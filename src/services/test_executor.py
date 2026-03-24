@@ -13,13 +13,10 @@
 import re
 import time
 import json
-import asyncio
 import uuid
 from datetime import datetime
-from pathlib import Path
-from typing import List, Dict, Any, Optional, Set, Tuple
+from typing import List, Dict, Any, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from loguru import logger
 
 import requests
 from requests.exceptions import RequestException, Timeout, ConnectionError
@@ -34,6 +31,9 @@ from ..core.models import (
     AssertOperator,
 )
 from ..core.config import get_config, AppConfig
+from src.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class ExecutionContext:

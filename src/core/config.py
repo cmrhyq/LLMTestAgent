@@ -5,13 +5,15 @@
 """
 
 import os
+import logging
 from pathlib import Path
 from typing import Optional, Any, List
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 import yaml
-from loguru import logger
+
+logger = logging.getLogger(__name__)
 
 
 class OpenAIConfig(BaseModel):
@@ -113,7 +115,6 @@ class OutputConfig(BaseModel):
     base_dir: str = Field(default="output", description="输出根目录")
     test_cases_dir: str = Field(default="output/test_cases", description="用例目录")
     reports_dir: str = Field(default="output/reports", description="报告目录")
-    logs_dir: str = Field(default="output/logs", description="日志目录")
     excel: ExcelConfig = Field(default_factory=ExcelConfig)
     report: ReportConfig = Field(default_factory=ReportConfig)
 
@@ -121,6 +122,7 @@ class OutputConfig(BaseModel):
 class LoggingConfig(BaseModel):
     """日志配置"""
     level: str = Field(default="INFO", description="日志级别")
+    debug: bool = Field(default=False, deprecated="debug参数已废弃，请直接设置level为DEBUG", description="调试模式")
     format: str = Field(default="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}", description="日志格式")
     rotation: str = Field(default="10 MB", description="日志轮转大小")
     retention: str = Field(default="7 days", description="日志保留时间")
@@ -204,46 +206,11 @@ def ensure_output_dirs(config: AppConfig) -> None:
         config.output.base_dir,
         config.output.test_cases_dir,
         config.output.reports_dir,
-        config.output.logs_dir,
     ]
     
     for dir_path in dirs:
         Path(dir_path).mkdir(parents=True, exist_ok=True)
         logger.debug(f"确保目录存在: {dir_path}")
-
-
-def setup_logging(config: AppConfig) -> None:
-    """
-    配置日志
-    
-    Args:
-        config: 应用配置
-    """
-    from loguru import logger
-    import sys
-    
-    # 移除默认处理器
-    logger.remove()
-    
-    # 添加控制台处理器
-    logger.add(
-        sys.stderr,
-        level=config.logging.level,
-        format=config.logging.format
-    )
-    
-    # 添加文件处理器
-    log_file = Path(config.output.logs_dir) / "app.log"
-    logger.add(
-        str(log_file),
-        level=config.logging.level,
-        format=config.logging.format,
-        rotation=config.logging.rotation,
-        retention=config.logging.retention,
-        encoding="utf-8",
-    )
-    
-    logger.info("日志配置完成")
 
 
 # 全局配置实例
@@ -276,5 +243,4 @@ def init_config(config_path: Optional[str] = None) -> AppConfig:
     global _config
     _config = load_config(config_path)
     ensure_output_dirs(_config)
-    # setup_logging(_config)
     return _config

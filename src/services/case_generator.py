@@ -16,7 +16,6 @@
 import json
 import hashlib
 from typing import List, Dict, Any, Optional, Set
-from loguru import logger
 
 from ..core.models import (
     APIInfo,
@@ -26,6 +25,9 @@ from ..core.models import (
 )
 from ..core.config import get_config, AppConfig
 from .llm_client import get_llm_client, LLMClient
+from src.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 # 用例生成的系统提示词
@@ -243,7 +245,7 @@ class CaseGenerator:
             if json_start == -1 or json_end == 0:
                 raise ValueError("LLM响应中未找到有效JSON")
 
-            print(response)
+            # print(response)
             json_str = response[json_start:json_end]
             data = json.loads(json_str)
             

@@ -92,7 +92,8 @@ output:
 
 # 日志配置
 logging:
-  level: DEBUG  # DEBUG / INFO / WARNING / ERROR
+  level: INFO  # DEBUG / INFO / WARNING / ERROR
+  debug: true
   format: "{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}"
   rotation: "10 MB"
   retention: "7 days"

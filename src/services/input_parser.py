@@ -11,7 +11,6 @@
 import json
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Set, Tuple
-from loguru import logger
 
 from ..core.models import (
     APIInfo,
@@ -19,8 +18,10 @@ from ..core.models import (
     Priority,
     ValidationResult,
     AssertRule,
-    Dependency,
 )
+from src.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class InputParser:

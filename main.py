@@ -16,7 +16,10 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from loguru import logger
+
+from src.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 # 添加项目根目录到路径
 project_root = Path(__file__).parent
@@ -92,11 +95,6 @@ def main():
     
     # 初始化配置
     config = init_config(args.config)
-    
-    # 设置日志级别
-    if args.verbose:
-        logger.remove()
-        logger.add(sys.stderr, level="DEBUG")
     
     logger.info("=" * 60)
     logger.info("🧪 LLM API自动化测试工具")

@@ -9,15 +9,14 @@
 import sys
 from pathlib import Path
 
+from src import run_workflow
+from src.core.logging import get_logger
+
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from loguru import logger
-
-# 配置日志
-logger.remove()
-logger.add(sys.stderr, level="INFO", format="{time:HH:mm:ss} | {level} | {message}")
+logger = get_logger(__name__)
 
 
 def example_parse_input():
@@ -158,8 +157,7 @@ def example_full_workflow():
     print("\n" + "=" * 60)
     print("[STEP6] 示例6: 完整工作流")
     print("=" * 60)
-    
-    from src.workflows.workflow import run_simple_workflow
+
     from src.core.config import init_config
     
     # 初始化配置
@@ -189,7 +187,7 @@ def example_full_workflow():
     }
     
     # 运行工作流
-    result = run_simple_workflow(input_data)
+    result = run_workflow(input_data)
     
     if result.get("success"):
         summary = result.get("test_summary", {})

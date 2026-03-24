@@ -16,7 +16,7 @@ LangGraph工作流编排模块
 """
 
 from typing import Dict, Any, Optional, List, Literal, TypedDict
-from loguru import logger
+from src.core.logging import get_logger
 
 try:
     from langgraph.graph import StateGraph, END
@@ -38,6 +38,8 @@ from ..services.case_generator import CaseGenerator
 from ..services.excel_exporter import ExcelExporter
 from ..services.test_executor import TestExecutor
 from ..services.report_generator import ReportGenerator
+
+logger = get_logger(__name__)
 
 
 class GraphState(TypedDict):

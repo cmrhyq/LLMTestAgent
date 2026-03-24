@@ -11,7 +11,6 @@ import json
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from datetime import datetime
-from loguru import logger
 
 from openpyxl import Workbook
 from openpyxl.styles import (
@@ -27,6 +26,9 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from ..core.models import TestCase, TestResult, Priority
 from ..core.config import get_config, AppConfig
+from src.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class ExcelExporter:

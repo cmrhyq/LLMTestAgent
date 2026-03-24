@@ -11,17 +11,18 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-from loguru import logger
 
 from jinja2 import Template
 import matplotlib
 matplotlib.use('Agg')  # 非GUI后端
 import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
 
-from ..core.models import TestResult, TestSummary, TestStatus
+from ..core.models import TestResult, TestSummary
 from ..core.config import get_config, AppConfig
 from .excel_exporter import ExcelExporter
+from src.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 # HTML报告模板

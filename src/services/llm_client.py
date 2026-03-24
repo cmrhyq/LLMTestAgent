@@ -9,13 +9,15 @@ LLM客户端模块
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional, List, Dict, Any
-from loguru import logger
+from typing import Optional, List, Dict
 
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langchain_core.language_models import BaseChatModel
 
 from ..core.config import get_config, AppConfig
+from src.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class LLMClient(ABC):
