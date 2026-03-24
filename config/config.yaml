@@ -1,0 +1,98 @@
+# LLM API自动化测试工具 - 配置文件
+
+# LLM配置
+llm:
+  # 提供商: openai / bedrock / zhipu / qwen
+  provider: bedrock
+  
+  # OpenAI配置
+  openai:
+    api_key: ${OPENAI_API_KEY}
+    model: gpt-4
+    temperature: 0.7
+    max_tokens: 4096
+  
+  # AWS Bedrock配置
+  bedrock:
+    region: us-east-1
+    model_id: us.anthropic.claude-opus-4-5-20251101-v1:0
+    max_tokens: 4096
+    access_key: ${AWS_ACCESS_KEY_ID}
+    secret_key: ${AWS_SECRET_ACCESS_KEY}
+    session_token: ${AWS_SESSION_TOKEN}
+  
+  # 智谱AI配置
+  zhipu:
+    api_key: ${ZHIPU_API_KEY}
+    model: glm-4
+  
+  # 通义千问配置
+  qwen:
+    api_key: ${DASHSCOPE_API_KEY}
+    model: qwen-max
+
+# 测试执行配置
+execution:
+  # 超时配置（秒）
+  connect_timeout: 5
+  read_timeout: 30
+  total_timeout: 60
+  
+  # 重试配置
+  retry:
+    max_retries: 2
+    retry_interval: 1  # 秒
+    retry_on_status: [500, 502, 503, 504]
+  
+  # 并发配置
+  concurrency:
+    enabled: true
+    max_workers: 5
+  
+  # 依赖失败处理
+  dependency_failure: skip  # skip / abort
+
+# 用例生成配置
+case_generation:
+  # 是否启用LLM缓存
+  enable_cache: false
+  cache_ttl: 3600  # 秒
+  
+  # 人工确认（Human-in-the-loop）
+  human_confirm: false
+  
+  # 用例生成场景
+  scenarios:
+    normal: true           # 正常场景
+    param_missing: true    # 参数缺失
+    param_type_error: true # 参数类型错误
+    boundary_value: true   # 边界值
+    permission_error: true # 权限异常
+
+# 输出配置
+output:
+  # 输出目录
+  base_dir: output
+  test_cases_dir: output/test_cases
+  reports_dir: output/reports
+  logs_dir: output/logs
+  
+  # Excel配置
+  excel:
+    format: xlsx
+    auto_width: true
+    freeze_header: true
+    highlight_required: true
+  
+  # 报告格式
+  report:
+    formats: [excel, markdown, html]
+    include_charts: true
+    include_details: true
+
+# 日志配置
+logging:
+  level: DEBUG  # DEBUG / INFO / WARNING / ERROR
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}"
+  rotation: "10 MB"
+  retention: "7 days"
