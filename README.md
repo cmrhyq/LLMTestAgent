@@ -192,6 +192,12 @@ python -m unittest tests.test_report_details
 python -m unittest tests.test_case_generator_no_fallback
 ```
 
+## 📝 ToDoList
+- [ ] 增加前端页面
+- [ ] 增加数据库
+- [ ] 流程增加：用户从前端输入要测试的接口的任何信息，然后由大模型解析成好处理的数据，经过用户确认以后再去生成测试用例执行
+- [ ] 精细化管理prompt，借鉴JoinAI-Agent
+
 ## License
 
-MIT
+This project is licensed under the [Apache License 2.0](LICENSE) open source license.
