@@ -15,8 +15,9 @@ LangGraph工作流编排模块
 - 上下文管理
 """
 
-from typing import Dict, Any, Optional, List, Literal, TypedDict
+from typing import Dict, Any, Optional, Literal
 from src.core.logging import get_logger
+from ..graph.state import GraphState
 
 try:
     from langgraph.graph import StateGraph, END
@@ -33,47 +34,13 @@ from ..core.models import (
     TestSummary,
 )
 from ..core.config import get_config, AppConfig
-from ..services.input_parser import InputParser
-from ..services.case_generator import CaseGenerator
-from ..services.excel_exporter import ExcelExporter
-from ..services.test_executor import TestExecutor
-from ..services.report_generator import ReportGenerator
+from src.utils.parser.input_parser import InputParser
+from ..graph.case_generator import CaseGenerator
+from src.utils.excel.exporter import ExcelExporter
+from ..graph.test_executor import TestExecutor
+from ..graph.report_generator import ReportGenerator
 
 logger = get_logger(__name__)
-
-
-class GraphState(TypedDict):
-    """
-    工作流状态类型定义
-    
-    用于LangGraph StateGraph的状态管理。
-    """
-    # 输入
-    raw_input: Dict[str, Any]
-    
-    # 解析结果
-    api_infos: List[Dict[str, Any]]
-    validation_result: Dict[str, Any]
-    
-    # 用例
-    test_cases: List[Dict[str, Any]]
-    
-    # 执行上下文
-    execution_context: Dict[str, Any]
-    
-    # 结果
-    test_results: List[Dict[str, Any]]
-    test_summary: Dict[str, Any]
-    
-    # 报告
-    report_paths: Dict[str, str]
-    excel_path: str
-    
-    # 工作流控制
-    current_node: str
-    error_message: str
-    retry_count: int
-    should_continue: bool
 
 
 class TestWorkflow:

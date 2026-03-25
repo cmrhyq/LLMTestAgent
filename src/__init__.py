@@ -18,17 +18,17 @@ from .core.models import (
     WorkflowState,
 )
 from .core.config import get_config, init_config, AppConfig
-from .services.input_parser import InputParser, parse_input
-from .services.case_generator import CaseGenerator, generate_test_cases
-from .services.excel_exporter import ExcelExporter, export_test_cases, export_test_results
-from .services.test_executor import TestExecutor, execute_tests
-from .services.report_generator import ReportGenerator, generate_report
+from src.utils.parser.input_parser import InputParser, parse_input
+from .graph.case_generator import CaseGenerator, generate_test_cases
+from src.utils.excel.exporter import ExcelExporter, export_test_cases, export_test_results
+from .graph.test_executor import TestExecutor, execute_tests
+from .graph.report_generator import ReportGenerator, generate_report
 try:
     from .workflows.workflow import TestWorkflow, run_workflow
 except ImportError:
     TestWorkflow = None  # type: ignore[assignment]
     run_workflow = None  # type: ignore[assignment]
-from .services.llm_client import LLMClient, create_llm_client, get_llm_client
+from .graph.llm_client import LLMClient, create_llm_client, get_llm_client
 
 __all__ = [
     # 数据模型

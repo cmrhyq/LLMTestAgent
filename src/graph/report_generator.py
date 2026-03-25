@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 
 from ..core.models import TestResult, TestSummary
 from ..core.config import get_config, AppConfig
-from .excel_exporter import ExcelExporter
+from src.utils.excel.exporter import ExcelExporter
 from src.core.logging import get_logger
 
 logger = get_logger(__name__)

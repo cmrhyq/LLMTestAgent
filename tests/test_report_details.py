@@ -5,7 +5,7 @@ from pathlib import Path
 
 from src.core.config import AppConfig
 from src.core.models import TestResult, TestStatus
-from src.services.report_generator import ReportGenerator
+from src.graph.report_generator import ReportGenerator
 
 
 class ReportDetailsTest(unittest.TestCase):

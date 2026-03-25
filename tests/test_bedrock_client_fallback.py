@@ -1,6 +1,6 @@
 import unittest
 
-from src.services.llm_client import BedrockClient
+from src.graph.llm_client import BedrockClient
 
 
 class _DummyResponse:

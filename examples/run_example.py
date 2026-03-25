@@ -25,7 +25,7 @@ def example_parse_input():
     print("[STEP1] 示例1: 解析输入")
     print("=" * 60)
     
-    from src.services.input_parser import InputParser
+    from src.utils.parser.input_parser import InputParser
     
     # 示例输入数据
     input_data = {
@@ -59,7 +59,7 @@ def example_generate_cases(api_infos):
     print("[STEP2] 示例2: 生成测试用例")
     print("=" * 60)
     
-    from src.services.case_generator import CaseGenerator
+    from src.graph.case_generator import CaseGenerator
     from src.core.config import get_config
     
     config = get_config()
@@ -85,7 +85,7 @@ def example_export_excel(test_cases):
     print("[STEP3] 示例3: 导出Excel")
     print("=" * 60)
     
-    from src.services.excel_exporter import ExcelExporter
+    from src.utils.excel.exporter import ExcelExporter
     from src.core.config import get_config
     
     config = get_config()
@@ -108,7 +108,7 @@ def example_execute_tests(test_cases):
     print("[STEP4] 示例4: 执行测试")
     print("=" * 60)
     
-    from src.services.test_executor import TestExecutor
+    from src.graph.test_executor import TestExecutor
     from src.core.config import get_config
     
     config = get_config()
@@ -133,7 +133,7 @@ def example_generate_report(test_results):
     print("[STEP5] 示例5: 生成报告")
     print("=" * 60)
     
-    from src.services.report_generator import ReportGenerator
+    from src.graph.report_generator import ReportGenerator
     from src.core.config import get_config
     
     config = get_config()

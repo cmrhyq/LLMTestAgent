@@ -2,7 +2,7 @@ import time
 import unittest
 
 from src.core.models import HttpMethod, TestCase, TestResult, TestStatus
-from src.services.test_executor import TestExecutor
+from src.graph.test_executor import TestExecutor
 
 
 class TestExecutorOrderingTest(unittest.TestCase):
