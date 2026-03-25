@@ -38,7 +38,7 @@ def parse_args():
 示例:
     python main.py --input examples/input_example.json
     python main.py --input examples/input_example.json --output output/
-    python main.py --input examples/input_example.json --config config/config.yaml --mode simple
+    python main.py --input examples/input_example.json --config config/config.yaml
         """
     )
     
@@ -105,14 +105,8 @@ def main():
         logger.info(f"📂 加载输入文件: {args.input}")
         input_data = load_input(args.input)
         
-        # 设置输出目录
-        config.output.base_dir = args.output
-        config.output.test_cases_dir = f"{args.output}/test_cases"
-        config.output.reports_dir = f"{args.output}/reports"
-        config.output.logs_dir = f"{args.output}/logs"
-        
         # 确保输出目录存在
-        for dir_path in [config.output.test_cases_dir, config.output.reports_dir, config.output.logs_dir]:
+        for dir_path in [config.output.test_cases_dir, config.output.reports_dir]:
             Path(dir_path).mkdir(parents=True, exist_ok=True)
         
         result = run_workflow(input_data, config)
