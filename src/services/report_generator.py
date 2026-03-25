@@ -575,20 +575,17 @@ class ReportGenerator:
         # 生成摘要
         summary = TestSummary.from_results(ordered_results)
         
-        # 生成时间戳
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
         report_paths = {}
         formats = self.config.output.report.formats
         
         # 生成Excel报告
         if "excel" in formats:
-            excel_path = self._generate_excel_report(ordered_results, output_path, timestamp)
+            excel_path = self._generate_excel_report(ordered_results, output_path)
             report_paths["excel"] = excel_path
         
         # 生成HTML报告
         if "html" in formats:
-            html_path = self._generate_html_report(ordered_results, summary, output_path, timestamp)
+            html_path = self._generate_html_report(ordered_results, summary, output_path)
             report_paths["html"] = html_path
         
         logger.info(f"报告生成完成: {report_paths}")
@@ -597,8 +594,7 @@ class ReportGenerator:
     def _generate_excel_report(
         self,
         results: List[TestResult],
-        output_path: Path,
-        timestamp: str
+        output_path: Path
     ) -> str:
         """
         生成Excel报告
@@ -606,21 +602,19 @@ class ReportGenerator:
         Args:
             results: 测试结果列表
             output_path: 输出目录
-            timestamp: 时间戳
             
         Returns:
             str: Excel文件路径
         """
         exporter = ExcelExporter(self.config)
-        excel_file = str(output_path / f"test_report_{timestamp}.xlsx")
+        excel_file = str(output_path / f"test_report.xlsx")
         return exporter.export_test_results(results, excel_file)
 
     def _generate_html_report(
         self,
         results: List[TestResult],
         summary: TestSummary,
-        output_path: Path,
-        timestamp: str
+        output_path: Path
     ) -> str:
         """
         生成HTML报告
@@ -629,7 +623,6 @@ class ReportGenerator:
             results: 测试结果列表
             summary: 测试摘要
             output_path: 输出目录
-            timestamp: 时间戳
             
         Returns:
             str: HTML文件路径
@@ -640,8 +633,8 @@ class ReportGenerator:
         
         # 生成图表
         if include_charts:
-            pie_chart_path = self._generate_pie_chart(summary, output_path, timestamp)
-            bar_chart_path = self._generate_bar_chart(results, output_path, timestamp)
+            pie_chart_path = self._generate_pie_chart(summary, output_path)
+            bar_chart_path = self._generate_bar_chart(results, output_path)
         
         template = Template(HTML_REPORT_TEMPLATE)
         content = template.render(
@@ -655,7 +648,7 @@ class ReportGenerator:
             format_json=self._format_json_for_report,
         )
         
-        html_file = output_path / f"test_report_{timestamp}.html"
+        html_file = output_path / f"test_report.html"
         with open(html_file, "w", encoding="utf-8") as f:
             f.write(content)
         
@@ -694,8 +687,7 @@ class ReportGenerator:
     def _generate_pie_chart(
         self,
         summary: TestSummary,
-        output_path: Path,
-        timestamp: str
+        output_path: Path
     ) -> str:
         """
         生成饼图
@@ -703,7 +695,6 @@ class ReportGenerator:
         Args:
             summary: 测试摘要
             output_path: 输出目录
-            timestamp: 时间戳
             
         Returns:
             str: 图片路径
@@ -762,7 +753,7 @@ class ReportGenerator:
         ax.set_title('Test Results Distribution', fontsize=14, fontweight='bold', pad=20)
         
         # 保存图片
-        chart_file = output_path / f"pie_chart_{timestamp}.png"
+        chart_file = output_path / f"pie_chart.png"
         plt.savefig(chart_file, dpi=150, bbox_inches='tight', facecolor='white')
         plt.close()
         
@@ -771,8 +762,7 @@ class ReportGenerator:
     def _generate_bar_chart(
         self,
         results: List[TestResult],
-        output_path: Path,
-        timestamp: str
+        output_path: Path
     ) -> str:
         """
         生成柱状图
@@ -780,7 +770,6 @@ class ReportGenerator:
         Args:
             results: 测试结果列表
             output_path: 输出目录
-            timestamp: 时间戳
             
         Returns:
             str: 图片路径
@@ -840,7 +829,7 @@ class ReportGenerator:
         ax.spines['right'].set_visible(False)
         
         # 保存图片
-        chart_file = output_path / f"bar_chart_{timestamp}.png"
+        chart_file = output_path / f"bar_chart.png"
         plt.savefig(chart_file, dpi=150, bbox_inches='tight', facecolor='white')
         plt.close()
         
