@@ -6,6 +6,7 @@
 
 import os
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Optional, Any, List
 
@@ -14,6 +15,7 @@ from pydantic import BaseModel, Field
 import yaml
 
 logger = logging.getLogger(__name__)
+timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
 
 class OpenAIConfig(BaseModel):
@@ -113,8 +115,8 @@ class ReportConfig(BaseModel):
 class OutputConfig(BaseModel):
     """输出配置"""
     base_dir: str = Field(default="output", description="输出根目录")
-    test_cases_dir: str = Field(default="output/test_cases", description="用例目录")
-    reports_dir: str = Field(default="output/reports", description="报告目录")
+    test_cases_dir: str = Field(default=f"output/{timestamp}/test_cases", description="用例目录")
+    reports_dir: str = Field(default=f"output/{timestamp}/reports", description="报告目录")
     excel: ExcelConfig = Field(default_factory=ExcelConfig)
     report: ReportConfig = Field(default_factory=ReportConfig)
 
@@ -123,9 +125,6 @@ class LoggingConfig(BaseModel):
     """日志配置"""
     level: str = Field(default="INFO", description="日志级别")
     debug: bool = Field(default=False, deprecated="debug参数已废弃，请直接设置level为DEBUG", description="调试模式")
-    format: str = Field(default="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}", description="日志格式")
-    rotation: str = Field(default="10 MB", description="日志轮转大小")
-    retention: str = Field(default="7 days", description="日志保留时间")
 
 
 class AppConfig(BaseModel):

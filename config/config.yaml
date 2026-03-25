@@ -68,14 +68,6 @@ case_generation:
     param_type_error: true # 参数类型错误
     boundary_value: true   # 边界值
     permission_error: true # 权限异常
-
-# 输出配置
-output:
-  # 输出目录
-  base_dir: output
-  test_cases_dir: output/test_cases
-  reports_dir: output/reports
-  logs_dir: output/logs
   
   # Excel配置
   excel:
@@ -86,7 +78,7 @@ output:
   
   # 报告格式
   report:
-    formats: [excel, markdown, html]
+    formats: [excel, html]
     include_charts: true
     include_details: true
 
@@ -94,6 +86,3 @@ output:
 logging:
   level: INFO  # DEBUG / INFO / WARNING / ERROR
   debug: true
-  format: "{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}"
-  rotation: "10 MB"
-  retention: "7 days"
