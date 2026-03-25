@@ -97,7 +97,6 @@ class TestWorkflow:
         if not LANGGRAPH_AVAILABLE:
             raise ImportError(
                 "langgraph 或 langchain-core 版本不兼容，无法使用 TestWorkflow。"
-                "请升级依赖，或改用 SimpleWorkflow。"
             )
 
         self.config = config or get_config()

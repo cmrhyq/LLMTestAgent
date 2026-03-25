@@ -1,7 +1,23 @@
-# LLMTestAgent
+<div align="center">
 
-基于 `LangChain + LangGraph` 的 API 自动化测试工具：  
-输入接口信息 -> 由 LLM 生成测试用例 -> 执行测试 -> 输出测试报告。
+<p align="center">
+  <span style="font-size: 2em; font-weight: bold; vertical-align: middle;">LLMTestAgent</span>
+</p>
+
+![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)
+![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)
+![Contributions](https://img.shields.io/badge/Contributions-welcome-green.svg)
+
+**基于大模型的 API 自动化测试智能体**
+
+面向多接口与依赖场景，串联「解析 → 用例生成 → 执行 → 报告」全流程，减少手工编排与重复劳动。
+
+[English](README.md) • [快速命令](#快速命令) • [测试输入格式](#输入格式) • [常见问题](#常见问题)
+
+
+</div>
+
+---
 
 ## 主要功能
 
@@ -9,7 +25,7 @@
 - 用例生成策略：**仅 LLM 生成**（失败即终止，不再使用兜底 mock）
 - 支持接口依赖与动态参数注入（如 `{{dep:...}}`）
 - 测试执行支持依赖拓扑排序与并发执行
-- 报告支持 `Excel` / `Markdown` / `HTML`
+- 报告支持 `Excel` / `HTML`
 - HTML 报告支持双层折叠：
   - 按接口分组折叠
   - 按用例折叠详情
@@ -17,7 +33,7 @@
   - 请求方法、请求地址、请求头、请求数据
   - 响应码、响应头、响应数据、耗时、错误信息
 
-## 项目结构
+## 项目结构 <a id="项目结构"></a>
 
 ```text
 LLMTestAgent/
@@ -56,7 +72,7 @@ LLMTestAgent/
 pip install -r requirements.txt
 ```
 
-## 快速命令
+## 快速命令 <a id="快速命令"></a>
 
 ```bash
 # 1) 安装依赖
@@ -117,12 +133,11 @@ python main.py --input examples/input_example.json --output output/
 ## 报告说明
 
 - `Excel`：结构化结果清单，适合筛选与归档
-- `Markdown`：文本结果，适合粘贴到评审或消息工具
 - `HTML`：可视化报告，支持折叠查看大量用例
   - 第 1 层：按接口分组
   - 第 2 层：按用例展开请求/响应详情
 
-## 输入格式（简要）
+## 输入格式（简要） <a id="输入格式"></a>
 
 ```json
 {
@@ -140,7 +155,7 @@ python main.py --input examples/input_example.json --output output/
 }
 ```
 
-## 常见问题
+## 常见问题 <a id="常见问题"></a>
 
 ### 1) Bedrock 报错：`security token ... is invalid`
 
