@@ -26,7 +26,9 @@ from ..core.models import (
 from ..core.config import get_config, AppConfig
 from .llm_client import get_llm_client, LLMClient
 from src.core.logging import get_logger
-from ..prompts.case import CASE_GENERATION_USER_PROMPT_TEMPLATE, CASE_GENERATION_SYSTEM_PROMPT
+from ..prompts import CASE_GENERATION_SYSTEM_PROMPT
+from ..prompts.builders.case_builder import CasePromptBuilder
+from ..prompts.formatters.case_formatter import format_scenario_types
 
 logger = get_logger(__name__)
 
@@ -54,6 +56,7 @@ class CaseGenerator:
         self.config = config or get_config()
         self.llm_client = llm_client or get_llm_client()
         self.cache: Dict[str, List[TestCase]] = {}
+        self.case_prompt_builder = CasePromptBuilder()
     
     def generate(self, api_infos: List[APIInfo]) -> List[TestCase]:
         """
@@ -121,29 +124,21 @@ class CaseGenerator:
         """
         # 构建场景类型列表
         scenarios = self.config.case_generation.scenarios
-        scenario_types = []
-        if scenarios.normal:
-            scenario_types.append("- 正常场景 (normal)")
-        if scenarios.param_missing:
-            scenario_types.append("- 参数缺失场景 (param_missing)")
-        if scenarios.param_type_error:
-            scenario_types.append("- 参数类型错误场景 (param_type_error)")
-        if scenarios.boundary_value:
-            scenario_types.append("- 边界值场景 (boundary_value)")
-        if scenarios.permission_error:
-            scenario_types.append("- 权限异常场景 (permission_error)")
-        
+        scenario_types = format_scenario_types(scenarios)
+
         # 构建用户提示词
-        user_prompt = CASE_GENERATION_USER_PROMPT_TEMPLATE.format(
-            name=api_info.name,
-            api_url=api_info.api_url,
-            method=api_info.method.value,
-            headers=json.dumps(api_info.headers, ensure_ascii=False, indent=2),
-            body=json.dumps(api_info.body, ensure_ascii=False, indent=2) if api_info.body else "无",
-            assert_rules=json.dumps(api_info.assert_rules, ensure_ascii=False),
-            priority=api_info.priority.value,
-            description=api_info.description or "无",
-            scenario_types="\n".join(scenario_types),
+        user_prompt = self.case_prompt_builder.build_user_prompt(
+            api_info={
+                "name": api_info.name,
+                "api_url": api_info.api_url,
+                "method": api_info.method.value,
+                "headers": api_info.headers,
+                "body": api_info.body,
+                "assert_rules": api_info.assert_rules,
+                "priority": api_info.priority.value,
+                "description": api_info.description,
+            },
+            scenario_types=scenario_types,
         )
         
         # 调用LLM
