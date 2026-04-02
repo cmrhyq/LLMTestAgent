@@ -79,7 +79,7 @@ pip install -r requirements.txt
 pip install -r requirements.txt
 
 # 2) 运行示例
-python main.py --input examples/input_example.json --output output/
+python main.py --input input/input_example.json --output output/
 
 # 3) 运行测试
 python -m unittest
@@ -121,7 +121,7 @@ llm:
 ## 运行方式
 
 ```bash
-python main.py --input examples/input_example.json --output output/
+python main.py --input input/input_example.json --output output/
 ```
 
 执行完成后会在 `output/` 下生成：
@@ -191,12 +191,6 @@ python -m unittest
 python -m unittest tests.test_report_details
 python -m unittest tests.test_case_generator_no_fallback
 ```
-
-## 📝 ToDoList
-- [ ] 增加前端页面
-- [ ] 增加数据库
-- [ ] 流程增加：用户从前端输入要测试的接口的任何信息，然后由大模型解析成好处理的数据，经过用户确认以后再去生成测试用例执行
-- [ ] 精细化管理prompt，借鉴JoinAI-Agent
 
 ## License
 
