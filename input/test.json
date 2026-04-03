@@ -21,7 +21,7 @@
     },
     {
       "name": "get_user_by_id",
-      "api_url": "https://jsonplaceholder.typicode.com/users/{{cache:id}",
+      "api_url": "https://jsonplaceholder.typicode.com/users/{{cache:id}}",
       "method": "GET",
       "headers": {
         "Content-Type": "application/json",
