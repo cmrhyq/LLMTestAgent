@@ -7,9 +7,9 @@ LLM API自动化测试工具 - 主入口
     python main.py --input <输入文件路径> [--output <输出目录>] [--config <配置文件路径>]
     
 示例:
-    python main.py --input examples/input_example.json
-    python main.py --input examples/input_example.json --output output/
-    python main.py --input examples/input_example.json --config config/config.yaml
+    python main.py --input input/input_example.json
+    python main.py --input input/input_example.json --output output/
+    python main.py --input input/input_example.json --config config/config.yaml
 """
 
 import argparse
@@ -36,9 +36,9 @@ def parse_args():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
-    python main.py --input examples/input_example.json
-    python main.py --input examples/input_example.json --output output/
-    python main.py --input examples/input_example.json --config config/config.yaml
+    python main.py --input input/input_example.json
+    python main.py --input input/input_example.json --output output/
+    python main.py --input input/input_example.json --config config/config.yaml
         """
     )
     

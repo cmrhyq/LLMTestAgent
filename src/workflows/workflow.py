@@ -16,6 +16,9 @@ LangGraph工作流编排模块
 """
 
 from typing import Dict, Any, Optional, Literal
+
+from langgraph.graph.state import CompiledStateGraph
+
 from src.core.logging import get_logger
 from ..graph.state import GraphState
 
@@ -76,7 +79,7 @@ class TestWorkflow:
         self.test_executor = TestExecutor(self.config)
         self.report_generator = ReportGenerator(self.config)
     
-    def _build_graph(self) -> StateGraph:
+    def _build_graph(self) -> CompiledStateGraph[Any, Any, Any, Any]:
         """
         构建工作流图
         
@@ -122,7 +125,7 @@ class TestWorkflow:
         
         return workflow.compile()
     
-    def run(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+    def run(self, input_data: Dict[str, Any]) -> list[Any] | dict[str, Any] | GraphState | Any:
         """
         运行工作流
         
@@ -310,6 +313,7 @@ class TestWorkflow:
             test_results = self.test_executor.execute(test_cases)
             
             # 生成摘要
+            # TODO 可以喂给大模型生成一句话的摘要
             test_summary = TestSummary.from_results(test_results)
             
             # 转换为可序列化的格式

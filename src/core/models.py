@@ -11,9 +11,8 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Dict, Any, List, Union
-from pydantic import BaseModel, Field, field_validator, model_validator
-import re
+from typing import Optional, Dict, Any, List
+from pydantic import BaseModel, Field, field_validator
 import hashlib
 import json
 
@@ -205,8 +204,8 @@ class APIInfo(BaseModel):
         headers: 请求头
         body: 请求体
         query_params: 查询参数
+        cache_rules：参数缓存规则
         assert_rules: 断言规则列表
-        dependencies: 依赖关系
         priority: 优先级
         description: 描述
         tags: 标签
@@ -217,8 +216,8 @@ class APIInfo(BaseModel):
     headers: Dict[str, str] = Field(default_factory=dict, description="请求头")
     body: Optional[Dict[str, Any]] = Field(default=None, description="请求体")
     query_params: Optional[Dict[str, Any]] = Field(default=None, description="查询参数")
+    cache_rules: Optional[Dict[str, Any]] = Field(default=None, description="参数缓存规则")
     assert_rules: List[str] = Field(default_factory=list, description="断言规则列表")
-    dependencies: Dict[str, Dict[str, str]] = Field(default_factory=dict, description="依赖关系")
     priority: Priority = Field(default=Priority.P1, description="优先级")
     description: str = Field(default="", description="描述")
     tags: List[str] = Field(default_factory=list, description="标签")
@@ -246,17 +245,6 @@ class APIInfo(BaseModel):
                 # 记录解析失败的规则，但不中断
                 pass
         return rules
-    
-    def get_parsed_dependencies(self) -> List[Dependency]:
-        """获取解析后的依赖关系"""
-        deps = []
-        for api_id, dep_info in self.dependencies.items():
-            deps.append(Dependency(
-                source_api_id=api_id,
-                source_path=dep_info.get("source_path", ""),
-                target_param=dep_info.get("target_param", "")
-            ))
-        return deps
 
 
 class TestCase(BaseModel):
@@ -266,13 +254,13 @@ class TestCase(BaseModel):
     Attributes:
         case_id: 用例ID
         case_name: 用例名称
-        api_info: API信息
+        api_url: API地址
+        method: 请求方法
         scenario_type: 场景类型
         priority: 优先级
         headers: 请求头（可能被修改）
         body: 请求体（可能被修改）
         assert_rules: 断言规则
-        dependencies: 依赖关系
         expected_result: 预期结果
         description: 描述
         created_at: 创建时间
@@ -286,8 +274,8 @@ class TestCase(BaseModel):
     headers: Dict[str, str] = Field(default_factory=dict, description="请求头")
     body: Optional[Dict[str, Any]] = Field(default=None, description="请求体")
     query_params: Optional[Dict[str, Any]] = Field(default=None, description="查询参数")
+    cache_rules: Optional[Dict[str, Any]] = Field(default=None, description="参数缓存规则")
     assert_rules: List[str] = Field(default_factory=list, description="断言规则")
-    dependencies: Dict[str, Dict[str, str]] = Field(default_factory=dict, description="依赖关系")
     expected_result: str = Field(default="成功", description="预期结果")
     description: str = Field(default="", description="描述")
     remark: str = Field(default="", description="备注")
@@ -332,8 +320,8 @@ class TestCase(BaseModel):
             headers=modified_headers or api_info.headers.copy(),
             body=modified_body if modified_body is not None else (api_info.body.copy() if api_info.body else None),
             query_params=api_info.query_params.copy() if api_info.query_params else None,
+            cache_rules=api_info.cache_rules.copy() if api_info.cache_rules else None,
             assert_rules=api_info.assert_rules.copy(),
-            dependencies=api_info.dependencies.copy(),
             expected_result=expected_result,
             description=description or api_info.description,
         )

@@ -10,7 +10,7 @@
 
 import json
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Set, Tuple
+from typing import Dict, Any, List, Optional, Tuple
 
 from src.core.models import (
     APIInfo,
@@ -78,10 +78,6 @@ class InputParser:
             except Exception as e:
                 self.validation_result.add_error(f"解析API[{idx}]失败: {str(e)}")
         
-        # 校验依赖关系
-        if self.api_infos:
-            self._validate_dependencies()
-        
         logger.info(f"解析完成: {len(self.api_infos)}个API, 校验结果: {self.validation_result.is_valid}")
         return self.api_infos, self.validation_result
     
@@ -148,14 +144,13 @@ class InputParser:
                 f"API[{index}]优先级无效: {priority_str}, 使用默认值P1"
             )
             priority = Priority.P1
+
+        # 参数缓存规则
+        cache_rules = api_data.get("cache_rules")
         
         # 校验断言规则
         assert_rules = api_data.get("assert_rules", [])
         validated_rules = self._validate_assert_rules(assert_rules, index)
-        
-        # 校验依赖关系格式
-        dependencies = api_data.get("dependencies", {})
-        validated_deps = self._validate_dependency_format(dependencies, index)
         
         # 创建API信息对象
         try:
@@ -166,8 +161,8 @@ class InputParser:
                 headers=api_data.get("headers", {}),
                 body=api_data.get("body"),
                 query_params=api_data.get("query_params"),
+                cache_rules=cache_rules,
                 assert_rules=validated_rules,
-                dependencies=validated_deps,
                 priority=priority,
                 description=api_data.get("description", ""),
                 tags=api_data.get("tags", []),
@@ -201,167 +196,6 @@ class InputParser:
                 )
         
         return valid_rules
-    
-    def _validate_dependency_format(
-        self, dependencies: Dict[str, Dict[str, str]], api_index: int
-    ) -> Dict[str, Dict[str, str]]:
-        """
-        校验依赖关系格式
-        
-        Args:
-            dependencies: 依赖关系
-            api_index: API索引
-            
-        Returns:
-            Dict[str, Dict[str, str]]: 有效的依赖关系
-        """
-        valid_deps = {}
-        
-        for dep_id, dep_info in dependencies.items():
-            if not isinstance(dep_info, dict):
-                self.validation_result.add_warning(
-                    f"API[{api_index}]依赖关系格式无效: {dep_id}"
-                )
-                continue
-            
-            source_path = dep_info.get("source_path", "")
-            target_param = dep_info.get("target_param", "")
-            
-            # 校验source_path
-            if not source_path.startswith("$."):
-                self.validation_result.add_warning(
-                    f"API[{api_index}]依赖{dep_id}的source_path必须以$.开头: {source_path}"
-                )
-                continue
-            
-            # 校验target_param
-            valid_prefixes = ["headers.", "body.", "query.", "path."]
-            if not any(target_param.startswith(prefix) for prefix in valid_prefixes):
-                self.validation_result.add_warning(
-                    f"API[{api_index}]依赖{dep_id}的target_param格式无效: {target_param}"
-                )
-                continue
-            
-            valid_deps[dep_id] = dep_info
-        
-        return valid_deps
-    
-    def _validate_dependencies(self) -> None:
-        """
-        校验依赖关系
-        
-        检测：
-        1. 依赖的API是否存在
-        2. 是否存在循环依赖
-        """
-        # 构建API ID映射
-        api_id_map = {api.name: api for api in self.api_infos}
-        api_id_map.update({api.api_id: api for api in self.api_infos})
-        
-        # 检查依赖是否存在
-        for api in self.api_infos:
-            for dep_id in api.dependencies.keys():
-                if dep_id not in api_id_map:
-                    self.validation_result.add_warning(
-                        f"API[{api.name}]依赖的接口不存在: {dep_id}"
-                    )
-        
-        # 检测循环依赖
-        cycle = self._detect_dependency_cycle()
-        if cycle:
-            self.validation_result.add_error(
-                f"检测到循环依赖: {' -> '.join(cycle)}"
-            )
-    
-    def _detect_dependency_cycle(self) -> Optional[List[str]]:
-        """
-        检测依赖循环
-        
-        使用DFS检测有向图中的环
-        
-        Returns:
-            Optional[List[str]]: 如果存在环，返回环中的节点列表
-        """
-        # 构建依赖图
-        graph: Dict[str, Set[str]] = {}
-        for api in self.api_infos:
-            api_id = api.name
-            graph[api_id] = set(api.dependencies.keys())
-        
-        # DFS检测环
-        visited: Set[str] = set()
-        rec_stack: Set[str] = set()
-        path: List[str] = []
-        
-        def dfs(node: str) -> Optional[List[str]]:
-            visited.add(node)
-            rec_stack.add(node)
-            path.append(node)
-            
-            for neighbor in graph.get(node, set()):
-                if neighbor not in visited:
-                    result = dfs(neighbor)
-                    if result:
-                        return result
-                elif neighbor in rec_stack:
-                    # 找到环
-                    cycle_start = path.index(neighbor)
-                    return path[cycle_start:] + [neighbor]
-            
-            path.pop()
-            rec_stack.remove(node)
-            return None
-        
-        for node in graph:
-            if node not in visited:
-                result = dfs(node)
-                if result:
-                    return result
-        
-        return None
-    
-    def get_execution_order(self) -> List[APIInfo]:
-        """
-        获取API执行顺序（拓扑排序）
-        
-        Returns:
-            List[APIInfo]: 按依赖顺序排列的API列表
-        """
-        if not self.api_infos:
-            return []
-        
-        # 构建API ID映射
-        api_map = {api.name: api for api in self.api_infos}
-        
-        # 计算入度
-        in_degree: Dict[str, int] = {api.name: 0 for api in self.api_infos}
-        for api in self.api_infos:
-            for dep_id in api.dependencies.keys():
-                if dep_id in in_degree:
-                    in_degree[api.name] += 1
-        
-        # 拓扑排序
-        queue = [name for name, degree in in_degree.items() if degree == 0]
-        result = []
-        
-        while queue:
-            current = queue.pop(0)
-            result.append(api_map[current])
-            
-            # 更新入度
-            for api in self.api_infos:
-                if current in api.dependencies:
-                    in_degree[api.name] -= 1
-                    if in_degree[api.name] == 0:
-                        queue.append(api.name)
-        
-        # 如果结果数量不等于API数量，说明存在环（理论上前面已经检测过）
-        if len(result) != len(self.api_infos):
-            logger.warning("拓扑排序失败，可能存在循环依赖")
-            return self.api_infos
-        
-        return result
-
 
 def parse_input(input_data: Dict[str, Any] | str | Path) -> Tuple[List[APIInfo], ValidationResult]:
     """
