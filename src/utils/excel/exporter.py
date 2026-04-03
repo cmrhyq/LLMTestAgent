@@ -51,17 +51,10 @@ class ExcelExporter:
         ("请求方法", "method", 10),
         ("请求头", "headers", 40),
         ("请求体", "body", 50),
+        ("缓存参数", "cache_rules", 20),
         ("断言规则", "assert_rules", 40),
-        ("依赖接口ID", "dependencies", 20),
         ("预期结果", "expected_result", 15),
         ("备注", "remark", 30),
-    ]
-    
-    DEPENDENCY_COLUMNS = [
-        ("用例ID", "case_id", 20),
-        ("依赖接口ID", "dep_id", 20),
-        ("依赖参数路径", "source_path", 30),
-        ("目标参数位置", "target_param", 30),
     ]
     
     RESULT_COLUMNS = [
@@ -143,9 +136,6 @@ class ExcelExporter:
         
         # 创建用例清单Sheet
         self._create_case_sheet(cases)
-        
-        # 创建依赖关系Sheet
-        self._create_dependency_sheet(cases)
         
         # 生成输出路径
         if output_path is None:
@@ -240,8 +230,8 @@ class ExcelExporter:
             case.method.value,
             self._format_json(case.headers),
             self._format_json(case.body) if case.body else "",
+            self._format_json(case.cache_rules) if case.cache_rules else "",
             "; ".join(case.assert_rules),
-            ", ".join(case.dependencies.keys()),
             case.expected_result,
             case.remark,
         ]
@@ -259,45 +249,7 @@ class ExcelExporter:
                     cell.fill = self.p1_fill
                 elif case.priority == Priority.P2:
                     cell.fill = self.p2_fill
-    
-    def _create_dependency_sheet(self, cases: List[TestCase]) -> None:
-        """
-        创建依赖关系Sheet
-        
-        Args:
-            cases: 测试用例列表
-        """
-        ws = self.workbook.create_sheet("依赖关系")
-        
-        # 写入表头
-        for col_idx, (header, _, width) in enumerate(self.DEPENDENCY_COLUMNS, 1):
-            cell = ws.cell(row=1, column=col_idx, value=header)
-            cell.font = self.header_font
-            cell.fill = self.header_fill
-            cell.alignment = self.header_alignment
-            cell.border = self.thin_border
-            ws.column_dimensions[get_column_letter(col_idx)].width = width
-        
-        # 写入数据
-        row_idx = 2
-        for case in cases:
-            for dep_id, dep_info in case.dependencies.items():
-                row_data = [
-                    case.case_id,
-                    dep_id,
-                    dep_info.get("source_path", ""),
-                    dep_info.get("target_param", ""),
-                ]
-                for col_idx, value in enumerate(row_data, 1):
-                    cell = ws.cell(row=row_idx, column=col_idx, value=value)
-                    cell.alignment = self.data_alignment
-                    cell.border = self.thin_border
-                row_idx += 1
-        
-        # 冻结表头
-        if self.config.output.excel.freeze_header:
-            ws.freeze_panes = "A2"
-    
+
     def _create_result_sheet(self, results: List[TestResult]) -> None:
         """
         创建测试结果Sheet

@@ -72,7 +72,7 @@ class CaseGenerator:
         
         for api_info in api_infos:
             try:
-                cases = self.generate_for_api(api_info)
+                cases = self._generate_with_llm(api_info)
                 all_cases.extend(cases)
                 logger.info(f"为API[{api_info.name}]生成了{len(cases)}个测试用例")
             except Exception as e:
@@ -84,34 +84,7 @@ class CaseGenerator:
         logger.info(f"用例生成完成，总计{len(unique_cases)}个用例（去重后）")
         
         return unique_cases
-    
-    def generate_for_api(self, api_info: APIInfo) -> List[TestCase]:
-        """
-        为单个API生成测试用例
-        
-        Args:
-            api_info: API信息
-            
-        Returns:
-            List[TestCase]: 测试用例列表
-        """
-        # 检查缓存
-        cache_key = self._get_cache_key(api_info)
-        if self.config.case_generation.enable_cache and cache_key in self.cache:
-            logger.debug(f"从缓存获取API[{api_info.name}]的测试用例")
-            return self.cache[cache_key]
-        
-        # 仅允许LLM生成，移除规则兜底/模拟生成逻辑
-        cases = self._generate_with_llm(api_info)
-        if not cases:
-            raise ValueError(f"API[{api_info.name}]未生成任何有效用例")
-        
-        # 缓存结果
-        if self.config.case_generation.enable_cache:
-            self.cache[cache_key] = cases
-        
-        return cases
-    
+
     def _generate_with_llm(self, api_info: APIInfo) -> List[TestCase]:
         """
         使用LLM生成补充用例
@@ -212,14 +185,15 @@ class CaseGenerator:
                         priority=priority,
                         headers=case_data["headers"],
                         body=case_data.get("body"),
+                        cache_rules=api_info.cache_rules,
                         assert_rules=case_data["assert_rules"],
-                        dependencies=api_info.dependencies,
                         expected_result=case_data["expected_result"],
                         description=case_data.get("description", ""),
                         remark="LLM生成",
                     )
                     cases.append(case)
                 except Exception as e:
+                    logger.debug(f"Case Data: {case_data}")
                     logger.warning(f"解析LLM生成的用例失败: {str(e)}")
                     continue
         
