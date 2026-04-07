@@ -107,7 +107,7 @@ class TestExecutor:
 
                     # 发送请求
                     start_time = time.time()
-                    response = self._send_request(case, headers, body)
+                    response = self._send_request(api_url, case.method.value, headers, body)
                     end_time = time.time()
 
                     # 记录响应信息
@@ -178,7 +178,8 @@ class TestExecutor:
 
     def _send_request(
         self,
-        case: TestCase,
+        url: str,
+        method: str,
         headers: Dict[str, str],
         body: Optional[Dict[str, Any]]
     ) -> requests.Response:
@@ -186,18 +187,19 @@ class TestExecutor:
         发送HTTP请求
 
         Args:
-            case: 测试用例
+            url: 请求地址
+            method: 请求方法
             headers: 请求头
             body: 请求体
 
         Returns:
             requests.Response: 响应对象
         """
-        method = case.method.value.upper()
-        url = case.api_url
+        method = method.upper()
+        url = url
 
         # 处理查询参数
-        params = case.query_params
+        params = None
 
         # 设置超时
         timeout = (
