@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 
+from src import APIInfo, ValidationResult
 from src.core.models import (
     APIInfo,
     HttpMethod,
@@ -39,10 +40,11 @@ class InputParser:
     def __init__(self):
         """初始化输入解析器"""
         self.raw_input: Dict[str, Any] = {}
+        self.domain: str = ""
         self.api_infos: List[APIInfo] = []
         self.validation_result: ValidationResult = ValidationResult()
     
-    def parse(self, input_data: Dict[str, Any] | str | Path) -> Tuple[List[APIInfo], ValidationResult]:
+    def parse(self, input_data: Dict[str, Any] | str | Path) -> tuple[str, list[APIInfo], ValidationResult]:
         """
         解析输入数据
         
@@ -53,6 +55,7 @@ class InputParser:
             Tuple[List[APIInfo], ValidationResult]: API信息列表和校验结果
         """
         # 重置状态
+        self.domain = ""
         self.api_infos = []
         self.validation_result = ValidationResult()
         
@@ -61,13 +64,18 @@ class InputParser:
             self.raw_input = self._load_input(input_data)
         except Exception as e:
             self.validation_result.add_error(f"加载输入数据失败: {str(e)}")
-            return self.api_infos, self.validation_result
+            return self.domain, self.api_infos, self.validation_result
+
+        self.domain = self.raw_input.get("domain", "")
+        if self.domain == "":
+            self.validation_result.add_error("输入数据中缺少apis字段或为空")
+            return self.domain, self.api_infos, self.validation_result
         
         # 解析API列表
         apis_data = self.raw_input.get("apis", [])
         if not apis_data:
             self.validation_result.add_error("输入数据中缺少apis字段或为空")
-            return self.api_infos, self.validation_result
+            return self.domain, self.api_infos, self.validation_result
         
         # 解析每个API
         for idx, api_data in enumerate(apis_data):
@@ -79,7 +87,7 @@ class InputParser:
                 self.validation_result.add_error(f"解析API[{idx}]失败: {str(e)}")
         
         logger.info(f"解析完成: {len(self.api_infos)}个API, 校验结果: {self.validation_result.is_valid}")
-        return self.api_infos, self.validation_result
+        return self.domain, self.api_infos, self.validation_result
     
     def _load_input(self, input_data: Dict[str, Any] | str | Path) -> Dict[str, Any]:
         """
@@ -116,7 +124,7 @@ class InputParser:
             Optional[APIInfo]: API信息对象
         """
         # 校验必填字段
-        required_fields = ["api_url", "method"]
+        required_fields = ["url", "method"]
         for field in required_fields:
             if field not in api_data or not api_data[field]:
                 self.validation_result.add_error(f"API[{index}]缺少必填字段: {field}")
@@ -156,7 +164,7 @@ class InputParser:
         try:
             api_info = APIInfo(
                 name=name,
-                api_url=api_data["api_url"],
+                url=api_data["url"],
                 method=method,
                 headers=api_data.get("headers", {}),
                 body=api_data.get("body"),

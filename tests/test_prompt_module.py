@@ -16,7 +16,7 @@ class TestPromptModule(unittest.TestCase):
         user_prompt = builder.build_user_prompt(
             {
                 "name": "用户登录",
-                "api_url": "https://api.example.com/login",
+                "url": "https://api.example.com/login",
                 "method": "POST",
                 "headers": {"Content-Type": "application/json"},
                 "body": {"username": "u", "password": "p"},

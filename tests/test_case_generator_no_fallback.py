@@ -48,7 +48,7 @@ class CaseGeneratorNoFallbackTest(unittest.TestCase):
     def setUp(self) -> None:
         self.api_info = APIInfo(
             name="登录",
-            api_url="https://example.test/api/login",
+            url="https://example.test/api/login",
             method=HttpMethod.POST,
             headers={"Content-Type": "application/json"},
             body={"username": "u", "password": "p"},

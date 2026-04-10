@@ -140,6 +140,7 @@ class TestWorkflow:
         # 初始状态
         initial_state: GraphState = {
             "raw_input": input_data,
+            "domain": "",
             "api_infos": [],
             "validation_result": {},
             "test_cases": [],
@@ -179,9 +180,10 @@ class TestWorkflow:
         state["current_node"] = "parse_input"
         
         try:
-            api_infos, validation_result = self.input_parser.parse(state["raw_input"])
+            domain, api_infos, validation_result = self.input_parser.parse(state["raw_input"])
             
             # 转换为可序列化的格式
+            state["domain"] = domain
             state["api_infos"] = [api.model_dump() for api in api_infos]
             state["validation_result"] = validation_result.model_dump()
             
@@ -307,10 +309,11 @@ class TestWorkflow:
         
         try:
             # 恢复用例对象
+            domain = state["domain"]
             test_cases = [TestCase(**case_data) for case_data in state["test_cases"]]
             
             # 执行测试
-            test_results = self.test_executor.execute(test_cases)
+            test_results = self.test_executor.execute(domain, test_cases)
             
             # 生成摘要
             # TODO 可以喂给大模型生成一句话的摘要

@@ -18,6 +18,7 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional, Tuple
 
 import requests
+from requests import Response
 from requests.exceptions import RequestException, Timeout, ConnectionError
 from jsonpath_ng import parse as jsonpath_parse
 
@@ -31,6 +32,7 @@ from src.core.models import (
 )
 from src.core.config import get_config, AppConfig
 from src.core.logging import get_logger, log_execution_time
+from src.utils.http.request import HttpRequest
 
 logger = get_logger(__name__)
 
@@ -56,23 +58,14 @@ class TestExecutor:
         """
         self.cache = DataCache.get_instance()
         self.config = config or get_config()
-        self.session = requests.Session()
-        self._setup_session()
-
-    def _setup_session(self) -> None:
-        """配置requests会话"""
-        # 设置默认超时
-        self.session.timeout = (
-            self.config.execution.connect_timeout,
-            self.config.execution.read_timeout
-        )
 
     @log_execution_time(name="executor_test_case", level="info")
-    def execute(self, cases: list[TestCase]) -> List[TestResult]:
+    def execute(self, domain: str, cases: list[TestCase]) -> List[TestResult]:
         """
-        执行测试用例，已过时
+        执行测试用例
 
         Args:
+            domain: 被测网站域名
             cases: 测试用例列表
 
         Returns:
@@ -97,17 +90,17 @@ class TestExecutor:
             while True:
                 try:
                     # 替换动态参数
-                    api_url, headers, body = self._replace_dynamic_params(case)
+                    url, headers, body = self._replace_dynamic_params(case)
 
                     # 记录请求信息
-                    case_result.request_url = api_url
+                    case_result.request_url = url
                     case_result.request_method = case.method.value
                     case_result.request_headers = headers
                     case_result.request_body = body
 
                     # 发送请求
                     start_time = time.time()
-                    response = self._send_request(api_url, case.method.value, headers, body)
+                    response = self._send_request(domain, url, case.method.value, headers, body)
                     end_time = time.time()
 
                     # 记录响应信息
@@ -178,11 +171,12 @@ class TestExecutor:
 
     def _send_request(
         self,
+        domain: str,
         url: str,
         method: str,
         headers: Dict[str, str],
         body: Optional[Dict[str, Any]]
-    ) -> requests.Response:
+    ) -> Response | None:
         """
         发送HTTP请求
 
@@ -201,31 +195,32 @@ class TestExecutor:
         # 处理查询参数
         params = None
 
-        # 设置超时
-        timeout = (
-            self.config.execution.connect_timeout,
-            self.config.execution.read_timeout
+        http_client = HttpRequest(
+            base_url=domain,
+            connect_timeout=self.config.execution.connect_timeout,
+            read_timeout=self.config.execution.read_timeout
         )
 
         # 发送请求
         if method == "GET":
-            response = self.session.get(url, headers=headers, params=params, timeout=timeout)
+            response = http_client.get(url, headers=headers, params=params)
         elif method == "POST":
-            response = self.session.post(url, headers=headers, json=body, params=params, timeout=timeout)
+            response = http_client.post(url, headers=headers, json=body, params=params)
         elif method == "PUT":
-            response = self.session.put(url, headers=headers, json=body, params=params, timeout=timeout)
+            response = http_client.put(url, headers=headers, json=body, params=params)
         elif method == "DELETE":
-            response = self.session.delete(url, headers=headers, json=body, params=params, timeout=timeout)
+            response = http_client.delete(url, headers=headers, json=body, params=params)
         elif method == "PATCH":
-            response = self.session.patch(url, headers=headers, json=body, params=params, timeout=timeout)
+            response = http_client.patch(url, headers=headers, json=body, params=params)
         else:
-            response = self.session.request(method, url, headers=headers, json=body, params=params, timeout=timeout)
+            response = None
+            logger.error(f"{url}使用了不受支持的请求方法：{method}")
 
         return response
 
     def _replace_dynamic_params(
         self, case: TestCase
-    ) -> tuple[str, dict[str, str], dict[str, Any]]:
+    ) -> tuple[str, dict[str, str], dict[str, Any] | None]:
         """
         替换动态参数
 
@@ -242,12 +237,12 @@ class TestExecutor:
         Returns:
             Tuple[Dict[str, str], Optional[Dict[str, Any]]]: 替换后的请求头和请求体
         """
-        api_url = case.api_url
+        url = case.url
         headers = case.headers.copy()
         body = case.body.copy() if case.body else None
 
         # 处理API URL的占位符
-        api_url = self._replace_placeholder(api_url)
+        url = self._replace_placeholder(url)
 
         # 替换请求头中的占位符
         for key, value in headers.items():
@@ -258,7 +253,7 @@ class TestExecutor:
         if body:
             body = self._replace_in_dict(body)
 
-        return api_url, headers, body
+        return url, headers, body
 
     def _replace_placeholder(self, value: str) -> str:
         """

@@ -1,8 +1,9 @@
 {
+  "domain": "https://httpbin.org",
   "apis": [
     {
       "name": "用户登录",
-      "api_url": "https://httpbin.org/post",
+      "url": "/post",
       "method": "POST",
       "headers": {
         "Content-Type": "application/json",
@@ -21,7 +22,7 @@
     },
     {
       "name": "获取用户信息",
-      "api_url": "https://httpbin.org/get",
+      "url": "/get",
       "method": "GET",
       "headers": {
         "Content-Type": "application/json",
@@ -42,7 +43,7 @@
     },
     {
       "name": "更新用户信息",
-      "api_url": "https://httpbin.org/put",
+      "url": "/put",
       "method": "PUT",
       "headers": {
         "Content-Type": "application/json",
@@ -69,7 +70,7 @@
     },
     {
       "name": "删除用户",
-      "api_url": "https://httpbin.org/delete",
+      "url": "/delete",
       "method": "DELETE",
       "headers": {
         "Content-Type": "application/json",

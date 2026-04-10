@@ -199,7 +199,7 @@ class APIInfo(BaseModel):
     
     Attributes:
         name: API名称
-        api_url: API地址
+        url: API地址
         method: 请求方法
         headers: 请求头
         body: 请求体
@@ -211,7 +211,7 @@ class APIInfo(BaseModel):
         tags: 标签
     """
     name: str = Field(..., description="API名称")
-    api_url: str = Field(..., description="API地址")
+    url: str = Field(..., description="API地址")
     method: HttpMethod = Field(..., description="请求方法")
     headers: Dict[str, str] = Field(default_factory=dict, description="请求头")
     body: Optional[Dict[str, Any]] = Field(default=None, description="请求体")
@@ -221,14 +221,6 @@ class APIInfo(BaseModel):
     priority: Priority = Field(default=Priority.P1, description="优先级")
     description: str = Field(default="", description="描述")
     tags: List[str] = Field(default_factory=list, description="标签")
-    
-    @field_validator("api_url")
-    @classmethod
-    def validate_url(cls, v: str) -> str:
-        """验证URL格式"""
-        if not v.startswith(("http://", "https://")):
-            raise ValueError(f"API地址必须以http://或https://开头: {v}")
-        return v
     
     @property
     def api_id(self) -> str:
@@ -254,7 +246,7 @@ class TestCase(BaseModel):
     Attributes:
         case_id: 用例ID
         case_name: 用例名称
-        api_url: API地址
+        url: API地址
         method: 请求方法
         scenario_type: 场景类型
         priority: 优先级
@@ -267,7 +259,7 @@ class TestCase(BaseModel):
     """
     case_id: str = Field(..., description="用例ID")
     case_name: str = Field(..., description="用例名称")
-    api_url: str = Field(..., description="API地址")
+    url: str = Field(..., description="API地址")
     method: HttpMethod = Field(..., description="请求方法")
     scenario_type: ScenarioType = Field(default=ScenarioType.NORMAL, description="场景类型")
     priority: Priority = Field(default=Priority.P1, description="优先级")
@@ -313,7 +305,7 @@ class TestCase(BaseModel):
         return cls(
             case_id=case_id,
             case_name=case_name,
-            api_url=api_info.api_url,
+            url=api_info.url,
             method=api_info.method,
             scenario_type=scenario_type,
             priority=api_info.priority,
@@ -328,7 +320,7 @@ class TestCase(BaseModel):
     
     def get_unique_hash(self) -> str:
         """生成用例唯一哈希（用于去重）"""
-        content = f"{self.api_url}|{self.method}|{json.dumps(self.body, sort_keys=True)}"
+        content = f"{self.url}|{self.method}|{json.dumps(self.body, sort_keys=True)}"
         return hashlib.md5(content.encode()).hexdigest()[:8]
 
 

@@ -1,8 +1,9 @@
 {
+  "domain": "https://jsonplaceholder.typicode.com",
   "apis": [
     {
       "name": "user_list",
-      "api_url": "https://jsonplaceholder.typicode.com/users",
+      "url": "/users",
       "method": "GET",
       "headers": {
         "Content-Type": "application/json",
@@ -21,7 +22,7 @@
     },
     {
       "name": "get_user_by_id",
-      "api_url": "https://jsonplaceholder.typicode.com/users/{{cache:id}}",
+      "url": "/users/{{cache:id}}",
       "method": "GET",
       "headers": {
         "Content-Type": "application/json",

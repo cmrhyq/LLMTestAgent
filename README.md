@@ -141,10 +141,11 @@ python main.py --input input/input_example.json --output output/
 
 ```json
 {
+  "domain": "https://api.example.com",
   "apis": [
     {
       "name": "用户登录",
-      "api_url": "https://api.example.com/login",
+      "url": "/login",
       "method": "POST",
       "headers": { "Content-Type": "application/json" },
       "body": { "username": "testuser", "password": "testpass" },
@@ -178,7 +179,7 @@ pip install -U langchain-aws
 ### 4) 运行后没有生成报告文件？
 
 - 先查看 `output/logs/app.log` 中是否已有“用例生成异常”或“测试执行异常”
-- 确认输入 JSON 中 `api_url`、`method`、`assert_rules` 格式正确
+- 确认输入 JSON 中 `url`、`method`、`assert_rules` 格式正确
 - 确认 LLM 凭证可用（尤其 Bedrock 的 AK/SK/Session Token）
 
 ## 开发与验证

@@ -2,7 +2,7 @@ prompt: |
   请为以下API生成测试用例：
 
   API名称: {name}
-  API地址: {api_url}
+  API地址: {url}
   请求方法: {method}
   请求头: {headers}
   请求体: {body}

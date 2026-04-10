@@ -103,7 +103,7 @@ class CaseGenerator:
         user_prompt = self.case_prompt_builder.build_user_prompt(
             api_info={
                 "name": api_info.name,
-                "api_url": api_info.api_url,
+                "url": api_info.url,
                 "method": api_info.method.value,
                 "headers": api_info.headers,
                 "body": api_info.body,
@@ -179,7 +179,7 @@ class CaseGenerator:
                     case = TestCase(
                         case_id=f"{api_info.api_id}_llm_{idx:03d}",
                         case_name=case_data["case_name"],
-                        api_url=api_info.api_url,
+                        url=api_info.url,
                         method=api_info.method,
                         scenario_type=scenario_type,
                         priority=priority,
@@ -237,7 +237,7 @@ class CaseGenerator:
         Returns:
             str: 缓存键
         """
-        content = f"{api_info.api_url}|{api_info.method}|{json.dumps(api_info.body, sort_keys=True)}"
+        content = f"{api_info.url}|{api_info.method}|{json.dumps(api_info.body, sort_keys=True)}"
         return hashlib.md5(content.encode()).hexdigest()
     
     def validate_cases(self, cases: List[TestCase]) -> List[TestCase]:
@@ -256,13 +256,8 @@ class CaseGenerator:
         
         for case in cases:
             # 校验必填字段
-            if not case.case_id or not case.api_url:
+            if not case.case_id or not case.url:
                 logger.warning(f"用例缺少必填字段: {case.case_id}")
-                continue
-            
-            # 校验URL格式
-            if not case.api_url.startswith(("http://", "https://")):
-                logger.warning(f"用例URL格式无效: {case.api_url}")
                 continue
             
             # 校验断言规则

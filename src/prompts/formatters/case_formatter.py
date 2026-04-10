@@ -35,7 +35,7 @@ def format_api_info_for_prompt(api_info: Dict[str, Any]) -> Dict[str, Any]:
     """规范化 API 信息，供 Jinja2 模板渲染。"""
     return {
         "name": api_info.get("name", ""),
-        "api_url": api_info.get("api_url", ""),
+        "url": api_info.get("url", ""),
         "method": str(api_info.get("method", "")),
         "headers": json.dumps(api_info.get("headers", {}), ensure_ascii=False, indent=2),
         "body": (

@@ -37,7 +37,7 @@ print(CASE_GENERATION_SYSTEM_PROMPT)
 # 使用用户提示词模板（需要格式化）
 user_prompt = CASE_GENERATION_USER_PROMPT_TEMPLATE.format(
     name="用户登录",
-    api_url="https://api.example.com/login",
+    url="https://api.example.com/login",
     method="POST",
     headers='{"Content-Type": "application/json"}',
     body='{"username": "test", "password": "123"}',
@@ -62,7 +62,7 @@ system_prompt = builder.build_system_prompt()
 # 构建用户提示词
 api_info = {
     "name": "用户登录",
-    "api_url": "https://api.example.com/login",
+    "url": "https://api.example.com/login",
     "method": "POST",
     "headers": {"Content-Type": "application/json"},
     "body": {"username": "test", "password": "123"},
@@ -86,7 +86,7 @@ from src.prompts import format_api_info_for_prompt, format_scenario_types
 # 格式化 API 信息
 api_info = {
     "name": "用户登录",
-    "api_url": "https://api.example.com/login",
+    "url": "https://api.example.com/login",
     "method": "POST",
     "headers": {"Content-Type": "application/json"},
     "body": {"username": "test", "password": "123"},

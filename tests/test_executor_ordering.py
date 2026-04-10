@@ -11,10 +11,12 @@ class TestExecutorOrderingTest(unittest.TestCase):
         executor.config.execution.concurrency.enabled = True
         executor.config.execution.concurrency.max_workers = 3
 
+        domain = "https://a.test"
+
         cases = [
-            TestCase(case_id="api_a_001", case_name="A-1", api_url="https://a.test/api", method=HttpMethod.GET),
-            TestCase(case_id="api_a_002", case_name="A-2", api_url="https://a.test/api", method=HttpMethod.GET),
-            TestCase(case_id="api_b_001", case_name="B-1", api_url="https://b.test/api", method=HttpMethod.GET),
+            TestCase(case_id="api_a_001", case_name="A-1", url="/api", method=HttpMethod.GET),
+            TestCase(case_id="api_a_002", case_name="A-2", url="/api", method=HttpMethod.GET),
+            TestCase(case_id="api_b_001", case_name="B-1", url="/api", method=HttpMethod.GET),
         ]
 
         delay_map = {
@@ -33,7 +35,7 @@ class TestExecutorOrderingTest(unittest.TestCase):
 
         executor._execute_single = fake_execute_single  # type: ignore[method-assign]
 
-        results = executor.execute(cases)
+        results = executor.execute(domain, cases)
 
         self.assertEqual(
             [r.case_id for r in results],

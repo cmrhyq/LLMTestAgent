@@ -11,6 +11,7 @@ class GraphState(TypedDict):
     raw_input: Dict[str, Any]
 
     # 解析结果
+    domain: str
     api_infos: List[Dict[str, Any]]
     validation_result: Dict[str, Any]
 
