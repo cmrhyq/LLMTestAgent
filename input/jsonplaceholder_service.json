@@ -6,9 +6,9 @@
       "url": "/users",
       "method": "GET",
       "headers": {
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+        "Abc": "json"
       },
+      "params": {},
       "body": {},
       "cache_rules": {
         "id": "$[0].id"
@@ -25,9 +25,9 @@
       "url": "/users/{{cache:id}}",
       "method": "GET",
       "headers": {
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+        "Abc": "json"
       },
+      "params": {},
       "body": {},
       "cache_rules": {
         "username": "$.username"
@@ -35,6 +35,24 @@
       "assert_rules": [
         "$.username == Bret",
         "$.id == 1"
+      ],
+      "priority": "P0",
+      "description": "根据 ID 获取用户信息"
+    },
+    {
+      "name": "get_user_posts",
+      "url": "/users/{{cache:id}}/posts",
+      "method": "GET",
+      "headers": {
+        "Abc": "json"
+      },
+      "params": {},
+      "body": {},
+      "cache_rules": {
+        "username": "$.username"
+      },
+      "assert_rules": [
+        "$[0].id == 1"
       ],
       "priority": "P0",
       "description": "根据 ID 获取用户信息"

@@ -284,7 +284,7 @@ class TestWorkflow:
             
             # 导出Excel
             excel_path = self.excel_exporter.export_test_cases(test_cases)
-            state["excel_path"] = excel_path
+            state["excel_path"] = excel_path or ""
             
             logger.info(f"Excel导出成功: {excel_path}")
             

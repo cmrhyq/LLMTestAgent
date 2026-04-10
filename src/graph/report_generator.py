@@ -485,6 +485,10 @@ HTML_REPORT_TEMPLATE = """
                                         <td><pre class="json-block">{{ format_json(result.request_headers) }}</pre></td>
                                     </tr>
                                     <tr>
+                                        <th>查询参数</th>
+                                        <td><pre class="json-block">{{ format_json(result.query_params) }}</pre></td>
+                                    </tr>
+                                    <tr>
                                         <th>请求数据</th>
                                         <td><pre class="json-block">{{ format_json(result.request_body) }}</pre></td>
                                     </tr>

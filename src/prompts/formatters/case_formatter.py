@@ -43,6 +43,11 @@ def format_api_info_for_prompt(api_info: Dict[str, Any]) -> Dict[str, Any]:
             if api_info.get("body") is not None
             else "无"
         ),
+        "params": (
+            json.dumps(api_info.get("params"), ensure_ascii=False, indent=2)
+            if api_info.get("params") is not None
+            else "无"
+        ),
         "assert_rules": json.dumps(api_info.get("assert_rules", []), ensure_ascii=False),
         "priority": str(api_info.get("priority", "P1")),
         "description": api_info.get("description") or "无",

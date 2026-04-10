@@ -90,17 +90,18 @@ class TestExecutor:
             while True:
                 try:
                     # 替换动态参数
-                    url, headers, body = self._replace_dynamic_params(case)
+                    url, headers, body, params = self._replace_dynamic_params(case)
 
                     # 记录请求信息
                     case_result.request_url = url
                     case_result.request_method = case.method.value
                     case_result.request_headers = headers
                     case_result.request_body = body
+                    case_result.query_params = params
 
                     # 发送请求
                     start_time = time.time()
-                    response = self._send_request(domain, url, case.method.value, headers, body)
+                    response = self._send_request(domain, url, case.method.value, headers, body, params)
                     end_time = time.time()
 
                     # 记录响应信息
@@ -175,7 +176,8 @@ class TestExecutor:
         url: str,
         method: str,
         headers: Dict[str, str],
-        body: Optional[Dict[str, Any]]
+        body: Optional[Dict[str, Any]],
+        params: Optional[Dict[str, Any]],
     ) -> Response | None:
         """
         发送HTTP请求
@@ -191,9 +193,6 @@ class TestExecutor:
         """
         method = method.upper()
         url = url
-
-        # 处理查询参数
-        params = None
 
         http_client = HttpRequest(
             base_url=domain,
@@ -220,7 +219,7 @@ class TestExecutor:
 
     def _replace_dynamic_params(
         self, case: TestCase
-    ) -> tuple[str, dict[str, str], dict[str, Any] | None]:
+    ) -> tuple[str, dict[str, str], dict[str, Any] | None, dict[str, Any] | None]:
         """
         替换动态参数
 
@@ -240,6 +239,7 @@ class TestExecutor:
         url = case.url
         headers = case.headers.copy()
         body = case.body.copy() if case.body else None
+        params = case.params.copy() if case.params else None
 
         # 处理API URL的占位符
         url = self._replace_placeholder(url)
@@ -253,7 +253,10 @@ class TestExecutor:
         if body:
             body = self._replace_in_dict(body)
 
-        return url, headers, body
+        if params:
+            params = self._replace_in_dict(params)
+
+        return url, headers, body, params
 
     def _replace_placeholder(self, value: str) -> str:
         """
@@ -420,7 +423,7 @@ class TestExecutor:
 
         return passed, actual_value
 
-    def _cache_response_params(self, cache_rules: dict, response: dict[str, Any]):
+    def _cache_response_params(self, cache_rules: dict, response: Any):
         """
         存储需要缓存的参数到全局缓存
 

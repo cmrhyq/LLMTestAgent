@@ -203,7 +203,7 @@ class APIInfo(BaseModel):
         method: 请求方法
         headers: 请求头
         body: 请求体
-        query_params: 查询参数
+        params: 查询参数
         cache_rules：参数缓存规则
         assert_rules: 断言规则列表
         priority: 优先级
@@ -215,7 +215,7 @@ class APIInfo(BaseModel):
     method: HttpMethod = Field(..., description="请求方法")
     headers: Dict[str, str] = Field(default_factory=dict, description="请求头")
     body: Optional[Dict[str, Any]] = Field(default=None, description="请求体")
-    query_params: Optional[Dict[str, Any]] = Field(default=None, description="查询参数")
+    params: Optional[Dict[str, Any]] = Field(default=None, description="查询参数")
     cache_rules: Optional[Dict[str, Any]] = Field(default=None, description="参数缓存规则")
     assert_rules: List[str] = Field(default_factory=list, description="断言规则列表")
     priority: Priority = Field(default=Priority.P1, description="优先级")
@@ -265,7 +265,7 @@ class TestCase(BaseModel):
     priority: Priority = Field(default=Priority.P1, description="优先级")
     headers: Dict[str, str] = Field(default_factory=dict, description="请求头")
     body: Optional[Dict[str, Any]] = Field(default=None, description="请求体")
-    query_params: Optional[Dict[str, Any]] = Field(default=None, description="查询参数")
+    params: Optional[Dict[str, Any]] = Field(default=None, description="查询参数")
     cache_rules: Optional[Dict[str, Any]] = Field(default=None, description="参数缓存规则")
     assert_rules: List[str] = Field(default_factory=list, description="断言规则")
     expected_result: str = Field(default="成功", description="预期结果")
@@ -311,7 +311,7 @@ class TestCase(BaseModel):
             priority=api_info.priority,
             headers=modified_headers or api_info.headers.copy(),
             body=modified_body if modified_body is not None else (api_info.body.copy() if api_info.body else None),
-            query_params=api_info.query_params.copy() if api_info.query_params else None,
+            params=api_info.params.copy() if api_info.params else None,
             cache_rules=api_info.cache_rules.copy() if api_info.cache_rules else None,
             assert_rules=api_info.assert_rules.copy(),
             expected_result=expected_result,
@@ -352,6 +352,7 @@ class TestResult(BaseModel):
     request_method: str = Field(default="", description="请求方法")
     request_headers: Dict[str, str] = Field(default_factory=dict, description="请求头")
     request_body: Optional[Dict[str, Any]] = Field(default=None, description="请求体")
+    query_params: Optional[Dict[str, Any]] = Field(default=None, description="查询参数")
     response_status_code: Optional[int] = Field(default=None, description="响应状态码")
     response_headers: Dict[str, str] = Field(default_factory=dict, description="响应头")
     response_body: Optional[Any] = Field(default=None, description="响应体")

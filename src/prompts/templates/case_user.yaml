@@ -6,6 +6,7 @@ prompt: |
   请求方法: {method}
   请求头: {headers}
   请求体: {body}
+  查询参数: {params}
   现有断言规则: {assert_rules}
   优先级: {priority}
   描述: {description}

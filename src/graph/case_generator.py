@@ -107,6 +107,7 @@ class CaseGenerator:
                 "method": api_info.method.value,
                 "headers": api_info.headers,
                 "body": api_info.body,
+                "params": api_info.params,
                 "assert_rules": api_info.assert_rules,
                 "priority": api_info.priority.value,
                 "description": api_info.description,

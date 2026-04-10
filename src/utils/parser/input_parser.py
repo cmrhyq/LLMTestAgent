@@ -12,7 +12,6 @@ import json
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 
-from src import APIInfo, ValidationResult
 from src.core.models import (
     APIInfo,
     HttpMethod,
@@ -168,7 +167,7 @@ class InputParser:
                 method=method,
                 headers=api_data.get("headers", {}),
                 body=api_data.get("body"),
-                query_params=api_data.get("query_params"),
+                params=api_data.get("params"),
                 cache_rules=cache_rules,
                 assert_rules=validated_rules,
                 priority=priority,

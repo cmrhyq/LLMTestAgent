@@ -9,7 +9,7 @@ Excel导出模块
 
 import json
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Any, Optional
 from datetime import datetime
 
 from openpyxl import Workbook
@@ -51,6 +51,7 @@ class ExcelExporter:
         ("请求方法", "method", 10),
         ("请求头", "headers", 40),
         ("请求体", "body", 50),
+        ("查询参数", "params", 50),
         ("缓存参数", "cache_rules", 20),
         ("断言规则", "assert_rules", 40),
         ("预期结果", "expected_result", 15),
@@ -65,6 +66,7 @@ class ExcelExporter:
         ("请求地址", "request_url", 45),
         ("请求头", "request_headers", 40),
         ("请求数据", "request_body", 45),
+        ("查询参数", "query_params", 45),
         ("响应状态码", "response_status_code", 15),
         ("响应头", "response_headers", 40),
         ("响应数据", "response_body", 50),
@@ -121,7 +123,7 @@ class ExcelExporter:
         self, 
         cases: List[TestCase], 
         output_path: Optional[str] = None
-    ) -> str:
+    ) -> str | None:
         """
         导出测试用例到Excel
         
@@ -154,7 +156,7 @@ class ExcelExporter:
         self,
         results: List[TestResult],
         output_path: Optional[str] = None
-    ) -> str:
+    ) -> str | None:
         """
         导出测试结果到Excel
         
@@ -230,6 +232,7 @@ class ExcelExporter:
             case.method.value,
             self._format_json(case.headers),
             self._format_json(case.body) if case.body else "",
+            self._format_json(case.params) if case.params else "",
             self._format_json(case.cache_rules) if case.cache_rules else "",
             "; ".join(case.assert_rules),
             case.expected_result,
@@ -297,6 +300,7 @@ class ExcelExporter:
             result.request_url,
             self._format_json(result.request_headers) if result.request_headers else "",
             self._format_json(result.request_body) if result.request_body else "",
+            self._format_json(result.query_params) if result.query_params else "",
             result.response_status_code or "",
             self._format_json(result.response_headers) if result.response_headers else "",
             self._format_json(result.response_body) if result.response_body is not None else "",
@@ -345,7 +349,7 @@ def export_test_cases(
     cases: List[TestCase],
     output_path: Optional[str] = None,
     config: Optional[AppConfig] = None
-) -> str:
+) -> str | None:
     """
     导出测试用例的便捷函数
     
@@ -365,7 +369,7 @@ def export_test_results(
     results: List[TestResult],
     output_path: Optional[str] = None,
     config: Optional[AppConfig] = None
-) -> str:
+) -> str | None:
     """
     导出测试结果的便捷函数
     
