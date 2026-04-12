@@ -28,7 +28,7 @@ try:
 except ImportError:
     TestWorkflow = None  # type: ignore[assignment]
     run_workflow = None  # type: ignore[assignment]
-from .graph.llm_client import LLMClient, create_llm_client, get_llm_client
+from src.core.llm.llm_client import LLMClient, create_llm_client, get_llm_client
 
 __all__ = [
     # 数据模型

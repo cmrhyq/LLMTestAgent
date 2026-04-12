@@ -20,7 +20,7 @@ from typing import Dict, Any, Optional, Literal
 from langgraph.graph.state import CompiledStateGraph
 
 from src.core.logging import get_logger
-from ..graph.state import GraphState
+from src.graph.state import GraphState
 
 try:
     from langgraph.graph import StateGraph, END

@@ -2,7 +2,7 @@ import unittest
 
 from src.core.models import APIInfo, HttpMethod, Priority
 from src.graph.case_generator import CaseGenerator
-from src.graph.llm_client import LLMClient
+from src.core.llm.llm_client import LLMClient
 
 
 class _FailingLLMClient(LLMClient):

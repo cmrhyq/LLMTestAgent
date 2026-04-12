@@ -15,7 +15,7 @@
 
 import json
 import hashlib
-from typing import List, Dict, Any, Optional, Set
+from typing import List, Dict, Optional, Set
 
 from ..core.models import (
     APIInfo,
@@ -24,7 +24,7 @@ from ..core.models import (
     ScenarioType,
 )
 from ..core.config import get_config, AppConfig
-from .llm_client import get_llm_client, LLMClient
+from src.core.llm.llm_client import get_llm_client, LLMClient
 from src.core.logging import get_logger
 from ..prompts import CASE_GENERATION_SYSTEM_PROMPT
 from ..prompts.builders.case_builder import CasePromptBuilder
