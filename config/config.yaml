@@ -1,5 +1,3 @@
-# LLM API自动化测试工具 - 配置文件
-
 # LLM配置
 llm:
   # 提供商: openai / bedrock / zhipu / qwen
@@ -81,6 +79,15 @@ case_generation:
     formats: [excel, html]
     include_charts: true
     include_details: true
+
+# 数据库配置
+database:
+  url: "sqlite:///db/LLMTest.db"
+  echo: false
+  pool_size: 5
+  max_overflow: 10
+  pool_timeout: 30
+  pool_recycle: 3600
 
 # 日志配置
 logging:

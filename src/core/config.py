@@ -121,6 +121,16 @@ class OutputConfig(BaseModel):
     report: ReportConfig = Field(default_factory=ReportConfig)
 
 
+class DatabaseConfig(BaseModel):
+    """数据库配置"""
+    url: str = Field(default="sqlite:///db/LLMTest.db", description="数据库连接URL")
+    echo: bool = Field(default=False, description="是否输出SQL语句")
+    pool_size: int = Field(default=5, description="连接池大小")
+    max_overflow: int = Field(default=10, description="最大溢出连接数")
+    pool_timeout: int = Field(default=30, description="连接池获取超时（秒）")
+    pool_recycle: int = Field(default=3600, description="连接回收时间（秒）")
+
+
 class LoggingConfig(BaseModel):
     """日志配置"""
     level: str = Field(default="INFO", description="日志级别")
@@ -133,6 +143,7 @@ class AppConfig(BaseModel):
     execution: ExecutionConfig = Field(default_factory=ExecutionConfig)
     case_generation: CaseGenerationConfig = Field(default_factory=CaseGenerationConfig)
     output: OutputConfig = Field(default_factory=OutputConfig)
+    database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
 
 
