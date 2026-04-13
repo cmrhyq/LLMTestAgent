@@ -19,12 +19,11 @@ from openpyxl.styles import (
     PatternFill, 
     Border, 
     Side,
-    NamedStyle,
 )
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
 
-from src.core.models import TestCase, TestResult, Priority
+from src.data.enum.models import TestCase, TestResult, Priority
 from src.core.config import get_config, AppConfig
 from src.core.logging import get_logger
 

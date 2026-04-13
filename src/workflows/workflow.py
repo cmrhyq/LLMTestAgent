@@ -30,7 +30,7 @@ except ImportError:
     END = "__END__"
     LANGGRAPH_AVAILABLE = False
 
-from ..core.models import (
+from src.data.enum.models import (
     APIInfo,
     TestCase,
     TestResult,

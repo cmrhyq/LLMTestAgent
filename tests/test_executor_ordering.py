@@ -1,7 +1,7 @@
 import time
 import unittest
 
-from src.core.models import HttpMethod, TestCase, TestResult, TestStatus
+from src.data.enum.models import HttpMethod, TestCase, TestResult, TestStatus
 from src.graph.test_executor import TestExecutor
 
 

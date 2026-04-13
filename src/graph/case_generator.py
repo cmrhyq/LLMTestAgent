@@ -17,7 +17,7 @@ import json
 import hashlib
 from typing import List, Dict, Optional, Set
 
-from ..core.models import (
+from src.data.enum.models import (
     APIInfo,
     TestCase,
     Priority,
@@ -265,7 +265,7 @@ class CaseGenerator:
             valid_rules = []
             for rule in case.assert_rules:
                 try:
-                    from ..core.models import AssertRule
+                    from src.data.enum.models import AssertRule
                     AssertRule.parse(rule)
                     valid_rules.append(rule)
                 except ValueError:

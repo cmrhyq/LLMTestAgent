@@ -5,9 +5,9 @@ LLM API自动化测试工具
 """
 
 __version__ = "1.0.0"
-__author__ = "LLMTestAgent Team"
+__author__ = "cmrhyq"
 
-from .core.models import (
+from src.data.enum.models import (
     APIInfo,
     TestCase,
     TestResult,

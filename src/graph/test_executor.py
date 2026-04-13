@@ -23,7 +23,7 @@ from requests.exceptions import RequestException, Timeout, ConnectionError
 from jsonpath_ng import parse as jsonpath_parse
 
 from src.core.cache.data_cache import DataCache
-from src.core.models import (
+from src.data.enum.models import (
     TestCase,
     TestResult,
     TestStatus,
