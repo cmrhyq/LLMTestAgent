@@ -61,6 +61,9 @@ LLMTestAgent/
 └── README.md
 ```
 
+## 流程图
+![img.png](doc/SystemFlowchart.png)
+
 ## 环境要求
 
 - Python `3.10+`
