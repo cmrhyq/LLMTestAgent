@@ -672,7 +672,3 @@ def parse_openapi(
     """
     parser = OpenAPIParser(default_priority=default_priority)
     return parser.parse(input_data, base_url_override=base_url_override)
-
-
-
-
