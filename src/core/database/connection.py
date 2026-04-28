@@ -19,11 +19,6 @@ from src.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-class Base(DeclarativeBase):
-    """SQLAlchemy 声明基类"""
-    pass
-
-
 class DatabaseManager:
     """
     数据库连接管理器
