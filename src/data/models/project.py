@@ -1,0 +1,25 @@
+from typing import List
+
+from sqlalchemy import Integer, Text, Index
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from src.data.models import Endpoint, TestRun
+from src.data.models.base import Base, local_now
+
+
+class Project(Base):
+    """项目表 - 管理多个被测服务"""
+    __tablename__ = "project"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    base_url: Mapped[str] = mapped_column(Text, nullable=False)
+    description: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    created_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
+    updated_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
+
+    endpoint: Mapped[List[Endpoint]] = relationship(back_populates="project", cascade="all, delete-orphan")
+    test_runs: Mapped[List[TestRun]] = relationship(back_populates="project")
+
+    __table_args__ = ()

@@ -1,10 +1,10 @@
 from typing import Optional, List, TypeVar, Type, Generic
 
+from langchain_community.document_compressors.rankllm_rerank import ModelType
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
-from src.core.database.connection import Base
-from src.core.logging import get_logger
+from src.data.models.base import Base
 
 T = TypeVar("T", bound=Base)
 
@@ -45,6 +45,14 @@ class BaseRepository(Generic[T]):
         self._session.delete(entity)
         self._session.flush()
         return True
+
+    def bulk_create(self, objects: list[dict]) -> list[ModelType]:
+        db_objects = [self._model(**obj) for obj in objects]
+        self._session.add_all(db_objects)
+        self._session.commit()
+        for obj in db_objects:
+            self._session.refresh(obj)
+        return db_objects
 
     def count(self) -> int:
         stmt = select(func.count()).select_from(self._model)
