@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 from src.core.config import AppConfig
-from src.data.enum.models import TestResult, TestStatus
+from src.data.enum.workflow import TestResult, TestStatus
 from src.graph.report_generator import ReportGenerator
 
 

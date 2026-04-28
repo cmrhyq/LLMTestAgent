@@ -17,7 +17,7 @@ import matplotlib
 matplotlib.use('Agg')  # 非GUI后端
 import matplotlib.pyplot as plt
 
-from src.data.enum.models import TestResult, TestSummary
+from src.data.enum.workflow import TestResult, TestSummary
 from ..core.config import get_config, AppConfig
 from src.utils.excel.exporter import ExcelExporter
 from src.core.logging import get_logger

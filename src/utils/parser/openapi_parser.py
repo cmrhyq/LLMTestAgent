@@ -18,7 +18,7 @@ from urllib.parse import urlparse
 import yaml
 
 from src.core.logging import get_logger
-from src.data.enum.models import APIInfo, HttpMethod, Priority, ValidationResult
+from src.data.enum.workflow import APIInfo, HttpMethod, Priority, ValidationResult
 
 logger = get_logger(__name__)
 

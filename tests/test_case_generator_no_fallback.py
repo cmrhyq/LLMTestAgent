@@ -1,6 +1,6 @@
 import unittest
 
-from src.data.enum.models import APIInfo, HttpMethod, Priority
+from src.data.enum.workflow import APIInfo, HttpMethod, Priority
 from src.graph.case_generator import CaseGenerator
 from src.core.llm.llm_client import LLMClient
 

@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 
-from src.data.enum.models import (
+from src.data.enum.workflow import (
     APIInfo,
     HttpMethod,
     Priority,

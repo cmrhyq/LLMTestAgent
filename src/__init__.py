@@ -7,11 +7,8 @@ LLM API自动化测试工具
 __version__ = "1.0.0"
 __author__ = "cmrhyq"
 
-from src.data.enum.models import (
+from src.data.enum.workflow import (
     APIInfo,
-    TestCase,
-    TestResult,
-    TestSummary,
     Dependency,
     AssertRule,
     ValidationResult,
@@ -33,9 +30,6 @@ from src.core.llm.llm_client import LLMClient, create_llm_client, get_llm_client
 __all__ = [
     # 数据模型
     "APIInfo",
-    "TestCase",
-    "TestResult",
-    "TestSummary",
     "Dependency",
     "AssertRule",
     "ValidationResult",

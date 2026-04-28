@@ -3,7 +3,7 @@ from typing import Optional
 
 from src import AppConfig, get_config
 from src.core.logging import get_logger
-from src.data.enum.models import Priority
+from src.data.enum.workflow import Priority
 from src.utils.parser import OpenAPIParser
 
 logger = get_logger(__name__)
