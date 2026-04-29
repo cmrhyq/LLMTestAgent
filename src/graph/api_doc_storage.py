@@ -2,8 +2,10 @@ from pathlib import Path
 from typing import Optional
 
 from src import AppConfig, get_config
+from src.core.database import init_database
 from src.core.logging import get_logger
-from src.data.enum.workflow import Priority
+from src.data.schemas.project import ProjectCreate
+from src.data.services.project_service import ProjectService
 from src.utils.parser import OpenAPIParser
 
 logger = get_logger(__name__)
@@ -25,24 +27,34 @@ class ApiDocStorage(object):
             config: 应用配置
         """
         self.config = config or get_config()
-        self.openapi = OpenAPIParser(default_priority=Priority.P1)
+        self.db = init_database(
+            db_url=self.config.database.url,
+            echo=self.config.database.echo,
+            pool_size=self.config.database.pool_size,
+            max_overflow=self.config.database.max_overflow,
+            pool_timeout=self.config.database.pool_timeout,
+            pool_recycle=self.config.database.pool_recycle,
+        )
+        self.service = ProjectService(self.db.create_session())
 
     def openapi_parse_storage(self, file_path: Path):
         try:
-            parse_result = self.openapi.parse(file_path)
-            result = parse_result[2]
-
-            for warn in result.warnings:
-                logger.warning(warn)
-
-            if result.is_valid:
-                base_url = parse_result[0]
-                api_info = parse_result[1]
-                for api in api_info:
-                    logger.info(api)
-            else:
-                for error in result.errors:
-                    logger.error(error)
+            parser = OpenAPIParser(file_path)
+            logger.info(f"title: {parser.title}")
+            logger.info(f"description: {parser.description}")
+            logger.info(f"base url: {parser.base_url}")
+            project = ProjectCreate(
+                name=parser.title,
+                base_url=parser.base_url,
+                description=parser.description,
+            )
+            info = self.service.create_project(project)
+            if info.id is not None:
+                for server in parser.servers:
+                    url = server.get("url", "")
+                    description = server.get("description", "")
+                    variables = server.get("variables", {})
+                    
         except Exception as e:
             logger.error(f"解析存储OpenAPI文档错误：{e}")
 
