@@ -1,6 +1,5 @@
 from typing import Optional, List, TypeVar, Type, Generic
 
-from langchain_community.document_compressors.rankllm_rerank import ModelType
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
@@ -46,7 +45,7 @@ class BaseRepository(Generic[T]):
         self._session.flush()
         return True
 
-    def bulk_create(self, objects: list[dict]) -> list[ModelType]:
+    def bulk_create(self, objects: list[dict]) -> List[T]:
         db_objects = [self._model(**obj) for obj in objects]
         self._session.add_all(db_objects)
         self._session.commit()
