@@ -17,6 +17,16 @@ import hashlib
 import json
 
 
+class DataStatus(int, Enum):
+    """
+    1=启用，2=禁用，3=已删除, 4=已废弃
+    """
+    ENABLE = 1
+    DISABLE = 2
+    DELETED = 3
+    ABANDONED = 4
+
+
 class HttpMethod(str, Enum):
     """HTTP请求方法"""
     GET = "GET"

@@ -4,6 +4,8 @@ info:
   description: 用户及文章相关接口集合
   version: 1.0.0
 servers:
+  - url: https://jsonplaceholder.dev.com
+    description: JSONPlaceholder 测试服务器
   - url: https://jsonplaceholder.typicode.com
     description: JSONPlaceholder 测试服务器
 
