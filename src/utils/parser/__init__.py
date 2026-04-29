@@ -5,11 +5,10 @@
 """
 
 from src.utils.parser.input_parser import InputParser, parse_input
-from src.utils.parser.openapi_parser import OpenAPIParser, parse_openapi
+from src.utils.parser.openapi_parser import OpenAPIParser
 
 __all__ = [
     "InputParser",
     "parse_input",
     "OpenAPIParser",
-    "parse_openapi",
 ]

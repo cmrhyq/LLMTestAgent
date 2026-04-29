@@ -5,7 +5,6 @@
 """
 
 from src.core.database.connection import (
-    Base,
     DatabaseManager,
     get_db_manager,
     init_database,
@@ -14,7 +13,6 @@ from src.core.database.connection import (
 
 __all__ = [
     # 连接管理
-    "Base",
     "DatabaseManager",
     "get_db_manager",
     "init_database",
