@@ -1,4 +1,6 @@
-from typing import Optional, List
+from __future__ import annotations
+
+from typing import Optional, List, TYPE_CHECKING
 
 from sqlalchemy import (
     Integer, Text, ForeignKey, Index, CheckConstraint
@@ -6,7 +8,11 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.data.models.base import Base, local_now
-from src.data.models import Endpoint, TestRun, TestResult
+
+if TYPE_CHECKING:
+    from src.data.models.endpoint import Endpoint
+    from src.data.models.test_run import TestRun
+    from src.data.models.test_result import TestResult
 
 
 class TestCase(Base):
@@ -37,7 +43,7 @@ class TestCase(Base):
     updated_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
 
     test_run: Mapped[TestRun] = relationship(back_populates="test_cases")
-    api_info: Mapped[Optional[Endpoint]] = relationship(back_populates="test_cases")
+    endpoint: Mapped[Optional[Endpoint]] = relationship(back_populates="test_cases")
     test_results: Mapped[List[TestResult]] = relationship(back_populates="test_case", cascade="all, delete-orphan")
 
     __table_args__ = (

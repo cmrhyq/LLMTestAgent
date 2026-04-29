@@ -1,4 +1,6 @@
-from typing import Optional, List
+from __future__ import annotations
+
+from typing import Optional, List, TYPE_CHECKING
 
 from sqlalchemy import (
     Integer, Text, Float, ForeignKey, Index, CheckConstraint
@@ -6,7 +8,14 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.data.models.base import Base, local_now
-from src.data.models import Environment, Project, TestCase, TestResult, TestSummary, Report
+
+if TYPE_CHECKING:
+    from src.data.models.environment import Environment
+    from src.data.models.project import Project
+    from src.data.models.test_case import TestCase
+    from src.data.models.test_result import TestResult
+    from src.data.models.test_summary import TestSummary
+    from src.data.models.report import Report
 
 
 class TestRun(Base):

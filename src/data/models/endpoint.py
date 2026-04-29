@@ -1,13 +1,17 @@
-from typing import Optional, List
+from __future__ import annotations
+
+from typing import Optional, List, TYPE_CHECKING
 
 from sqlalchemy import (
-    Integer, Text, ForeignKey, Index, UniqueConstraint, CheckConstraint
+    Integer, Text, ForeignKey, Index, CheckConstraint
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.data.models import TestCase
 from src.data.models.base import Base, local_now
-from src.data.models.project import Project
+
+if TYPE_CHECKING:
+    from src.data.models.project import Project
+    from src.data.models.test_case import TestCase
 
 
 class Endpoint(Base):
@@ -26,7 +30,6 @@ class Endpoint(Base):
     params: Mapped[Optional[str]] = mapped_column(Text, default=None)
     headers: Mapped[str] = mapped_column(Text, default="{}")
     body: Mapped[Optional[str]] = mapped_column(Text, default=None)
-    priority: Mapped[str] = mapped_column(Text, nullable=False, default="P1")
     status: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     created_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)

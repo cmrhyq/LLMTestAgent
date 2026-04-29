@@ -1,12 +1,16 @@
-from typing import List
+from __future__ import annotations
+
+from typing import List, TYPE_CHECKING
 
 from sqlalchemy import (
     Integer, Text, ForeignKey, Index
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.data.models import TestRun
 from src.data.models.base import Base, local_now
+
+if TYPE_CHECKING:
+    from src.data.models.test_run import TestRun
 
 
 class Environment(Base):

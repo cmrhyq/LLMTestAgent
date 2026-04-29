@@ -1,10 +1,16 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from sqlalchemy import (
     Integer, Text, ForeignKey, Index, CheckConstraint
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.data.models.base import Base, local_now
-from src.data.models import TestRun
+
+if TYPE_CHECKING:
+    from src.data.models.test_run import TestRun
 
 
 class Report(Base):

@@ -1,12 +1,6 @@
 from datetime import datetime
-from sqlalchemy import Integer, DateTime, Boolean, func, event
+from sqlalchemy import Integer, DateTime, Boolean, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-
-from src import TestCase
-from src.data.models.endpoint import Endpoint
-from src.data.models.environment import Environment
-from src.data.models.project import Project
-from src.data.models.test_run import TestRun
 
 
 def local_now() -> str:
@@ -17,10 +11,6 @@ def _update_timestamp(mapper, connection, target):
     """ORM 事件：更新 updated_at 时间戳"""
     if hasattr(target, "updated_at"):
         target.updated_at = local_now()
-
-
-for _model in (Project, Environment, Endpoint, TestRun, TestCase):
-    event.listen(_model, "before_update", _update_timestamp)
 
 
 class Base(DeclarativeBase):

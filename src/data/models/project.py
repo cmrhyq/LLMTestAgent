@@ -1,10 +1,15 @@
-from typing import List
+from __future__ import annotations
 
-from sqlalchemy import Integer, Text, Index
+from typing import List, TYPE_CHECKING
+
+from sqlalchemy import Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.data.models import Endpoint, TestRun
 from src.data.models.base import Base, local_now
+
+if TYPE_CHECKING:
+    from src.data.models.endpoint import Endpoint
+    from src.data.models.test_run import TestRun
 
 
 class Project(Base):
