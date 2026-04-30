@@ -14,6 +14,7 @@ from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker, Session, DeclarativeBase
 
+from src import AppConfig, get_config
 from src.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -283,6 +284,28 @@ def init_database(
         pool_recycle=pool_recycle,
     )
     return manager
+
+
+def get_session_from_config(config: Optional[AppConfig] = None) -> Session:
+    """
+    从配置中初始化数据库并返回session
+    Args:
+        config: 系统配置
+
+    Returns:
+        Session: session
+    """
+    config = config or get_config()
+    manager = get_db_manager()
+    manager.initialize(
+        db_url=config.database.url,
+        echo=config.database.echo,
+        pool_size=config.database.pool_size,
+        max_overflow=config.database.max_overflow,
+        pool_timeout=config.database.pool_timeout,
+        pool_recycle=config.database.pool_recycle,
+    )
+    return manager.create_session()
 
 
 @contextmanager
