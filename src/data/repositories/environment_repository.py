@@ -23,6 +23,23 @@ class EnvironmentRepository(BaseRepository[Environment]):
         stmt = select(Environment).where(Environment.name == name)
         return self._session.scalar(stmt)
 
+    def get_by_project_and_name(self, project_id: int, name: str) -> Optional[Environment]:
+        stmt = select(Environment).where(
+            Environment.project_id == project_id,
+            Environment.name == name
+        )
+        return self._session.scalar(stmt)
+
+    def bulk_query(
+            self, project_ids: set, names: set
+    ) -> List[Environment]:
+        """批量查询：一次 SQL 替代 N 次循环查询"""
+        stmt = select(Environment).where(
+            Environment.project_id.in_(project_ids),
+            Environment.name.in_(names)
+        )
+        return list(self._session.scalars(stmt).all())
+
     def get_active_environments(self) -> List[Environment]:
         stmt = select(Environment).where(Environment.status == 1)
         return list(self._session.scalars(stmt).all())

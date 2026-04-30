@@ -50,7 +50,7 @@ try:
 except ImportError:
     _HAS_REQUESTS = False
 
-
+# TODO 增加对servers的variables的处理
 class OpenAPIParser:
     """
     OpenAPI / Swagger 接口文档解析工具类

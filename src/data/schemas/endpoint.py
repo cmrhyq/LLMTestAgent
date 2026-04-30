@@ -14,36 +14,14 @@ class EndpointBase(BaseModel):
     operation_id: str = Field(..., description="操作ID，唯一标识")
     name: str = Field(..., description="API 名称")
     path: str = Field(..., description="API 路径")
-    method: HttpMethod = Field(..., description="HTTP 方法")
-    tags: Optional[List[str]] = Field(default=[], description="标签列表")
-    summary: Optional[str] = Field(default=None, description="摘要")
+    method: str = Field(..., description="HTTP 方法")
+    tags: str = Field(default="[]", description="标签列表")
+    summary: Optional[str] = Field(default="", description="摘要")
     description: Optional[str] = Field(default="", description="描述")
-    params: Optional[dict] = Field(default=None, description="查询参数定义")
-    headers: Optional[dict] = Field(default={}, description="请求头定义")
-    body: Optional[dict] = Field(default=None, description="请求体定义")
-    status: int = Field(default=1, description="状态: 1-启用, 0-禁用")
-
-    @field_validator("tags", mode="before")
-    @classmethod
-    def parse_tags(cls, v):
-        """兼容数据库中存储的 JSON 字符串"""
-        if isinstance(v, str):
-            try:
-                return json.loads(v)
-            except (json.JSONDecodeError, TypeError):
-                return []
-        return v
-
-    @field_validator("params", "headers", "body", mode="before")
-    @classmethod
-    def parse_json_fields(cls, v):
-        """兼容数据库中存储的 JSON 字符串"""
-        if isinstance(v, str):
-            try:
-                return json.loads(v)
-            except (json.JSONDecodeError, TypeError):
-                return None
-        return v
+    params: Optional[str] = Field(default="{}", description="查询参数定义")
+    headers: Optional[str] = Field(default="{}", description="请求头定义")
+    body: Optional[str] = Field(default="{}", description="请求体定义")
+    status: int = Field(default=1, description="状态: 1=启用，2=禁用，3=已删除, 4=已废弃")
 
 
 # ==================== 创建 Schema ====================

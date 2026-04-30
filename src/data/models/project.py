@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List, TYPE_CHECKING
 
-from sqlalchemy import Integer, Text
+from sqlalchemy import Integer, Text, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.data.models.base import Base, local_now
@@ -27,4 +27,6 @@ class Project(Base):
     endpoint: Mapped[List[Endpoint]] = relationship(back_populates="project", cascade="all, delete-orphan")
     test_runs: Mapped[List[TestRun]] = relationship(back_populates="project")
 
-    __table_args__ = ()
+    __table_args__ = (
+        Index("idx_project_name", "name"),
+    )
