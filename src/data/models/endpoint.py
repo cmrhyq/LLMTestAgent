@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Optional, List, TYPE_CHECKING
 
 from sqlalchemy import (
-    Integer, Text, ForeignKey, Index, CheckConstraint
+    Integer, Text, ForeignKey, Index, CheckConstraint, UniqueConstraint
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -40,7 +40,7 @@ class Endpoint(Base):
 
     __table_args__ = (
         CheckConstraint("method IN ('GET','POST','PUT','DELETE','PATCH','HEAD','OPTIONS')", name="ck_api_method"),
-        CheckConstraint("priority IN ('P0','P1','P2')", name="ck_api_priority"),
+        UniqueConstraint("project_id", "path", "method", name="uq_project_path_method"),
         Index("idx_endpoint_project", "project_id"),
         Index("idx_endpoint_operation_id", "operation_id"),
     )
