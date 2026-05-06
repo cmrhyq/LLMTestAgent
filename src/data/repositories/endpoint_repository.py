@@ -42,9 +42,11 @@ class EndpointRepository(BaseRepository[Endpoint]):
     ) -> List[Endpoint]:
         """批量查询：一次 SQL 替代 N 次循环查询"""
         stmt = select(Endpoint).where(
-            Endpoint.project_id.in_(project_ids),
-            Endpoint.path.in_(paths),
-            Endpoint.method.in_(methods),
+            and_(
+                Endpoint.project_id.in_(project_ids),
+                Endpoint.path.in_(paths),
+                Endpoint.method.in_(methods),
+            )
         )
         return list(self._session.scalars(stmt).all())
 
