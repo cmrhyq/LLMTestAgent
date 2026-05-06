@@ -1,8 +1,9 @@
+import json
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 from src import AppConfig, get_config
-from src.core.database.connection import get_session_from_config
+from src.core.database.connection import get_db_manager
 from src.core.logging import get_logger
 from src.data.schemas.endpoint import EndpointCreate
 from src.data.schemas.environment import EnvironmentCreate
@@ -15,81 +16,90 @@ from src.utils.parser import OpenAPIParser
 logger = get_logger(__name__)
 
 
-class ApiDocStorage(object):
-    """
-    API文档存储
-
-    Attributes:
-        config: 应用配置
-    """
+class ApiDocStorage:
+    """API文档存储"""
 
     def __init__(self, config: Optional[AppConfig] = None):
+        self.config = config or get_config()
+
+    def openapi_parse_storage(self, file_path: Path) -> None:
         """
-        初始化用例生成器
+        解析 OpenAPI 文档并将结果存储到数据库。
+
+        整个操作在单一事务中完成：project、environment、endpoint
+        的写入要么全部成功，要么全部回滚。
 
         Args:
-            config: 应用配置
+            file_path: OpenAPI 文档文件路径
+
+        Raises:
+            FileNotFoundError: 文件不存在
+            ValueError: 文档解析失败
         """
-        self.config = config or get_config()
-        self._session = get_session_from_config()
-        self.project_service = ProjectService(self._session)
-        self.env_service = EnvironmentService(self._session)
-        self.endpoint_service = EndpointService(self._session)
+        logger.info("开始解析 OpenAPI 文档: %s", file_path)
+        parser = OpenAPIParser(file_path)
+        logger.info("OpenAPI Document Title: %s", parser.title)
+        logger.info("OpenAPI Document Base URL: %s", parser.base_url)
 
-    def openapi_parse_storage(self, file_path: Path):
-        try:
-            logger.info("开始解析OpenAPI文档")
-            parser = OpenAPIParser(file_path)
-            logger.info(f"OpenAPI Document Title: {parser.title}")
-            logger.info(f"OpenAPI Document Description: {parser.description}")
-            logger.info(f"OpenAPI Document Base Url: {parser.base_url}")
-            project = ProjectCreate(
-                name=parser.title,
-                base_url=parser.base_url,
-                description=parser.description,
+        project = ProjectCreate(
+            name=parser.title,
+            base_url=parser.base_url,
+            description=parser.description,
+        )
+
+        with get_db_manager().get_session() as session:
+            project_service = ProjectService(session)
+            env_service = EnvironmentService(session)
+            endpoint_service = EndpointService(session)
+
+            project_info = project_service.create_project(project)
+            if project_info.id is None:
+                logger.error("创建项目失败，未获得有效的 project_id")
+                raise ValueError("创建项目失败，project_id 为空")
+
+            env_list = self._build_environments(project_info.id, parser)
+            if env_list:
+                env_service.create_env(env_list)
+
+            endpoint_list = self._build_endpoints(project_info.id, parser)
+            if endpoint_list:
+                endpoint_service.create_endpoint(endpoint_list)
+
+        logger.info("OpenAPI 文档解析存储完成，项目: %s", parser.title)
+
+    @staticmethod
+    def _build_environments(
+        project_id: int, parser: OpenAPIParser
+    ) -> List[EnvironmentCreate]:
+        return [
+            EnvironmentCreate(
+                project_id=project_id,
+                name=server.get("description", ""),
+                base_url=server.get("url", ""),
+                description=server.get("description", ""),
+                variables=server.get("variables", ""),
+                is_default=1 if server.get("url", "") == parser.base_url else 2,
             )
-            logger.info("开始存储OpenAPI文档解析结果")
-            project_info = self.project_service.create_project(project)
-            if project_info.id is not None:
-                env_list, endpoint_list = [], []
-                for server in parser.servers:
-                    url = server.get("url", "")
-                    description = server.get("description", "")
-                    variables = server.get("variables", "")
-                    is_default = 1 if url == parser.base_url else 2
+            for server in parser.servers
+        ]
 
-                    env_list.append(EnvironmentCreate(
-                        project_id=project_info.id,
-                        name=description,
-                        base_url=url,
-                        description=description,
-                        variables=variables,
-                        is_default=is_default
-                    ))
-                self.env_service.create_env(env_list)
-
-                for endpoint in parser.endpoints:
-                    endpoint_list.append(EndpointCreate(
-                        project_id=project_info.id,
-                        operation_id=endpoint.get("operation_id", ""),
-                        name=endpoint.get("summary", ""),
-                        path=endpoint.get("path", ""),
-                        method=endpoint.get("method", ""),
-                        tags=str(endpoint.get("tags", "[]")),
-                        summary=endpoint.get("summary", ""),
-                        description=endpoint.get("description", ""),
-                        params=str(endpoint.get("parameters", "{}")),
-                        headers=endpoint.get("headers", "{}"),
-                        body=endpoint.get("request_body", "{}"),
-                    ))
-                self.endpoint_service.create_endpoint(endpoint_list)
-                logger.info(f"存储OpenAPI文档解析结果成功")
-        except Exception as e:
-            logger.error(f"解析存储OpenAPI文档错误：{e}")
-
-
-if __name__ == '__main__':
-    project_root = Path(__file__).parent.parent.parent
-    input_file = project_root / "input" / "test_yaml.yaml"
-    api_storage = ApiDocStorage()
-    api_storage.openapi_parse_storage(input_file)
+    @staticmethod
+    def _build_endpoints(
+        project_id: int, parser: OpenAPIParser
+    ) -> List[EndpointCreate]:
+        return [
+            EndpointCreate(
+                project_id=project_id,
+                operation_id=ep.get("operation_id", ""),
+                name=ep.get("summary", ""),
+                path=ep.get("path", ""),
+                method=ep.get("method", ""),
+                tags=json.dumps(ep.get("tags", []), ensure_ascii=False),
+                summary=ep.get("summary", ""),
+                description=ep.get("description", ""),
+                params=json.dumps(ep.get("parameters", {}), ensure_ascii=False),
+                headers=json.dumps(ep.get("headers", {}), ensure_ascii=False),
+                body=json.dumps(ep.get("request_body", {}), ensure_ascii=False),
+            )
+            for ep in parser.endpoints
+        ]
