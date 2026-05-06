@@ -65,12 +65,12 @@ CREATE TABLE IF NOT EXISTS endpoint
     version      INTEGER NOT NULL DEFAULT 1,
     created_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')),
     updated_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')),
+    UNIQUE(project_id, path, method),
     FOREIGN KEY (project_id) REFERENCES project (id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_endpoint_project ON endpoint (project_id);
 CREATE INDEX idx_endpoint_operation_id ON endpoint (operation_id);
-CREATE UNIQUE INDEX uq_project_path_method ON endpoint(project_id, path, method);
 
 -- ============================================================================
 -- 4. 执行批次表 (test_run)
