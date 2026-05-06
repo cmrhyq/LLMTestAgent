@@ -17,12 +17,12 @@ class EndpointService:
         self.repo = EndpointRepository(session)
 
     def _get_existing_keys(self, endpoint_list: List[EndpointCreate]) -> set:
-        """批量查询已存在的 (project_id, name) 组合"""
+        """批量查询已存在的 (project_id, path, method) 组合"""
         project_ids = {endpoint.project_id for endpoint in endpoint_list}
         paths = {endpoint.path for endpoint in endpoint_list}
         methods = {endpoint.method for endpoint in endpoint_list}
         existing = self.repo.bulk_query(project_ids, paths, methods)
-        return {(item.project_id, item.name) for item in existing}
+        return {(item.project_id, item.path, item.method) for item in existing}
 
     def create_endpoint(self, endpoints: List[EndpointCreate]) -> List[Endpoint]:
         if len(endpoints) == 0:
@@ -34,6 +34,7 @@ class EndpointService:
         try:
             # 1. 批量查询已存在的记录（一次查询代替 N 次）
             existing_keys = self._get_existing_keys(endpoints)
+            logger.debug(f"Existing keys: {existing_keys}")
             # 2. 过滤掉重复数据
             new_data = [
                 endpoint.model_dump() for endpoint in endpoints
