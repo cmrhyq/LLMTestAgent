@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Optional, List
 
 from src import AppConfig, get_config
-from src.core.database.connection import get_db_manager
+from src.core.database.connection import init_database_from_config
 from src.core.logging import get_logger
 from src.data.schemas.endpoint import EndpointCreate
 from src.data.schemas.environment import EnvironmentCreate
@@ -14,6 +14,11 @@ from src.data.services.project_service import ProjectService
 from src.utils.parser import OpenAPIParser
 
 logger = get_logger(__name__)
+
+
+def _get_session():
+    """获取数据库会话，自动确保数据库已初始化。"""
+    return init_database_from_config().get_session()
 
 
 class ApiDocStorage:
@@ -47,7 +52,7 @@ class ApiDocStorage:
             description=parser.description,
         )
 
-        with get_db_manager().get_session() as session:
+        with _get_session() as session:
             project_service = ProjectService(session)
             env_service = EnvironmentService(session)
             endpoint_service = EndpointService(session)

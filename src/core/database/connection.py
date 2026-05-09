@@ -286,14 +286,14 @@ def init_database(
     return manager
 
 
-def get_session_from_config(config: Optional[AppConfig] = None) -> Session:
+def init_database_from_config(config: Optional[AppConfig] = None) -> DatabaseManager:
     """
     从配置中初始化数据库并返回session
     Args:
         config: 系统配置
 
     Returns:
-        Session: session
+        DatabaseManager: DatabaseManager
     """
     config = config or get_config()
     manager = get_db_manager()
@@ -305,7 +305,7 @@ def get_session_from_config(config: Optional[AppConfig] = None) -> Session:
         pool_timeout=config.database.pool_timeout,
         pool_recycle=config.database.pool_recycle,
     )
-    return manager.create_session()
+    return manager
 
 
 @contextmanager
