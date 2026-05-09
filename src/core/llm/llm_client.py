@@ -9,10 +9,11 @@ LLM客户端模块
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Sequence
 
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, BaseMessage
 from langchain_core.language_models import BaseChatModel
+from langchain_core.tools import BaseTool
 
 from src.core.config import get_config, AppConfig
 from src.core.logging import get_logger
@@ -48,6 +49,64 @@ class LLMClient(ABC):
             BaseChatModel: LangChain模型
         """
         pass
+
+    def chat_with_tools(
+        self,
+        messages: List[Dict[str, str]],
+        tools: Sequence[BaseTool],
+        **kwargs,
+    ) -> BaseMessage:
+        """
+        发送带工具绑定的聊天请求
+
+        Args:
+            messages: 消息列表
+            tools: LangChain Tool 列表
+            **kwargs: 其他参数
+
+        Returns:
+            BaseMessage: LLM 响应消息（可能包含 tool_calls）
+        """
+        model = self.get_model()
+        model_with_tools = model.bind_tools(tools)
+        langchain_messages = self._convert_messages_base(messages)
+        return model_with_tools.invoke(langchain_messages)
+
+    def invoke_with_tools(
+        self,
+        messages: List[BaseMessage],
+        tools: Sequence[BaseTool],
+        **kwargs,
+    ) -> BaseMessage:
+        """
+        使用已转换的 LangChain 消息发送带工具绑定的请求
+
+        Args:
+            messages: LangChain BaseMessage 列表
+            tools: LangChain Tool 列表
+            **kwargs: 其他参数
+
+        Returns:
+            BaseMessage: LLM 响应消息
+        """
+        model = self.get_model()
+        model_with_tools = model.bind_tools(tools)
+        return model_with_tools.invoke(messages)
+
+    @staticmethod
+    def _convert_messages_base(messages: List[Dict[str, str]]) -> List[BaseMessage]:
+        """将字典格式消息转换为 LangChain BaseMessage 列表"""
+        result: List[BaseMessage] = []
+        for msg in messages:
+            role = msg.get("role", "user")
+            content = msg.get("content", "")
+            if role == "system":
+                result.append(SystemMessage(content=content))
+            elif role == "assistant":
+                result.append(AIMessage(content=content))
+            else:
+                result.append(HumanMessage(content=content))
+        return result
 
 
 class OpenAIClient(LLMClient):

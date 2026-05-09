@@ -20,11 +20,7 @@ from .graph.case_generator import CaseGenerator, generate_test_cases
 from src.utils.excel.exporter import ExcelExporter, export_test_cases, export_test_results
 from .graph.test_executor import TestExecutor, execute_tests
 from .graph.report_generator import ReportGenerator, generate_report
-try:
-    from .workflows.workflow import TestWorkflow, run_workflow
-except ImportError:
-    TestWorkflow = None  # type: ignore[assignment]
-    run_workflow = None  # type: ignore[assignment]
+
 from src.core.llm.llm_client import LLMClient, create_llm_client, get_llm_client
 
 __all__ = [
@@ -54,9 +50,6 @@ __all__ = [
     # 报告生成
     "ReportGenerator",
     "generate_report",
-    # 工作流
-    "TestWorkflow",
-    "run_workflow",
     # LLM客户端
     "LLMClient",
     "create_llm_client",
