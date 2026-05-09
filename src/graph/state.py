@@ -1,4 +1,24 @@
-from typing import TypedDict, Dict, Any, List
+from typing import Dict, Any, List
+from typing_extensions import TypedDict
+
+
+class TestGraphState(TypedDict):
+    raw_input: str
+    user_intent: str
+    selected_endpoints: List[Dict[str, Any]]
+
+    # 结果
+    test_results: List[Dict[str, Any]]
+    test_summary: Dict[str, Any]
+
+    # 报告
+    report_path: str
+
+    # 工作流控制
+    current_node: str
+    error_message: str
+    retry_count: int
+    should_continue: bool
 
 
 class GraphState(TypedDict):
