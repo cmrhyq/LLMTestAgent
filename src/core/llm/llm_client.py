@@ -1,19 +1,13 @@
-"""
-LLM客户端模块
+"""LLM 模型工厂模块。
 
-提供统一的LLM调用接口，支持多种LLM提供商：
-- OpenAI
-- AWS Bedrock
-- 智谱AI
-- 通义千问
+提供统一的工厂函数，根据配置返回对应的 LangChain BaseChatModel 实例。
+支持 OpenAI、AWS Bedrock、智谱AI、通义千问。
 """
 
-from abc import ABC, abstractmethod
-from typing import Optional, List, Dict, Sequence
+from typing import List, Dict, Optional
 
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, BaseMessage
 from langchain_core.language_models import BaseChatModel
-from langchain_core.tools import BaseTool
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, BaseMessage
 
 from src.core.config import get_config, AppConfig
 from src.core.logging import get_logger
@@ -21,397 +15,176 @@ from src.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-class LLMClient(ABC):
+def create_chat_model(config: Optional[AppConfig] = None) -> BaseChatModel:
+    """根据配置创建 LangChain ChatModel 实例。
+
+    Args:
+        config: 应用配置，如果为 None 则使用全局配置
+
+    Returns:
+        BaseChatModel 实例
     """
-    LLM客户端抽象基类
+    if config is None:
+        config = get_config()
+
+    provider = config.llm.provider.lower()
+
+    if provider == "openai":
+        logger.info("使用 OpenAI 作为 LLM 提供商")
+        return _create_openai_model(config)
+    elif provider == "bedrock":
+        logger.info("使用 AWS Bedrock 作为 LLM 提供商")
+        return _create_bedrock_model(config)
+    elif provider == "zhipu":
+        logger.info("使用智谱AI 作为 LLM 提供商")
+        return _create_zhipu_model(config)
+    elif provider == "qwen":
+        logger.info("使用通义千问作为 LLM 提供商")
+        return _create_qwen_model(config)
+    else:
+        logger.warning(f"未知的 LLM 提供商: {provider}，使用 OpenAI 作为默认")
+        return _create_openai_model(config)
+
+
+def _create_openai_model(config: AppConfig) -> BaseChatModel:
+    from langchain_openai import ChatOpenAI
+
+    openai_config = config.llm.openai
+    return ChatOpenAI(
+        api_key=openai_config.api_key,
+        model=openai_config.model,
+        temperature=openai_config.temperature,
+        max_tokens=openai_config.max_tokens,
+    )
+
+
+def _create_bedrock_model(config: AppConfig) -> BaseChatModel:
+    import boto3
+    from langchain_aws import ChatBedrock
+
+    bedrock_config = config.llm.bedrock
+    bedrock_client = boto3.client(
+        "bedrock-runtime",
+        region_name=bedrock_config.region,
+        aws_access_key_id=bedrock_config.access_key,
+        aws_secret_access_key=bedrock_config.secret_key,
+        aws_session_token=bedrock_config.session_token or None,
+    )
+    return ChatBedrock(
+        client=bedrock_client,
+        model_id=bedrock_config.model_id,
+        model_kwargs={"max_tokens": bedrock_config.max_tokens},
+    )
+
+
+def _create_zhipu_model(config: AppConfig) -> BaseChatModel:
+    from langchain_community.chat_models import ChatZhipuAI
+
+    zhipu_config = config.llm.zhipu
+    return ChatZhipuAI(
+        api_key=zhipu_config.api_key,
+        model=zhipu_config.model,
+    )
+
+
+def _create_qwen_model(config: AppConfig) -> BaseChatModel:
+    from langchain_community.chat_models import ChatTongyi
+
+    qwen_config = config.llm.qwen
+    return ChatTongyi(
+        dashscope_api_key=qwen_config.api_key,
+        model=qwen_config.model,
+    )
+
+
+def convert_to_langchain_messages(messages: List[Dict[str, str]]) -> List[BaseMessage]:
+    """将字典格式消息列表转换为 LangChain BaseMessage 列表。
+
+    Args:
+        messages: [{"role": "system/user/assistant", "content": "..."}]
+
+    Returns:
+        LangChain 消息列表
     """
-    
-    @abstractmethod
+    result: List[BaseMessage] = []
+    for msg in messages:
+        role = msg.get("role", "user")
+        content = msg.get("content", "")
+        if role == "system":
+            result.append(SystemMessage(content=content))
+        elif role == "assistant":
+            result.append(AIMessage(content=content))
+        else:
+            result.append(HumanMessage(content=content))
+    return result
+
+
+# ---------------------------------------------------------------------------
+# 兼容层：保持 get_llm_client() 接口可用，避免一次性改动所有调用方
+# ---------------------------------------------------------------------------
+
+
+class LLMClient:
+    """LLM 客户端兼容包装。
+
+    内部持有 BaseChatModel 实例，提供 chat / invoke_with_tools 等便捷方法。
+    """
+
+    def __init__(self, model: BaseChatModel):
+        self._model = model
+
+    @property
+    def model(self) -> BaseChatModel:
+        return self._model
+
     def chat(self, messages: List[Dict[str, str]], **kwargs) -> str:
-        """
-        发送聊天请求
-        
-        Args:
-            messages: 消息列表，格式为 [{"role": "system/user/assistant", "content": "..."}]
-            **kwargs: 其他参数
-            
-        Returns:
-            str: LLM响应内容
-        """
-        pass
-    
-    @abstractmethod
-    def get_model(self) -> BaseChatModel:
-        """
-        获取LangChain模型实例
-        
-        Returns:
-            BaseChatModel: LangChain模型
-        """
-        pass
-
-    def chat_with_tools(
-        self,
-        messages: List[Dict[str, str]],
-        tools: Sequence[BaseTool],
-        **kwargs,
-    ) -> BaseMessage:
-        """
-        发送带工具绑定的聊天请求
-
-        Args:
-            messages: 消息列表
-            tools: LangChain Tool 列表
-            **kwargs: 其他参数
-
-        Returns:
-            BaseMessage: LLM 响应消息（可能包含 tool_calls）
-        """
-        model = self.get_model()
-        model_with_tools = model.bind_tools(tools)
-        langchain_messages = self._convert_messages_base(messages)
-        return model_with_tools.invoke(langchain_messages)
+        """发送聊天请求，返回纯文本响应。"""
+        langchain_messages = convert_to_langchain_messages(messages)
+        response = self._model.invoke(langchain_messages)
+        return response.content
 
     def invoke_with_tools(
         self,
         messages: List[BaseMessage],
-        tools: Sequence[BaseTool],
+        tools,
         **kwargs,
     ) -> BaseMessage:
-        """
-        使用已转换的 LangChain 消息发送带工具绑定的请求
-
-        Args:
-            messages: LangChain BaseMessage 列表
-            tools: LangChain Tool 列表
-            **kwargs: 其他参数
-
-        Returns:
-            BaseMessage: LLM 响应消息
-        """
-        model = self.get_model()
-        model_with_tools = model.bind_tools(tools)
+        """使用已转换的消息发送带工具绑定的请求。"""
+        model_with_tools = self._model.bind_tools(tools)
         return model_with_tools.invoke(messages)
+
+    def get_model(self) -> BaseChatModel:
+        return self._model
 
     @staticmethod
     def _convert_messages_base(messages: List[Dict[str, str]]) -> List[BaseMessage]:
-        """将字典格式消息转换为 LangChain BaseMessage 列表"""
-        result: List[BaseMessage] = []
-        for msg in messages:
-            role = msg.get("role", "user")
-            content = msg.get("content", "")
-            if role == "system":
-                result.append(SystemMessage(content=content))
-            elif role == "assistant":
-                result.append(AIMessage(content=content))
-            else:
-                result.append(HumanMessage(content=content))
-        return result
+        return convert_to_langchain_messages(messages)
 
 
-class OpenAIClient(LLMClient):
-    """OpenAI客户端"""
-    
-    def __init__(self, config: AppConfig):
-        """
-        初始化OpenAI客户端
-        
-        Args:
-            config: 应用配置
-        """
-        self.config = config.llm.openai
-        self._model: Optional[BaseChatModel] = None
-    
-    def get_model(self) -> BaseChatModel:
-        """获取LangChain OpenAI模型"""
-        if self._model is None:
-            from langchain_openai import ChatOpenAI
-            self._model = ChatOpenAI(
-                api_key=self.config.api_key,
-                model=self.config.model,
-                temperature=self.config.temperature,
-                max_tokens=self.config.max_tokens,
-            )
-        return self._model
-    
-    def chat(self, messages: List[Dict[str, str]], **kwargs) -> str:
-        """发送聊天请求"""
-        model = self.get_model()
-        langchain_messages = self._convert_messages(messages)
-        response = model.invoke(langchain_messages)
-        return response.content
-    
-    def _convert_messages(self, messages: List[Dict[str, str]]) -> List:
-        """转换消息格式"""
-        result = []
-        for msg in messages:
-            role = msg.get("role", "user")
-            content = msg.get("content", "")
-            if role == "system":
-                result.append(SystemMessage(content=content))
-            elif role == "assistant":
-                result.append(AIMessage(content=content))
-            else:
-                result.append(HumanMessage(content=content))
-        return result
-
-
-class BedrockClient(LLMClient):
-    """AWS Bedrock客户端"""
-    
-    def __init__(self, config: AppConfig):
-        """
-        初始化Bedrock客户端
-        
-        Args:
-            config: 应用配置
-        """
-        self.config = config.llm.bedrock
-        self._model: Optional[BaseChatModel] = None
-        self._fallback_model: Optional[BaseChatModel] = None
-    
-    def _create_bedrock_runtime_client(self):
-        """创建Bedrock Runtime客户端，支持临时凭证session token。"""
-        import boto3
-        return boto3.client(
-            "bedrock-runtime",
-            region_name=self.config.region,
-            aws_access_key_id=self.config.access_key,
-            aws_secret_access_key=self.config.secret_key,
-            aws_session_token=self.config.session_token or None,
-        )
-    
-    def get_model(self) -> BaseChatModel:
-        """获取LangChain Bedrock模型"""
-        if self._model is None:
-            from langchain_aws import ChatBedrock
-            bedrock_client = self._create_bedrock_runtime_client()
-            
-            self._model = ChatBedrock(
-                client=bedrock_client,
-                model_id=self.config.model_id,
-                model_kwargs={"max_tokens": self.config.max_tokens},
-            )
-        return self._model
-    
-    def _get_fallback_model(self) -> Optional[BaseChatModel]:
-        """
-        获取回退模型（移除 us./eu./apac. 区域前缀后重试）。
-        
-        某些 Bedrock SDK/适配层会错误识别带区域前缀的模型为非 chat 模型。
-        """
-        model_id = self.config.model_id
-        prefixes = ("us.", "eu.", "apac.")
-        matched_prefix = next((prefix for prefix in prefixes if model_id.startswith(prefix)), None)
-        if matched_prefix is None:
-            return None
-        
-        fallback_model_id = model_id[len(matched_prefix):]
-        if not fallback_model_id:
-            return None
-        
-        if self._fallback_model is None:
-            from langchain_aws import ChatBedrock
-            bedrock_client = self._create_bedrock_runtime_client()
-            self._fallback_model = ChatBedrock(
-                client=bedrock_client,
-                model_id=fallback_model_id,
-                model_kwargs={"max_tokens": self.config.max_tokens},
-            )
-            logger.warning(
-                f"Bedrock模型[{model_id}]调用失败，尝试回退模型ID: {fallback_model_id}"
-            )
-        
-        return self._fallback_model
-    
-    def chat(self, messages: List[Dict[str, str]], **kwargs) -> str:
-        """发送聊天请求"""
-        model = self.get_model()
-        langchain_messages = self._convert_messages(messages)
-        try:
-            response = model.invoke(langchain_messages)
-            return response.content
-        except Exception as e:
-            error_message = str(e)
-            normalized_message = error_message.lower()
-            if "unrecognizedclientexception" in normalized_message or "security token included in the request is invalid" in normalized_message:
-                raise RuntimeError(
-                    "AWS凭证无效：请检查 AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY，"
-                    "如果使用临时凭证还需要设置 AWS_SESSION_TOKEN。"
-                ) from e
-            if "does not support chat" in error_message.lower():
-                fallback_model = self._get_fallback_model()
-                if fallback_model is not None:
-                    response = fallback_model.invoke(langchain_messages)
-                    return response.content
-            raise
-    
-    def _convert_messages(self, messages: List[Dict[str, str]]) -> List:
-        """转换消息格式"""
-        result = []
-        for msg in messages:
-            role = msg.get("role", "user")
-            content = msg.get("content", "")
-            if role == "system":
-                result.append(SystemMessage(content=content))
-            elif role == "assistant":
-                result.append(AIMessage(content=content))
-            else:
-                result.append(HumanMessage(content=content))
-        return result
-
-
-class ZhipuClient(LLMClient):
-    """智谱AI客户端"""
-    
-    def __init__(self, config: AppConfig):
-        """
-        初始化智谱AI客户端
-        
-        Args:
-            config: 应用配置
-        """
-        self.config = config.llm.zhipu
-        self._model: Optional[BaseChatModel] = None
-    
-    def get_model(self) -> BaseChatModel:
-        """获取LangChain智谱模型"""
-        if self._model is None:
-            from langchain_community.chat_models import ChatZhipuAI
-            self._model = ChatZhipuAI(
-                api_key=self.config.api_key,
-                model=self.config.model,
-            )
-        return self._model
-    
-    def chat(self, messages: List[Dict[str, str]], **kwargs) -> str:
-        """发送聊天请求"""
-        model = self.get_model()
-        langchain_messages = self._convert_messages(messages)
-        response = model.invoke(langchain_messages)
-        return response.content
-    
-    def _convert_messages(self, messages: List[Dict[str, str]]) -> List:
-        """转换消息格式"""
-        result = []
-        for msg in messages:
-            role = msg.get("role", "user")
-            content = msg.get("content", "")
-            if role == "system":
-                result.append(SystemMessage(content=content))
-            elif role == "assistant":
-                result.append(AIMessage(content=content))
-            else:
-                result.append(HumanMessage(content=content))
-        return result
-
-
-class QwenClient(LLMClient):
-    """通义千问客户端"""
-    
-    def __init__(self, config: AppConfig):
-        """
-        初始化通义千问客户端
-        
-        Args:
-            config: 应用配置
-        """
-        self.config = config.llm.qwen
-        self._model: Optional[BaseChatModel] = None
-    
-    def get_model(self) -> BaseChatModel:
-        """获取LangChain通义千问模型"""
-        if self._model is None:
-            from langchain_community.chat_models import ChatTongyi
-            self._model = ChatTongyi(
-                dashscope_api_key=self.config.api_key,
-                model=self.config.model,
-            )
-        return self._model
-    
-    def chat(self, messages: List[Dict[str, str]], **kwargs) -> str:
-        """发送聊天请求"""
-        model = self.get_model()
-        langchain_messages = self._convert_messages(messages)
-        response = model.invoke(langchain_messages)
-        return response.content
-    
-    def _convert_messages(self, messages: List[Dict[str, str]]) -> List:
-        """转换消息格式"""
-        result = []
-        for msg in messages:
-            role = msg.get("role", "user")
-            content = msg.get("content", "")
-            if role == "system":
-                result.append(SystemMessage(content=content))
-            elif role == "assistant":
-                result.append(AIMessage(content=content))
-            else:
-                result.append(HumanMessage(content=content))
-        return result
-
-
-def create_llm_client(config: Optional[AppConfig] = None) -> LLMClient:
-    """
-    创建LLM客户端
-    
-    根据配置创建对应的LLM客户端实例。
-    
-    Args:
-        config: 应用配置，如果为None则使用全局配置
-        
-    Returns:
-        LLMClient: LLM客户端实例
-    """
-    if config is None:
-        config = get_config()
-    
-    provider = config.llm.provider.lower()
-    
-    if provider == "openai":
-        logger.info("使用OpenAI作为LLM提供商")
-        return OpenAIClient(config)
-    elif provider == "bedrock":
-        logger.info("使用AWS Bedrock作为LLM提供商")
-        return BedrockClient(config)
-    elif provider == "zhipu":
-        logger.info("使用智谱AI作为LLM提供商")
-        return ZhipuClient(config)
-    elif provider == "qwen":
-        logger.info("使用通义千问作为LLM提供商")
-        return QwenClient(config)
-    else:
-        logger.warning(f"未知的LLM提供商: {provider}, 使用OpenAI作为默认")
-        return OpenAIClient(config)
-
-
-# 全局LLM客户端实例
+_chat_model: Optional[BaseChatModel] = None
 _llm_client: Optional[LLMClient] = None
 
 
-def get_llm_client() -> LLMClient:
-    """
-    获取全局LLM客户端实例
-    
-    Returns:
-        LLMClient: LLM客户端实例
-    """
+def get_chat_model(config: Optional[AppConfig] = None) -> BaseChatModel:
+    """获取全局 ChatModel 单例。"""
+    global _chat_model
+    if _chat_model is None:
+        _chat_model = create_chat_model(config)
+    return _chat_model
+
+
+def get_llm_client(config: Optional[AppConfig] = None) -> LLMClient:
+    """获取全局 LLMClient 单例（兼容旧接口）。"""
     global _llm_client
     if _llm_client is None:
-        _llm_client = create_llm_client()
+        model = get_chat_model(config)
+        _llm_client = LLMClient(model)
     return _llm_client
 
 
 def init_llm_client(config: Optional[AppConfig] = None) -> LLMClient:
-    """
-    初始化LLM客户端
-    
-    Args:
-        config: 应用配置
-        
-    Returns:
-        LLMClient: LLM客户端实例
-    """
-    global _llm_client
-    _llm_client = create_llm_client(config)
+    """重新初始化全局 LLM 客户端。"""
+    global _chat_model, _llm_client
+    _chat_model = create_chat_model(config)
+    _llm_client = LLMClient(_chat_model)
     return _llm_client
