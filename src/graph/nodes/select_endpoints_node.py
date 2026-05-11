@@ -45,11 +45,14 @@ def select_endpoints_agent_node(state: AgentState) -> dict:
             SystemMessage(content=messages_dicts[0]["content"]),
             HumanMessage(content=messages_dicts[1]["content"]),
         ]
+        logger.debug(f"messages: {messages}")
+        response = model_with_tools.invoke(messages)
+        return {"messages": messages + [response]}
     else:
         messages = state["messages"]
-
-    response = model_with_tools.invoke(messages)
-    return {"messages": [response]}
+        logger.debug(f"messages: {messages}")
+        response = model_with_tools.invoke(messages)
+        return {"messages": [response]}
 
 
 def parse_endpoints_result_node(state: AgentState) -> dict:
@@ -84,23 +87,58 @@ def parse_endpoints_result_node(state: AgentState) -> dict:
 def _parse_selected_endpoints(response: str) -> List[Dict[str, Any]]:
     """从 LLM 最终响应中解析选中的接口信息。
 
+    采用分层策略：优先从 markdown code block 提取，回退用花括号配对。
+
     Args:
         response: LLM 最终输出文本
 
     Returns:
         选中的接口列表
     """
-    json_match = re.search(r'\{[\s\S]*"selected_endpoint_ids"[\s\S]*\}', response)
-    if not json_match:
+    code_block_match = re.search(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', response)
+    if code_block_match:
+        try:
+            data = json.loads(code_block_match.group(1))
+            return _build_endpoint_list(data)
+        except json.JSONDecodeError:
+            pass
+
+    start = response.find('"selected_endpoint_ids"')
+    if start == -1:
         logger.warning("无法从 LLM 响应中提取 JSON 结果")
         return []
 
-    try:
-        data = json.loads(json_match.group())
-    except json.JSONDecodeError:
-        logger.warning("LLM 响应 JSON 解析失败")
+    brace_start = response.rfind('{', 0, start)
+    if brace_start == -1:
+        logger.warning("无法从 LLM 响应中提取 JSON 结果")
         return []
 
+    depth = 0
+    for i in range(brace_start, len(response)):
+        if response[i] == '{':
+            depth += 1
+        elif response[i] == '}':
+            depth -= 1
+            if depth == 0:
+                try:
+                    data = json.loads(response[brace_start:i + 1])
+                    return _build_endpoint_list(data)
+                except json.JSONDecodeError:
+                    break
+
+    logger.warning("LLM 响应 JSON 解析失败")
+    return []
+
+
+def _build_endpoint_list(data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """从解析后的 JSON 数据构建接口列表。
+
+    Args:
+        data: 包含 selected_endpoint_ids 等字段的字典
+
+    Returns:
+        选中的接口列表
+    """
     endpoint_ids = data.get("selected_endpoint_ids", [])
     if not endpoint_ids:
         return []
