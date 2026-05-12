@@ -92,19 +92,37 @@ class ApiDocStorage:
     def _build_endpoints(
         project_id: int, parser: OpenAPIParser
     ) -> List[EndpointCreate]:
-        return [
-            EndpointCreate(
-                project_id=project_id,
-                operation_id=ep.get("operation_id", ""),
-                name=ep.get("summary", ""),
-                path=ep.get("path", ""),
-                method=ep.get("method", ""),
-                tags=json.dumps(ep.get("tags", []), ensure_ascii=False),
-                summary=ep.get("summary", ""),
-                description=ep.get("description", ""),
-                params=json.dumps(ep.get("parameters", {}), ensure_ascii=False),
-                headers=json.dumps(ep.get("headers", {}), ensure_ascii=False),
-                body=json.dumps(ep.get("request_body", {}), ensure_ascii=False),
+        result = []
+        for ep in parser.endpoints:
+            header_params = [
+                p for p in ep.get("parameters", [])
+                if p.get("in") == "header"
+            ]
+
+            request_body = ep.get("request_body") or {}
+            content_type = "application/json"
+            if isinstance(request_body, dict) and request_body.get("content"):
+                content_keys = list(request_body["content"].keys())
+                if content_keys:
+                    content_type = content_keys[0]
+
+            result.append(
+                EndpointCreate(
+                    project_id=project_id,
+                    operation_id=ep.get("operation_id", ""),
+                    name=ep.get("summary", ""),
+                    path=ep.get("path", ""),
+                    method=ep.get("method", ""),
+                    tags=json.dumps(ep.get("tags", []), ensure_ascii=False),
+                    summary=ep.get("summary", ""),
+                    description=ep.get("description", ""),
+                    params=json.dumps(ep.get("parameters", []), ensure_ascii=False),
+                    headers=json.dumps(header_params, ensure_ascii=False),
+                    body=json.dumps(request_body, ensure_ascii=False),
+                    responses=json.dumps(ep.get("responses", []), ensure_ascii=False),
+                    security=json.dumps(ep.get("security", []), ensure_ascii=False),
+                    content_type=content_type,
+                    deprecated=1 if ep.get("deprecated", False) else 0,
+                )
             )
-            for ep in parser.endpoints
-        ]
+        return result

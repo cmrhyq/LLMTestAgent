@@ -61,6 +61,10 @@ CREATE TABLE IF NOT EXISTS endpoint
     params       TEXT             DEFAULT '{}',
     headers      TEXT             DEFAULT '{}',
     body         TEXT             DEFAULT '{}',
+    responses    TEXT             DEFAULT '[]', -- 响应定义 JSON 数组
+    security     TEXT             DEFAULT '[]', -- 接口级认证方案 JSON 数组
+    content_type TEXT             DEFAULT 'application/json', -- 请求体 Content-Type
+    deprecated   INTEGER NOT NULL DEFAULT 0, -- 0=正常，1=已废弃（来自 OpenAPI deprecated 标记）
     status    INTEGER NOT NULL DEFAULT 1, -- 1=启用，2=禁用，3=已删除, 4=已废弃
     version      INTEGER NOT NULL DEFAULT 1,
     created_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')),

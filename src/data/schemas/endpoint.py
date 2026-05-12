@@ -21,6 +21,10 @@ class EndpointBase(BaseModel):
     params: Optional[str] = Field(default="{}", description="查询参数定义")
     headers: Optional[str] = Field(default="{}", description="请求头定义")
     body: Optional[str] = Field(default="{}", description="请求体定义")
+    responses: str = Field(default="[]", description="响应定义 JSON 数组")
+    security: str = Field(default="[]", description="接口级认证方案 JSON 数组")
+    content_type: str = Field(default="application/json", description="请求体 Content-Type")
+    deprecated: int = Field(default=0, description="是否已废弃: 0=正常, 1=已废弃")
     status: int = Field(default=1, description="状态: 1=启用，2=禁用，3=已删除, 4=已废弃")
 
 
@@ -75,6 +79,10 @@ class EndpointUpdate(BaseModel):
     params: Optional[dict] = Field(default=None, description="查询参数定义")
     headers: Optional[dict] = Field(default=None, description="请求头定义")
     body: Optional[dict] = Field(default=None, description="请求体定义")
+    responses: Optional[list] = Field(default=None, description="响应定义")
+    security: Optional[list] = Field(default=None, description="接口级认证方案")
+    content_type: Optional[str] = Field(default=None, description="请求体 Content-Type")
+    deprecated: Optional[int] = Field(default=None, description="是否已废弃")
     status: Optional[int] = Field(default=None, description="状态")
 
     @field_validator("tags", mode="before")
@@ -90,6 +98,16 @@ class EndpointUpdate(BaseModel):
     @field_validator("params", "headers", "body", mode="before")
     @classmethod
     def parse_json_fields(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except (json.JSONDecodeError, TypeError):
+                return None
+        return v
+
+    @field_validator("responses", "security", mode="before")
+    @classmethod
+    def parse_list_fields(cls, v):
         if isinstance(v, str):
             try:
                 return json.loads(v)
