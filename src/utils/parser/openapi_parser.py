@@ -50,7 +50,7 @@ try:
 except ImportError:
     _HAS_REQUESTS = False
 
-# TODO 增加对servers的variables的处理
+# TODO [外部依赖] servers.variables 中的 enum 验证依赖运行时用户输入，当前仅使用 default 值替换
 class OpenAPIParser:
     """
     OpenAPI / Swagger 接口文档解析工具类
@@ -528,17 +528,72 @@ class OpenAPIParser:
             schemes = self._raw.get("schemes", ["https"])
             if host:
                 result["base_url"] = f"{schemes[0]}://{host}{base_path}"
-                result["servers"] = [{"url": result["base_url"], "description": ""}]
+                result["servers"] = [{"url": result["base_url"], "description": "", "variables": {}}]
         else:
             for s in self._raw.get("servers", []):
+                variables = self._parse_server_variables(s.get("variables", {}))
+                resolved_url = self._resolve_server_url(s.get("url", ""), variables)
                 result["servers"].append({
-                    "url": s.get("url", ""),
+                    "url": resolved_url,
                     "description": s.get("description", ""),
+                    "variables": variables,
                 })
             if result["servers"]:
                 result["base_url"] = result["servers"][0]["url"]
 
         return result
+
+    @staticmethod
+    def _parse_server_variables(raw_variables: dict) -> dict:
+        """解析 servers.variables 定义。
+
+        Args:
+            raw_variables: OpenAPI 3.x servers[].variables 原始字典
+
+        Returns:
+            解析后的变量字典，格式:
+            {
+                "var_name": {
+                    "default": "default_value",
+                    "enum": ["val1", "val2"],
+                    "description": "..."
+                }
+            }
+        """
+        if not raw_variables or not isinstance(raw_variables, dict):
+            return {}
+
+        variables = {}
+        for name, var_data in raw_variables.items():
+            if not isinstance(var_data, dict):
+                continue
+            variables[name] = {
+                "default": var_data.get("default", ""),
+                "enum": var_data.get("enum", []),
+                "description": var_data.get("description", ""),
+            }
+        return variables
+
+    @staticmethod
+    def _resolve_server_url(url: str, variables: dict) -> str:
+        """用 variables 的 default 值替换 server URL 中的 {variable} 占位符。
+
+        Args:
+            url: 含 {variable} 占位符的 server URL
+            variables: 已解析的 variables 字典
+
+        Returns:
+            替换占位符后的完整 URL
+        """
+        if not variables:
+            return url
+
+        resolved = url
+        for name, var_info in variables.items():
+            placeholder = "{" + name + "}"
+            if placeholder in resolved:
+                resolved = resolved.replace(placeholder, var_info.get("default", ""))
+        return resolved
 
     def _parse_security_schemes(self) -> list:
         if self.is_v2:
