@@ -531,7 +531,7 @@ class OpenAPIParser:
                 result["servers"] = [{"url": result["base_url"], "description": "", "variables": {}}]
         else:
             for s in self._raw.get("servers", []):
-                variables = self._parse_server_variables(s.get("variables", {}))
+                variables = self._parse_server_variables(s.get("variables", "{}"))
                 resolved_url = self._resolve_server_url(s.get("url", ""), variables)
                 result["servers"].append({
                     "url": resolved_url,

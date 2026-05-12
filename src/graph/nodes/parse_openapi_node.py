@@ -8,12 +8,12 @@ from pathlib import Path
 from src.core.config import get_config
 from src.core.logging import get_logger
 from src.graph.api_doc_storage import ApiDocStorage
-from src.graph.state import TestGraphState
+from src.graph.state import AgentState
 
 logger = get_logger(__name__)
 
 
-def parse_openapi_node(state: TestGraphState) -> dict:
+def parse_openapi_node(state: AgentState) -> dict:
     """OpenAPI 文档解析节点。
 
     Args:

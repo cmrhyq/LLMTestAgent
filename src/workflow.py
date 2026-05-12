@@ -3,8 +3,10 @@
 使用 LangGraph StateGraph 定义有状态工作流：
 - parse_input: 意图解析
 - select_endpoints: 接口挑选（Agent + ToolNode 循环）
-- parse_openapi_doc: OpenAPI 文档解析
+- generate_cases: 测试用例生成（LLM 驱动）
+- execute_tests: 测试执行（HTTP 请求 + 断言）
 - generate_report: 报告生成
+- parse_openapi_doc: OpenAPI 文档解析
 """
 
 from pathlib import Path
@@ -16,6 +18,8 @@ from langgraph.prebuilt import ToolNode, tools_condition
 
 from src.core.config import get_config, AppConfig
 from src.core.logging import get_logger
+from src.graph.nodes.execute_tests_node import execute_tests_node
+from src.graph.nodes.generate_cases_node import generate_cases_node
 from src.graph.nodes.generate_report_node import generate_report_node
 from src.graph.nodes.parse_input_node import parse_input_node
 from src.graph.nodes.parse_openapi_node import parse_openapi_node
@@ -37,7 +41,8 @@ def build_graph() -> CompiledStateGraph:
         START -> parse_input -> (route_by_intent)
             -> "select_endpoints" -> select_endpoints_agent
                 -> (tools_condition) -> tools -> select_endpoints_agent (循环)
-                -> (tools_condition) -> parse_result -> generate_report -> END
+                -> (tools_condition) -> parse_result -> generate_cases
+                -> execute_tests -> generate_report -> END
             -> "parse_openapi_doc" -> parse_openapi_doc -> END
 
     Returns:
@@ -47,13 +52,15 @@ def build_graph() -> CompiledStateGraph:
 
     workflow.add_node("parse_input", parse_input_node)
 
-    # 分支1 测试分支
+    # 测试分支节点
     workflow.add_node("select_endpoints_agent", select_endpoints_agent_node)
     workflow.add_node("tools", ToolNode(tools=AVAILABLE_TOOLS))
     workflow.add_node("parse_result", parse_endpoints_result_node)
+    workflow.add_node("generate_cases", generate_cases_node)
+    workflow.add_node("execute_tests", execute_tests_node)
     workflow.add_node("generate_report", generate_report_node)
 
-    # 分支2 解析API文档分支
+    # 解析API文档分支
     workflow.add_node("parse_openapi_doc", parse_openapi_node)
 
     workflow.add_edge(START, "parse_input")
@@ -77,7 +84,9 @@ def build_graph() -> CompiledStateGraph:
     )
     workflow.add_edge("tools", "select_endpoints_agent")
 
-    workflow.add_edge("parse_result", "generate_report")
+    workflow.add_edge("parse_result", "generate_cases")
+    workflow.add_edge("generate_cases", "execute_tests")
+    workflow.add_edge("execute_tests", "generate_report")
     workflow.add_edge("generate_report", END)
     workflow.add_edge("parse_openapi_doc", END)
 
@@ -121,6 +130,9 @@ class TestWorkflow:
             "selected_endpoints": [],
             "test_results": [],
             "test_summary": {},
+            "run_id": 0,
+            "test_cases_count": 0,
+            "test_results_summary": {},
             "report_path": "",
             "error_message": "",
             "messages": [],

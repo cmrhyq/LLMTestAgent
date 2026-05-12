@@ -8,7 +8,7 @@ import re
 
 from src.core.llm.llm_client import get_llm_client
 from src.core.logging import get_logger
-from src.graph.state import TestGraphState
+from src.graph.state import AgentState
 from src.prompts.builders.intent_builder import IntentPromptBuilder
 
 logger = get_logger(__name__)
@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 _VALID_INTENTS = ("run_test", "parse_openapi")
 
 
-def parse_input_node(state: TestGraphState) -> dict:
+def parse_input_node(state: AgentState) -> dict:
     """意图解析节点：调用 LLM 识别用户意图。
 
     Args:

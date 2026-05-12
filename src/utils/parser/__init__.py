@@ -4,11 +4,8 @@
 提供用户原始输入（自定义 JSON）与标准 OpenAPI 文档的解析能力。
 """
 
-from src.utils.parser.input_parser import InputParser, parse_input
 from src.utils.parser.openapi_parser import OpenAPIParser
 
 __all__ = [
-    "InputParser",
-    "parse_input",
     "OpenAPIParser",
 ]
