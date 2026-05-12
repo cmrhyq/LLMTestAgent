@@ -46,10 +46,14 @@ def build_graph() -> CompiledStateGraph:
     workflow = StateGraph(AgentState)
 
     workflow.add_node("parse_input", parse_input_node)
+
+    # 分支1 测试分支
     workflow.add_node("select_endpoints_agent", select_endpoints_agent_node)
     workflow.add_node("tools", ToolNode(tools=AVAILABLE_TOOLS))
     workflow.add_node("parse_result", parse_endpoints_result_node)
     workflow.add_node("generate_report", generate_report_node)
+
+    # 分支2 解析API文档分支
     workflow.add_node("parse_openapi_doc", parse_openapi_node)
 
     workflow.add_edge(START, "parse_input")
