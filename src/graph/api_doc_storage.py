@@ -82,7 +82,7 @@ class ApiDocStorage:
                 name=server.get("description", ""),
                 base_url=server.get("url", ""),
                 description=server.get("description", ""),
-                variables=server.get("variables", ""),
+                variables=str(server.get("variables", "")),
                 is_default=1 if server.get("url", "") == parser.base_url else 2,
             )
             for server in parser.servers

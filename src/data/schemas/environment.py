@@ -56,7 +56,7 @@ class EnvironmentUpdate(BaseModel):
     name: Optional[str] = Field(default=None, min_length=1, max_length=100, description="环境名称")
     base_url: Optional[str] = Field(default=None, description="环境基础URL")
     description: Optional[str] = Field(default=None, description="环境描述")
-    variables: Optional[Dict[str, Any]] = Field(default=None, description="环境变量键值对")
+    variables: str = Field(default="", description="环境变量键值对")
     is_default: Optional[int] = Field(default=None, description="是否默认环境: 1-是, 0-否")
     status: Optional[int] = Field(default=None, description="状态: 1-启用, 0-禁用")
 
