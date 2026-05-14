@@ -12,11 +12,5 @@ class SelectEndpointsBuilder(BasePromptBuilder):
 
     SYSTEM_TEMPLATE = "select_endpoints_system.yaml"
 
-    def build_system_prompt(self) -> str:
-        return self.render(self.SYSTEM_TEMPLATE)
-
     def build_messages(self, user_input: str) -> List[Dict[str, str]]:
-        return [
-            {"role": "system", "content": self.build_system_prompt()},
-            {"role": "user", "content": f"测试目标：{user_input}"},
-        ]
+        return super().build_messages(f"测试目标：{user_input}")
