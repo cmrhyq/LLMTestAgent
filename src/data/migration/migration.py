@@ -12,8 +12,9 @@ from typing import Optional, List
 
 from sqlalchemy import text, inspect
 
-from src.core.database.connection import DatabaseManager, get_db_manager, Base
+from src.core.database.connection import DatabaseManager, get_db_manager
 from src.core.logging import get_logger
+from src.data.models.base import Base
 
 logger = get_logger(__name__)
 

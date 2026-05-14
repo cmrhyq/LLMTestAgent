@@ -80,45 +80,11 @@ class ExecutionConfig(BaseModel):
     dependency_failure: str = Field(default="skip", description="依赖失败处理方式")
 
 
-class ScenariosConfig(BaseModel):
-    """用例生成场景配置"""
-    normal: bool = Field(default=True, description="正常场景")
-    param_missing: bool = Field(default=True, description="参数缺失")
-    param_type_error: bool = Field(default=True, description="参数类型错误")
-    boundary_value: bool = Field(default=True, description="边界值")
-    permission_error: bool = Field(default=True, description="权限异常")
-
-
-class CaseGenerationConfig(BaseModel):
-    """用例生成配置"""
-    enable_cache: bool = Field(default=False, description="是否启用缓存")
-    cache_ttl: int = Field(default=3600, description="缓存TTL（秒）")
-    human_confirm: bool = Field(default=False, description="是否需要人工确认")
-    scenarios: ScenariosConfig = Field(default_factory=ScenariosConfig)
-
-
-class ExcelConfig(BaseModel):
-    """Excel配置"""
-    format: str = Field(default="xlsx", description="Excel格式")
-    auto_width: bool = Field(default=True, description="自动列宽")
-    freeze_header: bool = Field(default=True, description="冻结表头")
-    highlight_required: bool = Field(default=True, description="高亮必填项")
-
-
-class ReportConfig(BaseModel):
-    """报告配置"""
-    formats: List[str] = Field(default=["excel", "html"], description="报告格式")
-    include_charts: bool = Field(default=True, description="是否包含图表")
-    include_details: bool = Field(default=True, description="是否包含详情")
-
-
 class OutputConfig(BaseModel):
     """输出配置"""
     base_dir: str = Field(default="output", description="输出根目录")
     test_cases_dir: str = Field(default=f"output/{timestamp}/test_cases", description="用例目录")
     reports_dir: str = Field(default=f"output/{timestamp}/reports", description="报告目录")
-    excel: ExcelConfig = Field(default_factory=ExcelConfig)
-    report: ReportConfig = Field(default_factory=ReportConfig)
 
 
 class DatabaseConfig(BaseModel):
@@ -141,7 +107,6 @@ class AppConfig(BaseModel):
     """应用配置"""
     llm: LLMConfig = Field(default_factory=LLMConfig)
     execution: ExecutionConfig = Field(default_factory=ExecutionConfig)
-    case_generation: CaseGenerationConfig = Field(default_factory=CaseGenerationConfig)
     output: OutputConfig = Field(default_factory=OutputConfig)
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)

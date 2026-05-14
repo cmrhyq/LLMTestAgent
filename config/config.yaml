@@ -50,36 +50,6 @@ execution:
   # 依赖失败处理
   dependency_failure: skip  # skip / abort
 
-# 用例生成配置
-case_generation:
-  # 是否启用LLM缓存
-  enable_cache: false
-  cache_ttl: 3600  # 秒
-  
-  # 人工确认（Human-in-the-loop）
-  human_confirm: false
-  
-  # 用例生成场景
-  scenarios:
-    normal: true           # 正常场景
-    param_missing: true    # 参数缺失
-    param_type_error: true # 参数类型错误
-    boundary_value: true   # 边界值
-    permission_error: true # 权限异常
-  
-  # Excel配置
-  excel:
-    format: xlsx
-    auto_width: true
-    freeze_header: true
-    highlight_required: true
-  
-  # 报告格式
-  report:
-    formats: [excel, html]
-    include_charts: true
-    include_details: true
-
 # 数据库配置
 database:
   url: "sqlite:///db/LLMTest.db"
