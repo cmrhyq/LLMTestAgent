@@ -18,6 +18,7 @@ class AgentState(MessagesState):
     raw_input: str
     api_doc_file_path: str
     user_intent: str
+    test_mode: str
     selected_endpoints: List[Dict[str, Any]]
     test_results: List[Dict[str, Any]]
     test_summary: Dict[str, Any]

@@ -3,8 +3,10 @@
 使用 LangGraph StateGraph 定义有状态工作流：
 - parse_input: 意图解析
 - select_endpoints: 接口挑选（Agent + ToolNode 循环）
-- generate_cases: 测试用例生成（LLM 驱动）
-- execute_tests: 测试执行（HTTP 请求 + 断言）
+- generate_single_cases: 单接口测试用例生成（LLM 驱动）
+- generate_flow_cases: 流程测试用例生成（LLM 驱动）
+- execute_single_tests: 单接口测试执行（HTTP 请求 + 断言）
+- execute_flow_tests: 流程测试执行（顺序执行 + 上下文传递）
 - generate_report: 报告生成
 - parse_openapi_doc: OpenAPI 文档解析
 """
@@ -18,9 +20,11 @@ from langgraph.prebuilt import ToolNode, tools_condition
 
 from src.core.config import get_config, AppConfig
 from src.core.logging import get_logger
-from src.graph.nodes.execute_tests_node import execute_tests_node
-from src.graph.nodes.generate_cases_node import generate_cases_node
+from src.graph.nodes.execute_flow_tests_node import execute_flow_tests_node
+from src.graph.nodes.execute_single_tests_node import execute_single_tests_node
+from src.graph.nodes.generate_flow_cases_node import generate_flow_cases_node
 from src.graph.nodes.generate_report_node import generate_report_node
+from src.graph.nodes.generate_single_cases_node import generate_single_cases_node
 from src.graph.nodes.parse_input_node import parse_input_node
 from src.graph.nodes.parse_openapi_node import parse_openapi_node
 from src.graph.nodes.select_endpoints_node import (
@@ -28,7 +32,7 @@ from src.graph.nodes.select_endpoints_node import (
     parse_endpoints_result_node,
     select_endpoints_agent_node,
 )
-from src.graph.route import route_by_intent
+from src.graph.route import route_by_intent, route_by_test_mode
 from src.graph.state import AgentState
 
 logger = get_logger(__name__)
@@ -41,8 +45,9 @@ def build_graph() -> CompiledStateGraph:
         START -> parse_input -> (route_by_intent)
             -> "select_endpoints" -> select_endpoints_agent
                 -> (tools_condition) -> tools -> select_endpoints_agent (循环)
-                -> (tools_condition) -> parse_result -> generate_cases
-                -> execute_tests -> generate_report -> END
+                -> (tools_condition) -> parse_result -> (route_by_test_mode)
+                    -> "generate_single_cases" -> execute_single_tests -> generate_report -> END
+                    -> "generate_flow_cases" -> execute_flow_tests -> generate_report -> END
             -> "parse_openapi_doc" -> parse_openapi_doc -> END
 
     Returns:
@@ -52,12 +57,20 @@ def build_graph() -> CompiledStateGraph:
 
     workflow.add_node("parse_input", parse_input_node)
 
-    # 测试分支节点
+    # 测试分支公共节点
     workflow.add_node("select_endpoints_agent", select_endpoints_agent_node)
     workflow.add_node("tools", ToolNode(tools=AVAILABLE_TOOLS))
     workflow.add_node("parse_result", parse_endpoints_result_node)
-    workflow.add_node("generate_cases", generate_cases_node)
-    workflow.add_node("execute_tests", execute_tests_node)
+
+    # single 分支节点
+    workflow.add_node("generate_single_cases", generate_single_cases_node)
+    workflow.add_node("execute_single_tests", execute_single_tests_node)
+
+    # flow 分支节点
+    workflow.add_node("generate_flow_cases", generate_flow_cases_node)
+    workflow.add_node("execute_flow_tests", execute_flow_tests_node)
+
+    # 公共报告节点
     workflow.add_node("generate_report", generate_report_node)
 
     # 解析API文档分支
@@ -84,9 +97,23 @@ def build_graph() -> CompiledStateGraph:
     )
     workflow.add_edge("tools", "select_endpoints_agent")
 
-    workflow.add_edge("parse_result", "generate_cases")
-    workflow.add_edge("generate_cases", "execute_tests")
-    workflow.add_edge("execute_tests", "generate_report")
+    workflow.add_conditional_edges(
+        "parse_result",
+        route_by_test_mode,
+        {
+            "generate_single_cases": "generate_single_cases",
+            "generate_flow_cases": "generate_flow_cases",
+        },
+    )
+
+    # single 分支
+    workflow.add_edge("generate_single_cases", "execute_single_tests")
+    workflow.add_edge("execute_single_tests", "generate_report")
+
+    # flow 分支
+    workflow.add_edge("generate_flow_cases", "execute_flow_tests")
+    workflow.add_edge("execute_flow_tests", "generate_report")
+
     workflow.add_edge("generate_report", END)
     workflow.add_edge("parse_openapi_doc", END)
 
@@ -127,6 +154,7 @@ class TestWorkflow:
             "raw_input": raw_input,
             "api_doc_file_path": str(api_doc_file_path) if api_doc_file_path else "",
             "user_intent": "",
+            "test_mode": "",
             "selected_endpoints": [],
             "test_results": [],
             "test_summary": {},

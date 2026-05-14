@@ -15,6 +15,7 @@ from src.core.database.connection import get_db_manager
 from src.core.logging import get_logger
 from src.data.models.test_result import TestResult
 from src.data.models.test_run import TestRun
+from src.graph.nodes.utils import ensure_db
 from src.graph.state import AgentState
 
 logger = get_logger(__name__)
@@ -39,7 +40,7 @@ def generate_report_node(state: AgentState) -> dict:
         return {"report_path": ""}
 
     config = get_config()
-    _ensure_db()
+    ensure_db()
 
     try:
         with get_db_manager().get_session() as session:
@@ -145,18 +146,3 @@ def _build_markdown_report(test_run: TestRun, results: List[TestResult]) -> str:
     lines.append("*由 LLM API 自动化测试工具生成*")
 
     return "\n".join(lines)
-
-
-def _ensure_db() -> None:
-    """确保数据库已初始化。"""
-    manager = get_db_manager()
-    if not manager._initialized:
-        config = get_config()
-        manager.initialize(
-            db_url=config.database.url,
-            echo=config.database.echo,
-            pool_size=config.database.pool_size,
-            max_overflow=config.database.max_overflow,
-            pool_timeout=config.database.pool_timeout,
-            pool_recycle=config.database.pool_recycle,
-        )

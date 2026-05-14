@@ -30,7 +30,7 @@ logger = get_logger(__name__)
 class TestExecutor:
     """测试用例执行器。
 
-    负责单条用例的完整执行流程，由 execute_tests_node 调用。
+    负责单条用例的完整执行流程，由 execute_single_tests_node 调用。
     """
 
     def __init__(self, config: Optional[AppConfig] = None) -> None:

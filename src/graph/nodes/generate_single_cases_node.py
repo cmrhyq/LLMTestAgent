@@ -1,6 +1,6 @@
-"""测试用例生成节点。
+"""单接口测试用例生成节点。
 
-根据选中的 Endpoint 信息，调用 LLM 生成测试用例并写入数据库。
+根据选中的 Endpoint 信息，逐个调用 LLM 生成测试用例并写入数据库。
 """
 
 import hashlib
@@ -19,6 +19,7 @@ from src.data.models.endpoint import Endpoint
 from src.data.models.project import Project
 from src.data.models.test_case import TestCase
 from src.data.models.test_run import TestRun
+from src.graph.nodes.utils import ensure_db, get_model_name, safe_json_loads
 from src.graph.state import AgentState
 from src.prompts.builders.case_builder import CasePromptBuilder
 from src.prompts.formatters.case_formatter import format_scenario_types
@@ -26,10 +27,10 @@ from src.prompts.formatters.case_formatter import format_scenario_types
 logger = get_logger(__name__)
 
 
-def generate_cases_node(state: AgentState) -> dict:
-    """测试用例生成节点。
+def generate_single_cases_node(state: AgentState) -> dict:
+    """单接口测试用例生成节点。
 
-    从 selected_endpoints 获取接口信息，调用 LLM 生成用例，写入数据库。
+    从 selected_endpoints 获取接口信息，逐个调用 LLM 生成用例，写入数据库。
 
     Args:
         state: 当前工作流状态
@@ -37,7 +38,7 @@ def generate_cases_node(state: AgentState) -> dict:
     Returns:
         部分状态更新，包含 run_id 和 test_cases_count
     """
-    logger.info("进入测试用例生成节点")
+    logger.info("进入单接口测试用例生成节点")
 
     selected_endpoints = state.get("selected_endpoints", [])
     if not selected_endpoints:
@@ -48,7 +49,7 @@ def generate_cases_node(state: AgentState) -> dict:
     llm_client = get_llm_client()
     prompt_builder = CasePromptBuilder()
 
-    _ensure_db()
+    ensure_db()
 
     project_id = selected_endpoints[0].get("project_id")
     endpoint_ids = [ep.get("endpoint_id") for ep in selected_endpoints if ep.get("endpoint_id")]
@@ -79,7 +80,7 @@ def generate_cases_node(state: AgentState) -> dict:
             status="running",
             trigger_type="manual",
             llm_provider=config.llm.provider,
-            llm_model=_get_model_name(config),
+            llm_model=get_model_name(config),
             started_at=datetime.now().isoformat(),
         )
         session.add(test_run)
@@ -123,9 +124,9 @@ def _generate_cases_for_endpoint(
     """为单个 Endpoint 生成测试用例。"""
     full_url = f"{base_url}{endpoint.path}"
 
-    headers = _safe_json_loads(endpoint.headers, {})
-    body = _safe_json_loads(endpoint.body, None)
-    params = _safe_json_loads(endpoint.params, None)
+    headers = safe_json_loads(endpoint.headers, {})
+    body = safe_json_loads(endpoint.body, None)
+    params = safe_json_loads(endpoint.params, None)
 
     default_assert_rules = _extract_default_asserts(endpoint.responses)
 
@@ -283,42 +284,3 @@ def _extract_default_asserts(responses_json: Optional[str]) -> List[str]:
             break
 
     return default_rules
-
-
-def _safe_json_loads(value: Optional[str], default: Any) -> Any:
-    """安全解析 JSON 字段。"""
-    if not value:
-        return default
-    try:
-        return json.loads(value)
-    except (json.JSONDecodeError, TypeError):
-        return default
-
-
-def _get_model_name(config) -> str:
-    """获取当前使用的模型名称。"""
-    provider = config.llm.provider.lower()
-    if provider == "openai":
-        return config.llm.openai.model
-    if provider == "bedrock":
-        return config.llm.bedrock.model_id
-    if provider == "zhipu":
-        return config.llm.zhipu.model
-    if provider == "qwen":
-        return config.llm.qwen.model
-    return provider
-
-
-def _ensure_db() -> None:
-    """确保数据库已初始化。"""
-    manager = get_db_manager()
-    if not manager._initialized:
-        config = get_config()
-        manager.initialize(
-            db_url=config.database.url,
-            echo=config.database.echo,
-            pool_size=config.database.pool_size,
-            max_overflow=config.database.max_overflow,
-            pool_timeout=config.database.pool_timeout,
-            pool_recycle=config.database.pool_recycle,
-        )
