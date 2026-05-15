@@ -14,8 +14,8 @@ def start_node(state: AgentState) -> dict:
     - 返回需要更新的状态字段（字典）
     - 返回的字段会合并到当前状态中
     """
-    logger.info("=== 开始API测试工作流 ===")
-    logger.info(f"测试目标：{state.get('raw_input')}, 输入文件：{state.get('api_doc_file_path')}")
+    logger.info("进入开始节点，开始API测试工作流")
+    logger.info(f"指令：{state.get('raw_input')}, 输入文件：{state.get('api_doc_file_path', '无')}")
 
     raw_input = state.get("raw_input")
     if not raw_input:

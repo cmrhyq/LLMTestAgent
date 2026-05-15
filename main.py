@@ -77,8 +77,6 @@ def main():
             sys.exit(1)
         logger.info(f"API 文档: {api_doc_path}")
 
-    logger.info(f"指令: {args.instruction}")
-
     try:
         workflow = TestWorkflow(config)
         result = workflow.run(

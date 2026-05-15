@@ -195,7 +195,6 @@ def _parse_flow_response(response: str) -> List[Dict[str, Any]]:
 
     支持 markdown code block 和纯 JSON 两种格式。
     """
-    logger.info(response)
     response = response.strip()
 
     code_block_match = re.search(r"```(?:json)?\s*([\s\S]*?)```", response)
