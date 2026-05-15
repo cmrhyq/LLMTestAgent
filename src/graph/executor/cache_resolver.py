@@ -69,13 +69,14 @@ class CacheResolver:
                 continue
 
             if not self.cache.has(cache_key):
-                logger.debug(f"缓存键不存在，跳过注入: {cache_key}")
+                logger.debug("缓存键不存在，跳过注入", cache_key=cache_key)
                 continue
 
             raw_value = self.cache.get(cache_key)
             value = template.replace("{value}", str(raw_value)) if template else str(raw_value)
 
             headers, body, params = self._set_target_value(headers, body, params, target, value)
+            logger.debug("缓存注入成功", cache_key=cache_key, target=target)
 
         return headers, body, params
 
@@ -107,9 +108,9 @@ class CacheResolver:
             value = self._extract_by_jsonpath(response_body, source_path)
             if value is not None:
                 self.cache.set(cache_key, value)
-                logger.debug(f"缓存提取成功: {cache_key} = {str(value)[:100]}")
+                logger.debug("缓存提取成功", cache_key=cache_key, value_preview=str(value)[:100])
             else:
-                logger.warning(f"缓存提取失败，路径无匹配: path={source_path}, key={cache_key}")
+                logger.warning("缓存提取失败，路径无匹配", source_path=source_path, cache_key=cache_key)
 
     def has_unresolved_dependencies(self, cache_rules: Optional[Dict[str, Any]]) -> bool:
         """检查是否存在未满足的缓存依赖。

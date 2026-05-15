@@ -12,11 +12,8 @@ from sqlalchemy import select
 
 from src import get_config
 from src.core.database.connection import get_db_manager
-from src.core.logging import get_logger
 from src.data.models.endpoint import Endpoint
 from src.data.models.project import Project
-
-logger = get_logger(__name__)
 
 
 def _ensure_db_initialized() -> None:

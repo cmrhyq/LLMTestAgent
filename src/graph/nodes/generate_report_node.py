@@ -32,11 +32,11 @@ def generate_report_node(state: AgentState) -> dict:
     Returns:
         部分状态更新，包含 report_path 字段
     """
-    logger.info("进入报告生成节点")
+    logger.info("节点进入", node="generate_report")
 
     run_id = state.get("run_id", 0)
     if not run_id:
-        logger.warning("run_id 为空，跳过报告生成")
+        logger.warning("run_id为空，跳过报告生成")
         return {"report_path": ""}
 
     config = get_config()
@@ -46,11 +46,17 @@ def generate_report_node(state: AgentState) -> dict:
         with get_db_manager().get_session() as session:
             test_run = session.get(TestRun, run_id)
             if not test_run:
-                logger.error(f"TestRun 不存在: run_id={run_id}")
+                logger.error("TestRun不存在", run_id=run_id)
                 return {"report_path": "", "error_message": f"TestRun 不存在: {run_id}"}
 
             stmt = select(TestResult).where(TestResult.run_id == run_id)
             results: List[TestResult] = list(session.scalars(stmt).all())
+
+            logger.info(
+                "报告数据汇总",
+                run_id=run_id, result_count=len(results),
+                passed=test_run.passed_cases, failed=test_run.failed_cases,
+            )
 
             report_content = _build_markdown_report(test_run, results)
 
@@ -60,19 +66,18 @@ def generate_report_node(state: AgentState) -> dict:
             report_file.write_text(report_content, encoding="utf-8")
 
             report_path = str(report_file)
-            logger.info(f"报告生成成功: {report_path}")
+            logger.info("报告生成成功", path=report_path)
             return {
                 "current_step": "end",
                 "report_path": report_path
             }
 
     except Exception as e:
-        error_msg = f"报告生成异常: {str(e)}"
-        logger.error(error_msg)
+        logger.error("报告生成异常", error=str(e))
         return {
             "current_step": "error",
             "report_path": "",
-            "error_message": error_msg
+            "error_message": f"报告生成异常: {str(e)}"
         }
 
 

@@ -26,30 +26,27 @@ class EndpointService:
 
     def create_endpoint(self, endpoints: List[EndpointCreate]) -> List[Endpoint]:
         if len(endpoints) == 0:
-            logger.warning("No endpoints to create")
+            logger.warning("无接口数据需创建")
             return []
 
-        logger.info(f"Creating {len(endpoints)} endpoints")
+        logger.info("开始创建接口", count=len(endpoints))
 
         try:
-            # 1. 批量查询已存在的记录（一次查询代替 N 次）
             existing_keys = self._get_existing_keys(endpoints)
-            logger.debug(f"Existing keys: {existing_keys}")
-            # 2. 过滤掉重复数据
+            logger.debug("已存在记录查询完成", existing_count=len(existing_keys))
             new_data = [
                 endpoint.model_dump() for endpoint in endpoints
                 if (endpoint.project_id, endpoint.path, endpoint.method) not in existing_keys
             ]
             if not new_data:
-                logger.warning("All endpoints already exist, skip insert")
+                logger.warning("所有接口已存在，跳过插入")
                 return []
             skipped = len(endpoints) - len(new_data)
             if skipped:
-                logger.info(f"Skipped {skipped} duplicate endpoints")
-            # 3. 批量插入
+                logger.info("跳过重复接口", skipped=skipped)
             results = self.repo.bulk_create(new_data)
-            logger.info(f"Successfully created {len(results)} endpoints")
+            logger.info("接口创建成功", created=len(results))
             return results
         except Exception as e:
-            logger.error(f"Failed to create endpoints: {e}")
+            logger.error("接口创建失败", error=str(e))
             raise

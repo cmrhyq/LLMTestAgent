@@ -13,10 +13,6 @@ from typing import Optional
 
 from langchain_core.tools import tool
 
-from src.core.logging import get_logger
-
-logger = get_logger(__name__)
-
 _MAX_FILE_SIZE = 100 * 1024
 _MAX_OUTPUT_LENGTH = 10000
 _COMMAND_TIMEOUT = 30

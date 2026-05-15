@@ -7,11 +7,9 @@ from src.data.enum.workflow import DataStatus
 from src.data.models.base import Base
 from src.data.models.project import Project
 
-from src.core.logging import get_logger
 from src.data.repositories.base import BaseRepository
 
 
-logger = get_logger(__name__)
 T = TypeVar("T", bound=Base)
 
 

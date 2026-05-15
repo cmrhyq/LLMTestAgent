@@ -28,28 +28,25 @@ class EnvironmentService:
         去重批量创建环境
         """
         if len(env_list) == 0:
-            logger.warning("No environments to create")
+            logger.warning("无环境数据需创建")
             return []
 
-        logger.info(f"Creating {len(env_list)} environments")
+        logger.info("开始创建环境", count=len(env_list))
         try:
-            # 1. 批量查询已存在的记录（一次查询代替 N 次）
             existing_keys = self._get_existing_keys(env_list)
-            # 2. 过滤掉重复数据
             new_data = [
                 env.model_dump() for env in env_list
                 if (env.project_id, env.name) not in existing_keys
             ]
             if not new_data:
-                logger.warning("All environments already exist, skip insert")
+                logger.warning("所有环境已存在，跳过插入")
                 return []
             skipped = len(env_list) - len(new_data)
             if skipped:
-                logger.info(f"Skipped {skipped} duplicate environments")
-            # 3. 批量插入
+                logger.info("跳过重复环境", skipped=skipped)
             results = self.repo.bulk_create(new_data)
-            logger.info(f"Successfully created {len(results)} environments")
+            logger.info("环境创建成功", created=len(results))
             return results
         except Exception as e:
-            logger.error(f"Failed to create environments: {e}")
+            logger.error("环境创建失败", error=str(e))
             raise

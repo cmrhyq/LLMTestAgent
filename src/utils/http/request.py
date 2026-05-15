@@ -140,7 +140,7 @@ class HttpRequest:
         # 设置认证
         self._setup_authentication(auth_type, auth_credentials)
 
-        logger.info(f"Initialized BaseService with base_url: {self.base_url}")
+        logger.info("HTTP客户端初始化", base_url=self.base_url)
 
     def _setup_authentication(
             self,
@@ -155,29 +155,26 @@ class HttpRequest:
             auth_credentials: 认证凭证
         """
         if auth_type == 'bearer':
-            # Bearer Token 认证
             token = auth_credentials.get('token')
             if token:
                 self.session.headers.update({'Authorization': f'Bearer {token}'})
-                logger.info("Bearer token authentication configured")
+                logger.info("Bearer Token认证已配置")
 
         elif auth_type == 'basic':
-            # Basic Auth 认证
             username = auth_credentials.get('username')
             password = auth_credentials.get('password')
 
             if username and password:
                 self.session.auth = HTTPBasicAuth(username, password)
-                logger.info(f"Basic authentication configured for user: {username}")
+                logger.info("Basic认证已配置", username=username)
 
         elif auth_type == 'api_key':
-            # API Key 认证
             api_key = auth_credentials.get('api_key')
             header_name = auth_credentials.get('header_name')
 
             if api_key:
                 self.session.headers.update({header_name: api_key})
-                logger.info(f"API Key authentication configured with header: {header_name}")
+                logger.info("API Key认证已配置", header_name=header_name)
 
     def _build_url(self, endpoint: str) -> str:
         """
@@ -225,7 +222,7 @@ class HttpRequest:
         if "headers" in kwargs:
             log_data['headers'] = kwargs['headers']
 
-        logger.debug(f"Request Information: {log_data}")
+        logger.debug("请求信息", **log_data)
 
     def _log_response(self, response: requests.Response) -> None:
         """
@@ -247,7 +244,7 @@ class HttpRequest:
         except Exception:
             log_data['response_body'] = '(non-JSON or empty)'
 
-        logger.debug(f"Response Information: {log_data}")
+        logger.debug("响应信息", **log_data)
 
     def _make_request_with_retry(
             self,
@@ -310,10 +307,10 @@ class HttpRequest:
                 return response
 
             except (ConnectionError, Timeout) as e:
-                # 网络错误，可以重试
                 last_exception = e
                 logger.warning(
-                    f"Network error on attempt {attempt + 1}/{max_retries + 1}: {str(e)}"
+                    "网络错误",
+                    attempt=attempt + 1, max_attempts=max_retries + 1, error=str(e),
                 )
 
                 if attempt < max_retries:
@@ -321,12 +318,12 @@ class HttpRequest:
                     retry_delay *= 2  # 指数退避
                 else:
                     logger.error(
-                        f"Request failed after {max_retries + 1} attempts: {str(e)}"
+                        "请求重试耗尽",
+                        attempts=max_retries + 1, error=str(e),
                     )
 
             except HTTPError as e:
-                # HTTP 错误（4xx, 5xx）
-                logger.error(f"HTTP error: {e.response.status_code} - {str(e)}")
+                logger.error("HTTP错误", status_code=e.response.status_code, error=str(e))
                 # 对于 5xx 错误可以重试，4xx 错误不重试
                 if e.response.status_code >= 500 and attempt < max_retries:
                     last_exception = e
@@ -336,8 +333,7 @@ class HttpRequest:
                     raise
 
             except RequestException as e:
-                # 其他请求异常
-                logger.error(f"Request exception: {str(e)}")
+                logger.error("请求异常", error=str(e))
                 raise
 
         # 如果所有重试都失败，抛出最后一个异常
@@ -438,13 +434,13 @@ class HttpRequest:
         try:
             response_data = response.json()
         except Exception as e:
-            logger.error(f"Failed to parse response as JSON: {str(e)}")
+            logger.error("响应JSON解析失败", error=str(e))
             raise ValueError(f"Response is not valid JSON: {str(e)}")
 
         # 如果没有指定路径，缓存整个响应
         if json_path is None:
             self.cache.set(cache_key, response_data)
-            logger.info(f"Cached entire response with key: {cache_key}")
+            logger.info("缓存完整响应", cache_key=cache_key)
             return response_data
 
         # 按照路径提取数据
@@ -452,13 +448,9 @@ class HttpRequest:
 
         if extracted_value is not None:
             self.cache.set(cache_key, extracted_value)
-            logger.info(
-                f"Extracted and cached value from path '{json_path}' with key: {cache_key}"
-            )
+            logger.info("提取并缓存数据", json_path=json_path, cache_key=cache_key)
         else:
-            logger.warning(
-                f"Path '{json_path}' not found in response, cached None"
-            )
+            logger.warning("路径未找到，缓存None", json_path=json_path, cache_key=cache_key)
             self.cache.set(cache_key, None)
 
         return extracted_value
@@ -490,12 +482,10 @@ class HttpRequest:
                 elif isinstance(current, dict):
                     current = current[key]
                 else:
-                    logger.warning(
-                        f"Cannot extract key '{key}' from type {type(current)}"
-                    )
+                    logger.warning("路径提取类型不匹配", key=key, actual_type=type(current).__name__)
                     return None
             except (KeyError, IndexError, ValueError, TypeError) as e:
-                logger.warning(f"Failed to extract path '{path}': {str(e)}")
+                logger.warning("路径提取失败", path=path, error=str(e))
                 return None
 
         return current
@@ -512,7 +502,7 @@ class HttpRequest:
             Any: 缓存的值，如果不存在则返回 default
         """
         value = self.cache.get(cache_key, default)
-        logger.debug(f"Retrieved cached value for key: {cache_key}")
+        logger.debug("获取缓存值", cache_key=cache_key)
         return value
 
     def validate_status_code(
@@ -536,13 +526,9 @@ class HttpRequest:
         is_valid = response.status_code in expected_status
 
         if is_valid:
-            logger.info(
-                f"Status code {response.status_code} matches expected: {expected_status}"
-            )
+            logger.info("状态码验证通过", actual=response.status_code, expected=expected_status)
         else:
-            logger.error(
-                f"Status code {response.status_code} does not match expected: {expected_status}"
-            )
+            logger.error("状态码验证失败", actual=response.status_code, expected=expected_status)
 
         return is_valid
 
@@ -552,7 +538,7 @@ class HttpRequest:
         """
         if self.session:
             self.session.close()
-            logger.info("Session closed")
+            logger.debug("HTTP会话已关闭")
 
     def __enter__(self):
         """

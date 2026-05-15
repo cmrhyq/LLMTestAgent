@@ -205,7 +205,7 @@ class TestWorkflow:
         Returns:
             最终工作流状态字典
         """
-        logger.info("开始执行测试工作流")
+        logger.info("工作流开始执行")
 
         initial_state: Dict[str, Any] = {
             "raw_input": raw_input,
@@ -226,9 +226,9 @@ class TestWorkflow:
 
         try:
             final_state = self.graph.invoke(initial_state)
-            logger.info("测试工作流执行完成")
+            logger.info("工作流执行完成")
             return final_state
         except Exception as e:
-            logger.error(f"工作流执行失败: {str(e)}")
+            logger.error("工作流执行失败", error=str(e))
             initial_state["error_message"] = str(e)
             return initial_state

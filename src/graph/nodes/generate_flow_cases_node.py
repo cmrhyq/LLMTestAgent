@@ -37,7 +37,7 @@ def generate_flow_cases_node(state: AgentState) -> dict:
     Returns:
         部分状态更新，包含 run_id 和 test_cases_count
     """
-    logger.info("进入流程测试用例生成节点")
+    logger.info("节点进入", node="generate_flow_cases")
 
     selected_endpoints = state.get("selected_endpoints", [])
     if not selected_endpoints:
@@ -56,9 +56,8 @@ def generate_flow_cases_node(state: AgentState) -> dict:
     with get_db_manager().get_session() as session:
         project = session.get(Project, project_id)
         if not project:
-            error_msg = f"项目不存在: project_id={project_id}"
-            logger.error(error_msg)
-            return {"run_id": 0, "test_cases_count": 0, "error_message": error_msg, "current_step": "error"}
+            logger.error("项目不存在", project_id=project_id)
+            return {"run_id": 0, "test_cases_count": 0, "error_message": f"项目不存在: project_id={project_id}", "current_step": "error"}
 
         base_url = project.base_url.rstrip("/")
 
@@ -69,9 +68,8 @@ def generate_flow_cases_node(state: AgentState) -> dict:
         endpoints: List[Endpoint] = list(session.scalars(stmt).all())
 
         if not endpoints:
-            error_msg = "未查询到有效的接口定义"
-            logger.error(error_msg)
-            return {"run_id": 0, "test_cases_count": 0, "error_message": error_msg, "current_step": "error"}
+            logger.error("未查询到有效的接口定义", endpoint_ids=endpoint_ids)
+            return {"run_id": 0, "test_cases_count": 0, "error_message": "未查询到有效的接口定义", "current_step": "error"}
 
         test_run = TestRun(
             project_id=project_id,
@@ -90,7 +88,7 @@ def generate_flow_cases_node(state: AgentState) -> dict:
 
         messages = prompt_builder.build_messages(endpoints_info)
         response_text = llm_client.chat(messages)
-        logger.info(f"LLM 流程用例响应长度: {len(response_text)}")
+        logger.debug("LLM流程用例响应", response_length=len(response_text))
 
         cases_data = _parse_flow_response(response_text)
         endpoint_map = {ep.id: ep for ep in endpoints}
@@ -100,7 +98,7 @@ def generate_flow_cases_node(state: AgentState) -> dict:
             endpoint_id = case_data.get("endpoint_id")
             endpoint = endpoint_map.get(endpoint_id)
             if not endpoint:
-                logger.warning(f"步骤 {idx} 引用了未知的 endpoint_id={endpoint_id}，跳过")
+                logger.warning("步骤引用未知endpoint", step=idx, endpoint_id=endpoint_id)
                 continue
 
             full_url = f"{base_url}{endpoint.path}"
@@ -115,7 +113,7 @@ def generate_flow_cases_node(state: AgentState) -> dict:
             total_cases += 1
 
         test_run.total_cases = total_cases
-        logger.info(f"流程用例生成完成: run_id={run_id}, total_cases={total_cases}")
+        logger.info("流程用例生成完成", run_id=run_id, total_cases=total_cases)
 
     return {"run_id": run_id, "test_cases_count": total_cases, "current_step": "execute_flow_tests"}
 
@@ -204,14 +202,14 @@ def _parse_flow_response(response: str) -> List[Dict[str, Any]]:
         json_start = response.find("{")
         json_end = response.rfind("}") + 1
         if json_start == -1 or json_end <= 0:
-            logger.warning("LLM 流程响应中未找到 JSON 内容")
+            logger.warning("LLM流程响应中未找到JSON内容")
             return []
         json_str = response[json_start:json_end]
 
     try:
         data = json.loads(json_str)
     except json.JSONDecodeError as e:
-        logger.error(f"解析 LLM 流程 JSON 响应失败: {e}")
+        logger.error("解析LLM流程JSON响应失败", error=str(e))
         return []
 
     if isinstance(data, dict):

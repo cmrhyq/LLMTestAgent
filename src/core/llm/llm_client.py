@@ -4,6 +4,7 @@
 支持 OpenAI、AWS Bedrock、智谱AI、通义千问。
 """
 
+import time
 from typing import List, Dict, Optional
 
 from langchain_core.language_models import BaseChatModel
@@ -30,19 +31,19 @@ def create_chat_model(config: Optional[AppConfig] = None) -> BaseChatModel:
     provider = config.llm.provider.lower()
 
     if provider == "openai":
-        logger.info("使用 OpenAI 作为 LLM 提供商")
+        logger.info("LLM提供商初始化", provider="OpenAI")
         return _create_openai_model(config)
     elif provider == "bedrock":
-        logger.info("使用 AWS Bedrock 作为 LLM 提供商")
+        logger.info("LLM提供商初始化", provider="AWS Bedrock")
         return _create_bedrock_model(config)
     elif provider == "zhipu":
-        logger.info("使用智谱AI 作为 LLM 提供商")
+        logger.info("LLM提供商初始化", provider="智谱AI")
         return _create_zhipu_model(config)
     elif provider == "qwen":
-        logger.info("使用通义千问作为 LLM 提供商")
+        logger.info("LLM提供商初始化", provider="通义千问")
         return _create_qwen_model(config)
     else:
-        logger.warning(f"未知的 LLM 提供商: {provider}，使用 OpenAI 作为默认")
+        logger.warning("未知的LLM提供商，使用OpenAI作为默认", provider=provider)
         return _create_openai_model(config)
 
 
@@ -139,8 +140,12 @@ class LLMClient:
 
     def chat(self, messages: List[Dict[str, str]], **kwargs) -> str:
         """发送聊天请求，返回纯文本响应。"""
+        logger.debug("LLM调用开始", message_count=len(messages))
+        start_time = time.perf_counter()
         langchain_messages = convert_to_langchain_messages(messages)
         response = self._model.invoke(langchain_messages)
+        elapsed_ms = round((time.perf_counter() - start_time) * 1000, 2)
+        logger.debug("LLM调用完成", elapsed_ms=elapsed_ms, response_length=len(response.content))
         return response.content
 
     def invoke_with_tools(

@@ -35,8 +35,13 @@ OpenAPI 接口文档解析工具类
 
 import json
 import copy
+import sys
 from pathlib import Path
-from typing import Union, Optional, Any
+from typing import Union, Optional, Any, TextIO
+
+from src.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 try:
     import yaml
@@ -289,75 +294,88 @@ class OpenAPIParser:
     #  公开方法 - 格式化输出
     # ----------------------------------------------------------------
 
-    def print_summary(self):
-        """打印文档摘要到终端"""
-        print(f"\n{'=' * 60}")
-        print(f"  {self.title}  (v{self.version})")
-        print(f"  {self.description}")
-        if self.base_url:
-            print(f"  Base URL: {self.base_url}")
-        print(f"{'=' * 60}")
-        s = self.stats
-        print(f"  接口: {s['total_endpoints']}  "
-              f"模型: {s['total_schemas']}  "
-              f"标签: {s['total_tags']}  "
-              f"已废弃: {s['deprecated_count']}")
-        print(f"  方法: {s['methods']}")
-        print()
+    def print_summary(self, output: TextIO = None):
+        """打印文档摘要到终端
 
-    def print_endpoints(self, tag: str = None):
+        Args:
+            output: 输出流，默认为 sys.stdout
+        """
+        out = output or sys.stdout
+        out.write(f"\n{'=' * 60}\n")
+        out.write(f"  {self.title}  (v{self.version})\n")
+        out.write(f"  {self.description}\n")
+        if self.base_url:
+            out.write(f"  Base URL: {self.base_url}\n")
+        out.write(f"{'=' * 60}\n")
+        s = self.stats
+        out.write(f"  接口: {s['total_endpoints']}  "
+                  f"模型: {s['total_schemas']}  "
+                  f"标签: {s['total_tags']}  "
+                  f"已废弃: {s['deprecated_count']}\n")
+        out.write(f"  方法: {s['methods']}\n\n")
+
+    def print_endpoints(self, tag: str = None, output: TextIO = None):
         """
         打印接口列表
 
         Args:
             tag: 可选, 只打印指定标签下的接口
+            output: 输出流，默认为 sys.stdout
         """
+        out = output or sys.stdout
         eps = self.get_endpoints_by_tag(tag) if tag else self.endpoints
         for ep in eps:
             dep = " [废弃]" if ep["deprecated"] else ""
-            print(f"  {ep['method']:7s} {ep['path']:40s} {ep['summary']}{dep}")
+            out.write(f"  {ep['method']:7s} {ep['path']:40s} {ep['summary']}{dep}\n")
 
-    def print_endpoint_detail(self, path: str, method: str):
-        """打印单个接口详情"""
+    def print_endpoint_detail(self, path: str, method: str, output: TextIO = None):
+        """打印单个接口详情
+
+        Args:
+            path: 接口路径
+            method: HTTP 方法
+            output: 输出流，默认为 sys.stdout
+        """
+        out = output or sys.stdout
         ep = self.get_endpoint(path, method)
         if not ep:
-            print(f"  未找到接口: {method} {path}")
+            out.write(f"  未找到接口: {method} {path}\n")
             return
 
-        print(f"\n  {ep['method']} {ep['path']}")
-        print(f"  {'─' * 56}")
+        out.write(f"\n  {ep['method']} {ep['path']}\n")
+        out.write(f"  {'─' * 56}\n")
         if ep["summary"]:
-            print(f"  摘要: {ep['summary']}")
+            out.write(f"  摘要: {ep['summary']}\n")
         if ep["description"]:
-            print(f"  描述: {ep['description']}")
+            out.write(f"  描述: {ep['description']}\n")
         if ep["tags"]:
-            print(f"  标签: {', '.join(ep['tags'])}")
+            out.write(f"  标签: {', '.join(ep['tags'])}\n")
         if ep["deprecated"]:
-            print(f"  状态: ⚠ 已废弃")
+            out.write(f"  状态: 已废弃\n")
 
         if ep["parameters"]:
-            print(f"\n  参数:")
-            print(f"  {'名称':<20s} {'位置':<8s} {'类型':<15s} {'必填':<5s} 描述")
-            print(f"  {'─'*20} {'─'*8} {'─'*15} {'─'*5} {'─'*20}")
+            out.write(f"\n  参数:\n")
+            out.write(f"  {'名称':<20s} {'位置':<8s} {'类型':<15s} {'必填':<5s} 描述\n")
+            out.write(f"  {'─'*20} {'─'*8} {'─'*15} {'─'*5} {'─'*20}\n")
             for p in ep["parameters"]:
                 req = "是" if p["required"] else ""
-                print(f"  {p['name']:<20s} {p['in']:<8s} {p['type']:<15s} {req:<5s} {p['description']}")
+                out.write(f"  {p['name']:<20s} {p['in']:<8s} {p['type']:<15s} {req:<5s} {p['description']}\n")
 
         if ep["request_body"]:
             rb = ep["request_body"]
-            print(f"\n  请求体: {'(必填)' if rb['required'] else ''}")
+            out.write(f"\n  请求体: {'(必填)' if rb['required'] else ''}\n")
             for ct, schema in rb["content"].items():
-                print(f"    Content-Type: {ct}")
-                self._print_schema_props(schema.get("schema", {}), indent=6)
+                out.write(f"    Content-Type: {ct}\n")
+                self._print_schema_props(schema.get("schema", {}), indent=6, output=out)
 
         if ep["responses"]:
-            print(f"\n  响应:")
+            out.write(f"\n  响应:\n")
             for r in ep["responses"]:
-                print(f"    {r['status_code']}: {r['description']}")
+                out.write(f"    {r['status_code']}: {r['description']}\n")
                 for ct, schema in r.get("content", {}).items():
-                    print(f"      Content-Type: {ct}")
-                    self._print_schema_props(schema.get("schema", {}), indent=8)
-        print()
+                    out.write(f"      Content-Type: {ct}\n")
+                    self._print_schema_props(schema.get("schema", {}), indent=8, output=out)
+        out.write("\n")
 
     def to_dict(self) -> dict:
         """导出为结构化字典"""
@@ -773,8 +791,9 @@ class OpenAPIParser:
 
         return resp
 
-    def _print_schema_props(self, schema: dict, indent: int = 4):
+    def _print_schema_props(self, schema: dict, indent: int = 4, output: TextIO = None):
         """辅助: 打印 schema 属性"""
+        out = output or sys.stdout
         props = schema.get("properties", {})
         required = schema.get("required", [])
         prefix = " " * indent
@@ -782,7 +801,7 @@ class OpenAPIParser:
             req = "*" if name in required else " "
             ptype = prop.get("type", self._type_str(prop))
             desc = prop.get("description", "")
-            print(f"{prefix}{req} {name}: {ptype}  {desc}")
+            out.write(f"{prefix}{req} {name}: {ptype}  {desc}\n")
 
     # ================================================================
     #  魔术方法

@@ -7,10 +7,8 @@ from sqlalchemy.orm import Session
 from src.data.models.base import Base
 from src.data.models.test_run import TestRun
 
-from src.core.logging import get_logger
 from src.data.repositories.base import BaseRepository
 
-logger = get_logger(__name__)
 T = TypeVar("T", bound=Base)
 
 

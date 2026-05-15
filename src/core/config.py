@@ -100,7 +100,8 @@ class DatabaseConfig(BaseModel):
 class LoggingConfig(BaseModel):
     """日志配置"""
     level: str = Field(default="INFO", description="日志级别")
-    debug: bool = Field(default=False, deprecated="debug参数已废弃，请直接设置level为DEBUG", description="调试模式")
+    format: str = Field(default="console", description="输出格式: console(彩色) / json(生产环境)")
+    debug: bool = Field(default=False, deprecated="debug参数已废弃，请使用format字段", description="调试模式(已废弃)")
 
 
 class AppConfig(BaseModel):
@@ -161,11 +162,11 @@ def load_config(config_path: Optional[str] = None) -> AppConfig:
                 config_data = yaml.safe_load(f) or {}
             # 解析环境变量
             config_data = _resolve_env_vars(config_data)
-            logger.info(f"已加载配置文件: {config_path}")
+            logger.info("配置文件加载成功: %s", config_path)
         except Exception as e:
-            logger.warning(f"加载配置文件失败: {e}，使用默认配置")
+            logger.warning("配置文件加载失败，使用默认配置", exc_info=e)
     else:
-        logger.warning(f"配置文件不存在: {config_path}，使用默认配置")
+        logger.warning("配置文件不存在: %s，使用默认配置", config_path)
     
     return AppConfig(**config_data)
 
@@ -185,7 +186,7 @@ def ensure_output_dirs(config: AppConfig) -> None:
     
     for dir_path in dirs:
         Path(dir_path).mkdir(parents=True, exist_ok=True)
-        logger.debug(f"确保目录存在: {dir_path}")
+        logger.debug("输出目录已确认: %s", dir_path)
 
 
 # 全局配置实例
