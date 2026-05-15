@@ -81,7 +81,9 @@ def parse_endpoints_result_node(state: AgentState) -> dict:
     logger.info(f"LLM 最终输出: {final_content[:500]}")
     selected = _parse_selected_endpoints(final_content)
     logger.info(f"选中 {len(selected)} 个接口")
-    return {"selected_endpoints": selected}
+    return {
+        "selected_endpoints": selected
+    }
 
 
 def _parse_selected_endpoints(response: str) -> List[Dict[str, Any]]:

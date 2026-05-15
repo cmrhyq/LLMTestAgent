@@ -40,12 +40,18 @@ def parse_input_node(state: AgentState) -> dict:
 
         result = _extract_classification(response)
         logger.info(f"识别到用户意图: {result['intent']}, 测试模式: {result['test_mode']}")
-        return {"user_intent": result["intent"], "test_mode": result["test_mode"]}
+        return {
+            "user_intent": result["intent"],
+            "test_mode": result["test_mode"]
+        }
 
     except Exception as e:
         error_msg = f"输入解析异常: {str(e)}"
         logger.error(f"{error_msg}，使用默认意图: run_test, 默认模式: single")
-        return {"user_intent": "run_test", "test_mode": "single", "error_message": error_msg}
+        return {
+            "user_intent": "run_test",
+            "test_mode": "single", "error_message": error_msg
+        }
 
 
 def _extract_classification(response: str) -> Dict[str, str]:

@@ -38,14 +38,22 @@ def parse_openapi_node(state: AgentState) -> dict:
         storage = ApiDocStorage(config)
         storage.openapi_parse_storage(file_path)
         logger.info("OpenAPI 文档解析并存储完成")
-        return {}
+        return {
+            "current_step": "end",
+        }
 
     except (FileNotFoundError, ValueError) as e:
         error_msg = f"OpenAPI 文档解析失败: {str(e)}"
         logger.error(error_msg)
-        return {"error_message": error_msg}
+        return {
+            "current_step": "error",
+            "error_message": error_msg
+        }
 
     except Exception as e:
         error_msg = f"OpenAPI 文档解析异常: {str(e)}"
         logger.error(error_msg)
-        return {"error_message": error_msg}
+        return {
+            "current_step": "error",
+            "error_message": error_msg
+        }

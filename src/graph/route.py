@@ -3,6 +3,13 @@
 from src.graph.state import AgentState
 
 
+def route_by_step(state: AgentState) -> str:
+    """保存提示词后的路由"""
+    if state.get("current_step") == "error":
+        return "error"
+    return state.get("current_step")
+
+
 def route_by_intent(state: AgentState) -> str:
     """根据用户意图路由到对应节点。
 

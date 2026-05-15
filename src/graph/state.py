@@ -14,7 +14,7 @@ class AgentState(MessagesState):
     继承 MessagesState 自动包含 messages 字段（带 add_messages reducer）。
     包含所有节点需要的业务数据字段。
     """
-
+    current_step: str
     raw_input: str
     api_doc_file_path: str
     user_intent: str

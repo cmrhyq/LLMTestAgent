@@ -42,7 +42,7 @@ def generate_flow_cases_node(state: AgentState) -> dict:
     selected_endpoints = state.get("selected_endpoints", [])
     if not selected_endpoints:
         logger.warning("无选中的接口，跳过流程用例生成")
-        return {"run_id": 0, "test_cases_count": 0, "error_message": "无选中的接口"}
+        return {"run_id": 0, "test_cases_count": 0, "error_message": "无选中的接口", "current_step": "error"}
 
     config = get_config()
     llm_client = get_llm_client()
@@ -58,7 +58,7 @@ def generate_flow_cases_node(state: AgentState) -> dict:
         if not project:
             error_msg = f"项目不存在: project_id={project_id}"
             logger.error(error_msg)
-            return {"run_id": 0, "test_cases_count": 0, "error_message": error_msg}
+            return {"run_id": 0, "test_cases_count": 0, "error_message": error_msg, "current_step": "error"}
 
         base_url = project.base_url.rstrip("/")
 
@@ -71,7 +71,7 @@ def generate_flow_cases_node(state: AgentState) -> dict:
         if not endpoints:
             error_msg = "未查询到有效的接口定义"
             logger.error(error_msg)
-            return {"run_id": 0, "test_cases_count": 0, "error_message": error_msg}
+            return {"run_id": 0, "test_cases_count": 0, "error_message": error_msg, "current_step": "error"}
 
         test_run = TestRun(
             project_id=project_id,
@@ -117,7 +117,7 @@ def generate_flow_cases_node(state: AgentState) -> dict:
         test_run.total_cases = total_cases
         logger.info(f"流程用例生成完成: run_id={run_id}, total_cases={total_cases}")
 
-    return {"run_id": run_id, "test_cases_count": total_cases}
+    return {"run_id": run_id, "test_cases_count": total_cases, "current_step": "execute_flow_tests"}
 
 
 def _build_endpoints_info(endpoints: List[Endpoint], base_url: str) -> List[Dict[str, Any]]:

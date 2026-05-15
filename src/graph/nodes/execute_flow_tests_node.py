@@ -39,7 +39,7 @@ def execute_flow_tests_node(state: AgentState) -> dict:
     run_id = state.get("run_id", 0)
     if not run_id:
         logger.warning("run_id 为空，跳过执行")
-        return {"test_results_summary": {}}
+        return {"test_results_summary": {}, "current_step": "error", "error_message": "run_id 为空"}
 
     config = get_config()
     executor = TestExecutor(config)
@@ -50,7 +50,7 @@ def execute_flow_tests_node(state: AgentState) -> dict:
         test_run = session.get(TestRun, run_id)
         if not test_run:
             logger.error(f"TestRun 不存在: run_id={run_id}")
-            return {"test_results_summary": {}, "error_message": f"TestRun 不存在: {run_id}"}
+            return {"test_results_summary": {}, "error_message": f"TestRun 不存在: {run_id}", "current_step": "error"}
 
         stmt = select(TestCase).where(
             TestCase.run_id == run_id,
@@ -62,7 +62,7 @@ def execute_flow_tests_node(state: AgentState) -> dict:
             logger.warning(f"无可执行的用例: run_id={run_id}")
             test_run.status = "completed"
             test_run.finished_at = datetime.now().isoformat()
-            return {"test_results_summary": {"total": 0}}
+            return {"test_results_summary": {"total": 0}, "current_step": "generate_report"}
 
         test_cases.sort(key=lambda tc: _extract_step_order(tc))
 
@@ -140,7 +140,7 @@ def execute_flow_tests_node(state: AgentState) -> dict:
         f"pass_rate={pass_rate:.2f}%"
     )
 
-    return {"test_results_summary": summary}
+    return {"test_results_summary": summary, "current_step": "generate_report"}
 
 
 def _extract_step_order(test_case: TestCase) -> int:
