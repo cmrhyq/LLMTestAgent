@@ -164,7 +164,7 @@ def load_config(config_path: Optional[str] = None) -> AppConfig:
             config_data = _resolve_env_vars(config_data)
             logger.info("配置文件加载成功: %s", config_path)
         except Exception as e:
-            logger.warning("配置文件加载失败，使用默认配置", exc_info=e)
+            logger.warning(f"配置文件加载失败，使用默认配置, error: {e}", exc_info=e)
     else:
         logger.warning("配置文件不存在: %s，使用默认配置", config_path)
     

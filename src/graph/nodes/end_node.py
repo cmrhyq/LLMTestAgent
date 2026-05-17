@@ -8,6 +8,6 @@ logger = get_logger(__name__)
 
 def end_node(state: AgentState) -> dict:
     """结束节点：输出统计信息。"""
-    logger.info("工作流完成", node="end")
+    logger.info("工作流完成, node: end", node="end")
 
     return {"current_step": "completed"}

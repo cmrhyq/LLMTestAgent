@@ -38,7 +38,7 @@ def generate_single_cases_node(state: AgentState) -> dict:
     Returns:
         部分状态更新，包含 run_id 和 test_cases_count
     """
-    logger.info("节点进入", node="generate_single_cases")
+    logger.info("节点进入, node: generate_single_cases", node="generate_single_cases")
 
     selected_endpoints = state.get("selected_endpoints", [])
     if not selected_endpoints:
@@ -57,7 +57,7 @@ def generate_single_cases_node(state: AgentState) -> dict:
     with get_db_manager().get_session() as session:
         project = session.get(Project, project_id)
         if not project:
-            logger.error("项目不存在", project_id=project_id)
+            logger.error(f"项目不存在, project_id: {project_id}", project_id=project_id)
             return {"run_id": 0, "test_cases_count": 0, "error_message": f"项目不存在: project_id={project_id}", "current_step": "error"}
 
         base_url = project.base_url.rstrip("/")
@@ -69,7 +69,7 @@ def generate_single_cases_node(state: AgentState) -> dict:
         endpoints: List[Endpoint] = list(session.scalars(stmt).all())
 
         if not endpoints:
-            logger.error("未查询到有效的接口定义", endpoint_ids=endpoint_ids)
+            logger.error(f"未查询到有效的接口定义, endpoint_ids: {endpoint_ids}", endpoint_ids=endpoint_ids)
             return {"run_id": 0, "test_cases_count": 0, "error_message": "未查询到有效的接口定义", "current_step": "error"}
 
         test_run = TestRun(
@@ -100,12 +100,12 @@ def generate_single_cases_node(state: AgentState) -> dict:
                     session=session,
                 )
                 total_cases += len(cases)
-                logger.info("接口用例生成完成", endpoint=endpoint.name, count=len(cases))
+                logger.info(f"接口用例生成完成, endpoint: {endpoint.name}, count: {len(cases)}", endpoint=endpoint.name, count=len(cases))
             except Exception as e:
-                logger.error("接口用例生成失败", endpoint=endpoint.name, error=str(e))
+                logger.error(f"接口用例生成失败, endpoint: {endpoint.name}, error: {e}", endpoint=endpoint.name, error=str(e))
 
         test_run.total_cases = total_cases
-        logger.info("用例生成完成", run_id=run_id, total_cases=total_cases)
+        logger.info(f"用例生成完成, run_id: {run_id}, total_cases: {total_cases}", run_id=run_id, total_cases=total_cases)
 
     return {"run_id": run_id, "test_cases_count": total_cases, "current_step": "execute_single_tests"}
 
@@ -242,7 +242,7 @@ def _parse_llm_cases_response(response: str) -> List[Dict[str, Any]]:
     try:
         data = json.loads(json_str)
     except json.JSONDecodeError as e:
-        logger.error("解析LLM JSON响应失败", error=str(e))
+        logger.error(f"解析LLM JSON响应失败, error: {e}", error=str(e))
         return []
 
     if isinstance(data, dict):

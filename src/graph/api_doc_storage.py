@@ -41,9 +41,9 @@ class ApiDocStorage:
             FileNotFoundError: 文件不存在
             ValueError: 文档解析失败
         """
-        logger.info("开始解析OpenAPI文档", path=str(file_path))
+        logger.info(f"开始解析OpenAPI文档, path: {file_path}", path=str(file_path))
         parser = OpenAPIParser(file_path)
-        logger.info("OpenAPI文档信息", title=parser.title, base_url=parser.base_url)
+        logger.info(f"OpenAPI文档信息, title: {parser.title}, base_url: {parser.base_url}", title=parser.title, base_url=parser.base_url)
 
         project = ProjectCreate(
             name=parser.title,
@@ -69,7 +69,7 @@ class ApiDocStorage:
             if endpoint_list:
                 endpoint_service.create_endpoint(endpoint_list)
 
-        logger.info("OpenAPI文档解析存储完成", project=parser.title)
+        logger.info(f"OpenAPI文档解析存储完成, project: {parser.title}", project=parser.title)
 
     @staticmethod
     def _build_environments(

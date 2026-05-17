@@ -68,7 +68,7 @@ def init_database_from_sql(
             conn.execute(text(stmt))
         conn.commit()
 
-    logger.info("database_initialized_from_sql", file=sql_file, statement_count=len(statements))
+    logger.info(f"SQL文件建表完成, file: {sql_file}, statement_count: {len(statements)}", file=sql_file, statement_count=len(statements))
 
 
 def check_tables_exist(manager: Optional[DatabaseManager] = None) -> List[str]:
@@ -139,7 +139,7 @@ def ensure_database(
 
     if not is_database_ready(mgr):
         missing = get_missing_tables(mgr)
-        logger.info("database_tables_missing", tables=missing)
+        logger.info(f"数据库缺少表, tables: {missing}", tables=missing)
 
         if use_sql_file:
             init_database_from_sql(sql_file, mgr)

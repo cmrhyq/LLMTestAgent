@@ -33,7 +33,7 @@ def select_endpoints_agent_node(state: AgentState) -> dict:
     Returns:
         部分状态更新，包含新的 messages
     """
-    logger.info("节点进入", node="select_endpoints_agent")
+    logger.info("节点进入, node: select_endpoints_agent", node="select_endpoints_agent")
 
     model = get_chat_model()
     model_with_tools = model.bind_tools(AVAILABLE_TOOLS)
@@ -45,12 +45,12 @@ def select_endpoints_agent_node(state: AgentState) -> dict:
             SystemMessage(content=messages_dicts[0]["content"]),
             HumanMessage(content=messages_dicts[1]["content"]),
         ]
-        logger.debug("初始化消息列表", message_count=len(messages))
+        logger.debug(f"初始化消息列表, message_count: {len(messages)}", message_count=len(messages))
         response = model_with_tools.invoke(messages)
         return {"messages": messages + [response]}
     else:
         messages = state["messages"]
-        logger.debug("继续对话循环", message_count=len(messages))
+        logger.debug(f"继续对话循环, message_count: {len(messages)}", message_count=len(messages))
         response = model_with_tools.invoke(messages)
         return {"messages": [response]}
 
@@ -64,7 +64,7 @@ def parse_endpoints_result_node(state: AgentState) -> dict:
     Returns:
         部分状态更新，包含 selected_endpoints
     """
-    logger.info("解析接口挑选结果", node="parse_result")
+    logger.info("解析接口挑选结果, node: parse_result", node="parse_result")
 
     messages = state.get("messages", [])
     if not messages:
@@ -78,9 +78,9 @@ def parse_endpoints_result_node(state: AgentState) -> dict:
         logger.warning("最终消息内容为空")
         return {"selected_endpoints": []}
 
-    logger.debug("LLM最终输出", content=final_content[:500])
+    logger.debug(f"LLM最终输出, content: {final_content[:500]}", content=final_content[:500])
     selected = _parse_selected_endpoints(final_content)
-    logger.info("接口挑选完成", count=len(selected))
+    logger.info(f"接口挑选完成, count: {len(selected)}", count=len(selected))
     return {
         "selected_endpoints": selected
     }

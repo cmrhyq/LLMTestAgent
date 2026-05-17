@@ -28,7 +28,7 @@ def parse_input_node(state: AgentState) -> dict:
     Returns:
         部分状态更新，包含 user_intent 和 test_mode 字段
     """
-    logger.info("节点进入", node="parse_input")
+    logger.info("节点进入, node: parse_input", node="parse_input")
 
     try:
         builder = IntentPromptBuilder()
@@ -36,10 +36,10 @@ def parse_input_node(state: AgentState) -> dict:
 
         llm_client = get_llm_client()
         response = llm_client.chat(messages)
-        logger.debug("LLM意图分类响应", response=response)
+        logger.debug(f"LLM意图分类响应, response: {response}", response=response)
 
         result = _extract_classification(response)
-        logger.info("意图识别完成", intent=result["intent"], test_mode=result["test_mode"])
+        logger.info(f"意图识别完成, intent: {result['intent']}, test_mode: {result['test_mode']}", intent=result["intent"], test_mode=result["test_mode"])
         return {
             "user_intent": result["intent"],
             "test_mode": result["test_mode"]
@@ -47,7 +47,7 @@ def parse_input_node(state: AgentState) -> dict:
 
     except Exception as e:
         error_msg = f"输入解析异常: {str(e)}"
-        logger.error("意图解析失败，使用默认值", error=str(e), default_intent="run_test", default_mode="single")
+        logger.error(f"意图解析失败，使用默认值, error: {e}, default_intent: run_test, default_mode: single", error=str(e), default_intent="run_test", default_mode="single")
         return {
             "user_intent": "run_test",
             "test_mode": "single", "error_message": error_msg

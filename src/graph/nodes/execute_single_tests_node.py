@@ -34,7 +34,7 @@ def execute_single_tests_node(state: AgentState) -> dict:
     Returns:
         部分状态更新，包含 test_results_summary
     """
-    logger.info("节点进入", node="execute_single_tests")
+    logger.info("节点进入, node: execute_single_tests", node="execute_single_tests")
 
     run_id = state.get("run_id", 0)
     if not run_id:
@@ -51,7 +51,7 @@ def execute_single_tests_node(state: AgentState) -> dict:
     with get_db_manager().get_session() as session:
         test_run = session.get(TestRun, run_id)
         if not test_run:
-            logger.error("TestRun不存在", run_id=run_id)
+            logger.error(f"TestRun不存在, run_id: {run_id}", run_id=run_id)
             return {"test_results_summary": {}, "error_message": f"TestRun 不存在: {run_id}", "current_step": "error"}
 
         stmt = select(TestCase).where(
@@ -61,7 +61,7 @@ def execute_single_tests_node(state: AgentState) -> dict:
         test_cases: List[TestCase] = list(session.scalars(stmt).all())
 
         if not test_cases:
-            logger.warning("无可执行的用例", run_id=run_id)
+            logger.warning(f"无可执行的用例, run_id: {run_id}", run_id=run_id)
             test_run.status = "completed"
             test_run.finished_at = datetime.now().isoformat()
             return {"test_results_summary": {"total": 0}, "current_step": "generate_report"}
@@ -91,7 +91,7 @@ def execute_single_tests_node(state: AgentState) -> dict:
                 else:
                     error += 1
             except Exception as e:
-                logger.error("用例执行异常", case_id=test_case.case_id, error=str(e))
+                logger.error(f"用例执行异常, case_id: {test_case.case_id}, error: {e}", case_id=test_case.case_id, error=str(e))
                 error += 1
 
         total = passed + failed + skipped + error
@@ -120,7 +120,7 @@ def execute_single_tests_node(state: AgentState) -> dict:
     }
 
     logger.info(
-        "测试执行完成",
+        f"测试执行完成, total: {total}, passed: {passed}, failed: {failed}, skipped: {skipped}, error: {error}, pass_rate: {round(pass_rate, 2)}",
         total=total, passed=passed, failed=failed,
         skipped=skipped, error=error, pass_rate=round(pass_rate, 2),
     )

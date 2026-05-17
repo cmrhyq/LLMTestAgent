@@ -34,7 +34,7 @@ def execute_flow_tests_node(state: AgentState) -> dict:
     Returns:
         部分状态更新，包含 test_results_summary
     """
-    logger.info("节点进入", node="execute_flow_tests")
+    logger.info("节点进入, node: execute_flow_tests", node="execute_flow_tests")
 
     run_id = state.get("run_id", 0)
     if not run_id:
@@ -49,7 +49,7 @@ def execute_flow_tests_node(state: AgentState) -> dict:
     with get_db_manager().get_session() as session:
         test_run = session.get(TestRun, run_id)
         if not test_run:
-            logger.error("TestRun不存在", run_id=run_id)
+            logger.error(f"TestRun不存在, run_id: {run_id}", run_id=run_id)
             return {"test_results_summary": {}, "error_message": f"TestRun 不存在: {run_id}", "current_step": "error"}
 
         stmt = select(TestCase).where(
@@ -59,7 +59,7 @@ def execute_flow_tests_node(state: AgentState) -> dict:
         test_cases: List[TestCase] = list(session.scalars(stmt).all())
 
         if not test_cases:
-            logger.warning("无可执行的用例", run_id=run_id)
+            logger.warning(f"无可执行的用例, run_id: {run_id}", run_id=run_id)
             test_run.status = "completed"
             test_run.finished_at = datetime.now().isoformat()
             return {"test_results_summary": {"total": 0}, "current_step": "generate_report"}
@@ -80,7 +80,7 @@ def execute_flow_tests_node(state: AgentState) -> dict:
             cache_rules = _parse_cache_rules(test_case.cache_rules)
 
             if _has_dependency_on_failed(cache_rules, failed_cache_keys):
-                logger.info("用例前置步骤失败，标记为skipped", case_id=test_case.case_id)
+                logger.info(f"用例前置步骤失败，标记为skipped, case_id: {test_case.case_id}", case_id=test_case.case_id)
                 _record_skipped(test_case, run_id, session, "前置步骤失败，跳过执行")
                 skipped += 1
                 _mark_extract_keys_failed(cache_rules, failed_cache_keys)
@@ -102,7 +102,8 @@ def execute_flow_tests_node(state: AgentState) -> dict:
                     error += 1
                     _mark_extract_keys_failed(cache_rules, failed_cache_keys)
             except Exception as e:
-                logger.error("流程步骤执行异常", case_id=test_case.case_id, error=str(e))
+                logger.error(f"流程步骤执行异常, case_id: {test_case.case_id}, error: {e}", case_id=test_case.case_id,
+                             error=str(e))
                 error += 1
                 _mark_extract_keys_failed(cache_rules, failed_cache_keys)
 
@@ -133,7 +134,7 @@ def execute_flow_tests_node(state: AgentState) -> dict:
     }
 
     logger.info(
-        "流程测试执行完成",
+        f"流程测试执行完成, total: {total}, passed: {passed}, failed: {failed}, skipped: {skipped}, error: {error}, pass_rate: {round(pass_rate, 2)}",
         total=total, passed=passed, failed=failed,
         skipped=skipped, error=error, pass_rate=round(pass_rate, 2),
     )
@@ -161,8 +162,8 @@ def _parse_cache_rules(cache_rules_str: Optional[str]) -> Optional[Dict[str, Any
 
 
 def _has_dependency_on_failed(
-    cache_rules: Optional[Dict[str, Any]],
-    failed_keys: Set[str],
+        cache_rules: Optional[Dict[str, Any]],
+        failed_keys: Set[str],
 ) -> bool:
     """检查当前步骤是否依赖已失败步骤产出的缓存键。"""
     if not cache_rules or not failed_keys:
@@ -177,8 +178,8 @@ def _has_dependency_on_failed(
 
 
 def _mark_extract_keys_failed(
-    cache_rules: Optional[Dict[str, Any]],
-    failed_keys: Set[str],
+        cache_rules: Optional[Dict[str, Any]],
+        failed_keys: Set[str],
 ) -> None:
     """将当前步骤本应产出的 cache_key 标记为失败。"""
     if not cache_rules:
@@ -192,10 +193,10 @@ def _mark_extract_keys_failed(
 
 
 def _record_skipped(
-    test_case: TestCase,
-    run_id: int,
-    session: Any,
-    reason: str,
+        test_case: TestCase,
+        run_id: int,
+        session: Any,
+        reason: str,
 ) -> None:
     """为跳过的用例记录一条 TestResult。"""
     from src.data.models.test_result import TestResult

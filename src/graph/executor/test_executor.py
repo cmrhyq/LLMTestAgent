@@ -57,7 +57,7 @@ class TestExecutor:
         started_at = datetime.now()
 
         logger.debug(
-            "用例开始执行",
+            f"用例开始执行, case_id: {test_case.case_id}, method: {test_case.method}, url: {test_case.url}",
             case_id=test_case.case_id, method=test_case.method,
             url=test_case.url,
         )
@@ -70,7 +70,7 @@ class TestExecutor:
 
         if cache_rules and self.cache_resolver.has_unresolved_dependencies(cache_rules):
             if self.config.execution.dependency_failure == "skip":
-                logger.info("缓存依赖未满足，跳过执行", case_id=test_case.case_id)
+                logger.info(f"缓存依赖未满足，跳过执行, case_id: {test_case.case_id}", case_id=test_case.case_id)
                 return self._build_result(
                     test_case=test_case,
                     run_id=run_id,
@@ -138,7 +138,7 @@ class TestExecutor:
 
         except Exception as e:
             error_message = str(e)
-            logger.error("用例请求失败", case_id=test_case.case_id, error=error_message)
+            logger.error(f"用例请求失败, case_id: {test_case.case_id}, error: {error_message}", case_id=test_case.case_id, error=error_message)
 
         if error_message:
             status = "error"
@@ -174,7 +174,7 @@ class TestExecutor:
         )
 
         logger.info(
-            "用例执行完成",
+            f"用例执行完成, case_id: {test_case.case_id}, status: {status}, response_time_ms: {round(response_time, 2)}",
             case_id=test_case.case_id, status=status,
             response_time_ms=round(response_time, 2),
         )

@@ -99,7 +99,7 @@ class DatabaseManager:
         )
 
         self._initialized = True
-        logger.info("database_initialized", db_url=self._mask_url(db_url))
+        logger.info(f"数据库初始化完成, db_url: {self._mask_url(db_url)}", db_url=self._mask_url(db_url))
 
     @staticmethod
     def _ensure_db_directory(db_url: str) -> None:
@@ -204,7 +204,7 @@ class DatabaseManager:
                     conn.execute(text(statement))
             conn.commit()
 
-        logger.info("sql_file_executed", file=sql_file_path, statements=len(statements))
+        logger.info(f"SQL文件执行完成, file: {sql_file_path}, statements: {len(statements)}", file=sql_file_path, statements=len(statements))
 
     def check_connection(self) -> bool:
         """
@@ -219,7 +219,7 @@ class DatabaseManager:
                 conn.execute(text("SELECT 1"))
             return True
         except Exception as e:
-            logger.error("database_connection_check_failed", error=str(e))
+            logger.error(f"数据库连接检查失败, error: {e}", error=str(e))
             return False
 
     def close(self) -> None:

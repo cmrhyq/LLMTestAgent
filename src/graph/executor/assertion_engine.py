@@ -64,9 +64,9 @@ class AssertionEngine:
 
         failed_count = sum(1 for d in details if not d["passed"])
         if all_passed:
-            logger.debug("断言全部通过", rule_count=len(rules))
+            logger.debug(f"断言全部通过, rule_count: {len(rules)}", rule_count=len(rules))
         else:
-            logger.debug("断言部分失败", total=len(rules), failed=failed_count)
+            logger.debug(f"断言部分失败, total: {len(rules)}, failed: {failed_count}", total=len(rules), failed=failed_count)
 
         return all_passed, details
 
@@ -90,7 +90,7 @@ class AssertionEngine:
                 "operator": operator,
             }
         except Exception as e:
-            logger.warning("断言评估异常", rule=rule_str, error=str(e))
+            logger.warning(f"断言评估异常, rule: {rule_str}, error: {e}", rule=rule_str, error=str(e))
             return {
                 "rule": rule_str,
                 "passed": False,
@@ -229,7 +229,7 @@ class AssertionEngine:
         if operator in (">", "<", ">=", "<="):
             return self._numeric_compare(actual, operator, expected)
 
-        logger.warning("未知运算符", operator=operator)
+        logger.warning(f"未知运算符, operator: {operator}", operator=operator)
         return False
 
     @staticmethod

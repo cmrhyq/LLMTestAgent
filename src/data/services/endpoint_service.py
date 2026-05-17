@@ -29,11 +29,11 @@ class EndpointService:
             logger.warning("无接口数据需创建")
             return []
 
-        logger.info("开始创建接口", count=len(endpoints))
+        logger.info(f"开始创建接口, count: {len(endpoints)}", count=len(endpoints))
 
         try:
             existing_keys = self._get_existing_keys(endpoints)
-            logger.debug("已存在记录查询完成", existing_count=len(existing_keys))
+            logger.debug(f"已存在记录查询完成, existing_count: {len(existing_keys)}", existing_count=len(existing_keys))
             new_data = [
                 endpoint.model_dump() for endpoint in endpoints
                 if (endpoint.project_id, endpoint.path, endpoint.method) not in existing_keys
@@ -43,10 +43,10 @@ class EndpointService:
                 return []
             skipped = len(endpoints) - len(new_data)
             if skipped:
-                logger.info("跳过重复接口", skipped=skipped)
+                logger.info(f"跳过重复接口, skipped: {skipped}", skipped=skipped)
             results = self.repo.bulk_create(new_data)
-            logger.info("接口创建成功", created=len(results))
+            logger.info(f"接口创建成功, created: {len(results)}", created=len(results))
             return results
         except Exception as e:
-            logger.error("接口创建失败", error=str(e))
+            logger.error(f"接口创建失败, error: {e}", error=str(e))
             raise

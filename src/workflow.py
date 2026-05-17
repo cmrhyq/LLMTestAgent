@@ -229,6 +229,6 @@ class TestWorkflow:
             logger.info("工作流执行完成")
             return final_state
         except Exception as e:
-            logger.error("工作流执行失败", error=str(e))
+            logger.error(f"工作流执行失败, error: {e}", error=str(e))
             initial_state["error_message"] = str(e)
             return initial_state

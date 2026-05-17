@@ -14,7 +14,9 @@ def start_node(state: AgentState) -> dict:
     - 返回需要更新的状态字段（字典）
     - 返回的字段会合并到当前状态中
     """
-    logger.info("节点进入", node="start", raw_input=state.get("raw_input"), api_doc=state.get("api_doc_file_path", "无"))
+    logger.info(
+        f"节点进入, node: start, raw_input: {state.get('raw_input')}, api_doc: {state.get('api_doc_file_path', '无')}",
+        node="start", raw_input=state.get("raw_input"), api_doc=state.get("api_doc_file_path"))
 
     raw_input = state.get("raw_input")
     if not raw_input:
