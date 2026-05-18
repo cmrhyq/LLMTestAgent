@@ -28,10 +28,10 @@ class EnvironmentService:
         去重批量创建环境
         """
         if len(env_list) == 0:
-            logger.warning("无环境数据需创建")
+            logger.warning(f"无环境数据需创建", action="create_env")
             return []
 
-        logger.info(f"开始创建环境, count: {len(env_list)}", count=len(env_list))
+        logger.info(f"开始创建环境，数量: {len(env_list)}", action="create_env", count=len(env_list))
         try:
             existing_keys = self._get_existing_keys(env_list)
             new_data = [
@@ -39,14 +39,14 @@ class EnvironmentService:
                 if (env.project_id, env.name) not in existing_keys
             ]
             if not new_data:
-                logger.warning("所有环境已存在，跳过插入")
+                logger.warning(f"所有环境已存在，跳过插入", action="create_env")
                 return []
             skipped = len(env_list) - len(new_data)
             if skipped:
-                logger.info(f"跳过重复环境, skipped: {skipped}", skipped=skipped)
+                logger.info(f"跳过{skipped}个重复环境", action="create_env", skipped=skipped)
             results = self.repo.bulk_create(new_data)
-            logger.info(f"环境创建成功, created: {len(results)}", created=len(results))
+            logger.info(f"环境创建成功，数量: {len(results)}", action="create_env", created=len(results))
             return results
         except Exception as e:
-            logger.error(f"环境创建失败, error: {e}", error=str(e))
+            logger.error(f"环境创建失败: {e}", action="create_env", error=str(e))
             raise

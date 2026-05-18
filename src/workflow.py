@@ -205,7 +205,8 @@ class TestWorkflow:
         Returns:
             最终工作流状态字典
         """
-        logger.info("工作流开始执行")
+        logger.info(f"工作流开始执行，指令: {raw_input[:80]}，文档: {api_doc_file_path or '无'}",
+                    raw_input=raw_input, api_doc_file_path=str(api_doc_file_path) if api_doc_file_path else "")
 
         initial_state: Dict[str, Any] = {
             "raw_input": raw_input,
@@ -226,9 +227,12 @@ class TestWorkflow:
 
         try:
             final_state = self.graph.invoke(initial_state)
-            logger.info("工作流执行完成")
+            logger.info(f"工作流执行完成，意图: {final_state.get('user_intent', '')}, "
+                        f"步骤: {final_state.get('current_step', '')}",
+                        intent=final_state.get("user_intent", ""),
+                        current_step=final_state.get("current_step", ""))
             return final_state
         except Exception as e:
-            logger.error(f"工作流执行失败, error: {e}", error=str(e))
+            logger.error(f"工作流执行失败: {str(e)}", error=str(e), raw_input=raw_input[:100])
             initial_state["error_message"] = str(e)
             return initial_state

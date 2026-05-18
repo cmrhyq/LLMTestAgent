@@ -69,7 +69,7 @@ class DatabaseManager:
             pool_recycle: 连接回收时间（秒）
         """
         if self._initialized:
-            logger.debug("database_already_initialized")
+            logger.debug(f"数据库已初始化，跳过重复初始化", action="initialize")
             return
 
         self._ensure_db_directory(db_url)
@@ -99,7 +99,7 @@ class DatabaseManager:
         )
 
         self._initialized = True
-        logger.info(f"数据库初始化完成, db_url: {self._mask_url(db_url)}", db_url=self._mask_url(db_url))
+        logger.info(f"数据库初始化完成: {self._mask_url(db_url)}", db_url=self._mask_url(db_url))
 
     @staticmethod
     def _ensure_db_directory(db_url: str) -> None:
@@ -171,13 +171,13 @@ class DatabaseManager:
         """根据 ORM 模型创建所有表（如果不存在）"""
         self._check_initialized()
         Base.metadata.create_all(self._engine)  # type: ignore[arg-type]
-        logger.info("database_tables_created")
+        logger.info(f"数据库表已创建", action="create_tables")
 
     def drop_tables(self) -> None:
         """删除所有 ORM 模型对应的表（仅用于测试环境）"""
         self._check_initialized()
         Base.metadata.drop_all(self._engine)  # type: ignore[arg-type]
-        logger.warning("database_tables_dropped")
+        logger.warning(f"数据库表已删除（仅测试环境）", action="drop_tables")
 
     def execute_sql_file(self, sql_file_path: str) -> None:
         """
@@ -204,7 +204,7 @@ class DatabaseManager:
                     conn.execute(text(statement))
             conn.commit()
 
-        logger.info(f"SQL文件执行完成, file: {sql_file_path}, statements: {len(statements)}", file=sql_file_path, statements=len(statements))
+        logger.info(f"SQL文件执行完成: {sql_file_path}，语句数: {len(statements)}", file=sql_file_path, statements=len(statements))
 
     def check_connection(self) -> bool:
         """
@@ -219,14 +219,14 @@ class DatabaseManager:
                 conn.execute(text("SELECT 1"))
             return True
         except Exception as e:
-            logger.error(f"数据库连接检查失败, error: {e}", error=str(e))
+            logger.error(f"数据库连接检查失败: {str(e)}", error=str(e))
             return False
 
     def close(self) -> None:
         """关闭数据库引擎并释放所有连接"""
         if self._engine is not None:
             self._engine.dispose()
-            logger.info("database_engine_disposed")
+            logger.info(f"数据库引擎已释放", action="dispose")
         self._engine = None
         self._session_factory = None
         self._initialized = False

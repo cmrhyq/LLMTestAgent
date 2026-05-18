@@ -37,11 +37,11 @@ def generate_flow_cases_node(state: AgentState) -> dict:
     Returns:
         部分状态更新，包含 run_id 和 test_cases_count
     """
-    logger.info("节点进入, node: generate_flow_cases", node="generate_flow_cases")
-
     selected_endpoints = state.get("selected_endpoints", [])
+    logger.info(f"进入流程测试用例生成节点，接口数: {len(selected_endpoints)}", node="generate_flow_cases", endpoint_count=len(selected_endpoints))
+
     if not selected_endpoints:
-        logger.warning("无选中的接口，跳过流程用例生成")
+        logger.warning(f"无选中的接口，跳过流程用例生成", node="generate_flow_cases")
         return {"run_id": 0, "test_cases_count": 0, "error_message": "无选中的接口", "current_step": "error"}
 
     config = get_config()
@@ -56,7 +56,7 @@ def generate_flow_cases_node(state: AgentState) -> dict:
     with get_db_manager().get_session() as session:
         project = session.get(Project, project_id)
         if not project:
-            logger.error(f"项目不存在, project_id: {project_id}", project_id=project_id)
+            logger.error(f"项目不存在: project_id={project_id}", node="generate_flow_cases", project_id=project_id)
             return {"run_id": 0, "test_cases_count": 0, "error_message": f"项目不存在: project_id={project_id}", "current_step": "error"}
 
         base_url = project.base_url.rstrip("/")
@@ -68,7 +68,7 @@ def generate_flow_cases_node(state: AgentState) -> dict:
         endpoints: List[Endpoint] = list(session.scalars(stmt).all())
 
         if not endpoints:
-            logger.error(f"未查询到有效的接口定义, endpoint_ids: {endpoint_ids}", endpoint_ids=endpoint_ids)
+            logger.error(f"未查询到有效的接口定义", node="generate_flow_cases", endpoint_ids=endpoint_ids)
             return {"run_id": 0, "test_cases_count": 0, "error_message": "未查询到有效的接口定义", "current_step": "error"}
 
         test_run = TestRun(
@@ -88,7 +88,7 @@ def generate_flow_cases_node(state: AgentState) -> dict:
 
         messages = prompt_builder.build_messages(endpoints_info)
         response_text = llm_client.chat(messages)
-        logger.debug(f"LLM流程用例响应, response_length: {len(response_text)}", response_length=len(response_text))
+        logger.debug(f"LLM流程用例响应，长度: {len(response_text)}", node="generate_flow_cases", response_length=len(response_text))
 
         cases_data = _parse_flow_response(response_text)
         endpoint_map = {ep.id: ep for ep in endpoints}
@@ -98,7 +98,7 @@ def generate_flow_cases_node(state: AgentState) -> dict:
             endpoint_id = case_data.get("endpoint_id")
             endpoint = endpoint_map.get(endpoint_id)
             if not endpoint:
-                logger.warning(f"步骤引用未知endpoint, step: {idx}, endpoint_id: {endpoint_id}", step=idx, endpoint_id=endpoint_id)
+                logger.warning(f"步骤{idx}引用未知endpoint_id={endpoint_id}，跳过", node="generate_flow_cases", step=idx, endpoint_id=endpoint_id)
                 continue
 
             full_url = f"{base_url}{endpoint.path}"
@@ -113,7 +113,7 @@ def generate_flow_cases_node(state: AgentState) -> dict:
             total_cases += 1
 
         test_run.total_cases = total_cases
-        logger.info(f"流程用例生成完成, run_id: {run_id}, total_cases: {total_cases}", run_id=run_id, total_cases=total_cases)
+        logger.info(f"流程用例生成完成 - run_id: {run_id}, 总用例数: {total_cases}", node="generate_flow_cases", run_id=run_id, total_cases=total_cases)
 
     return {"run_id": run_id, "test_cases_count": total_cases, "current_step": "execute_flow_tests"}
 
@@ -202,14 +202,14 @@ def _parse_flow_response(response: str) -> List[Dict[str, Any]]:
         json_start = response.find("{")
         json_end = response.rfind("}") + 1
         if json_start == -1 or json_end <= 0:
-            logger.warning("LLM流程响应中未找到JSON内容")
+            logger.warning(f"LLM流程响应中未找到JSON内容", node="generate_flow_cases")
             return []
         json_str = response[json_start:json_end]
 
     try:
         data = json.loads(json_str)
     except json.JSONDecodeError as e:
-        logger.error(f"解析LLM流程JSON响应失败, error: {e}", error=str(e))
+        logger.error(f"解析LLM流程JSON响应失败: {e}", node="generate_flow_cases", error=str(e))
         return []
 
     if isinstance(data, dict):

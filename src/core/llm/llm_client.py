@@ -31,19 +31,19 @@ def create_chat_model(config: Optional[AppConfig] = None) -> BaseChatModel:
     provider = config.llm.provider.lower()
 
     if provider == "openai":
-        logger.info("LLM提供商初始化, provider: OpenAI", provider="OpenAI")
+        logger.info(f"LLM提供商初始化: OpenAI", provider="openai")
         return _create_openai_model(config)
     elif provider == "bedrock":
-        logger.info("LLM提供商初始化, provider: AWS Bedrock", provider="AWS Bedrock")
+        logger.info(f"LLM提供商初始化: AWS Bedrock", provider="bedrock")
         return _create_bedrock_model(config)
     elif provider == "zhipu":
-        logger.info("LLM提供商初始化, provider: 智谱AI", provider="智谱AI")
+        logger.info(f"LLM提供商初始化: 智谱AI", provider="zhipu")
         return _create_zhipu_model(config)
     elif provider == "qwen":
-        logger.info("LLM提供商初始化, provider: 通义千问", provider="通义千问")
+        logger.info(f"LLM提供商初始化: 通义千问", provider="qwen")
         return _create_qwen_model(config)
     else:
-        logger.warning(f"未知的LLM提供商，使用OpenAI作为默认, provider: {provider}", provider=provider)
+        logger.warning(f"未知的LLM提供商: {provider}，使用OpenAI作为默认", provider=provider)
         return _create_openai_model(config)
 
 
@@ -140,12 +140,12 @@ class LLMClient:
 
     def chat(self, messages: List[Dict[str, str]], **kwargs) -> str:
         """发送聊天请求，返回纯文本响应。"""
-        logger.debug(f"LLM调用开始, message_count: {len(messages)}", message_count=len(messages))
+        logger.debug(f"LLM调用开始，消息数: {len(messages)}", message_count=len(messages))
         start_time = time.perf_counter()
         langchain_messages = convert_to_langchain_messages(messages)
         response = self._model.invoke(langchain_messages)
         elapsed_ms = round((time.perf_counter() - start_time) * 1000, 2)
-        logger.debug(f"LLM调用完成, elapsed_ms: {elapsed_ms}, response_length: {len(response.content)}", elapsed_ms=elapsed_ms, response_length=len(response.content))
+        logger.debug(f"LLM调用完成，耗时: {elapsed_ms}ms，响应长度: {len(response.content)}", elapsed_ms=elapsed_ms, response_length=len(response.content))
         return response.content
 
     def invoke_with_tools(

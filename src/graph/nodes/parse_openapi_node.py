@@ -22,7 +22,7 @@ def parse_openapi_node(state: AgentState) -> dict:
     Returns:
         部分状态更新（成功时为空字典，失败时包含 error_message）
     """
-    logger.info("节点进入, node: parse_openapi", node="parse_openapi")
+    logger.info(f"进入OpenAPI文档解析节点", node="parse_openapi")
 
     try:
         api_doc_file_path = state.get("api_doc_file_path")
@@ -33,24 +33,24 @@ def parse_openapi_node(state: AgentState) -> dict:
         if not file_path.exists():
             raise FileNotFoundError(f"API 文档文件不存在: {file_path}")
 
-        logger.info(f"开始解析并存储API文档, path: {file_path}", path=str(file_path))
+        logger.info(f"开始解析并存储API文档: {file_path}", node="parse_openapi", path=str(file_path))
         config = get_config()
         storage = ApiDocStorage(config)
         storage.openapi_parse_storage(file_path)
-        logger.info("OpenAPI文档解析存储完成")
+        logger.info(f"OpenAPI文档解析存储完成", node="parse_openapi")
         return {
             "current_step": "end",
         }
 
     except (FileNotFoundError, ValueError) as e:
-        logger.error(f"OpenAPI文档解析失败, error: {e}", error=str(e))
+        logger.error(f"OpenAPI文档解析失败: {str(e)}", node="parse_openapi", error=str(e))
         return {
             "current_step": "error",
             "error_message": f"OpenAPI 文档解析失败: {str(e)}"
         }
 
     except Exception as e:
-        logger.error(f"OpenAPI文档解析异常, error: {e}", error=str(e))
+        logger.error(f"OpenAPI文档解析异常: {str(e)}", node="parse_openapi", error=str(e))
         return {
             "current_step": "error",
             "error_message": f"OpenAPI 文档解析异常: {str(e)}"

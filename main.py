@@ -65,15 +65,15 @@ def main():
 
     config = init_config(args.config)
 
-    logger.info(f"工具启动, name: LLM API 自动化测试工具", name="LLM API 自动化测试工具")
+    logger.info(f"LLM API 自动化测试工具启动，指令: {args.instruction[:80]}", instruction=args.instruction)
 
     api_doc_path: Path | None = None
     if args.api_doc:
         api_doc_path = Path(args.api_doc)
         if not api_doc_path.exists():
-            logger.error(f"API文档文件不存在, path: {api_doc_path}", path=str(api_doc_path))
+            logger.error(f"API文档文件不存在: {api_doc_path}", path=str(api_doc_path))
             sys.exit(1)
-        logger.info(f"加载API文档, path: {api_doc_path}", path=str(api_doc_path))
+        logger.info(f"加载API文档: {api_doc_path}", path=str(api_doc_path))
 
     try:
         workflow = TestWorkflow(config)
@@ -84,37 +84,39 @@ def main():
 
         error_message = result.get("error_message", "")
         if error_message:
-            logger.error(f"执行过程中出现错误, error: {error_message}", error=error_message)
+            logger.error(f"执行过程中出现错误: {error_message[:200]}", error=error_message)
             sys.exit(1)
 
         user_intent = result.get("user_intent", "")
-        logger.info(f"意图识别完成, intent: {user_intent}", intent=user_intent)
+        logger.info(f"意图识别完成，意图: {user_intent}", intent=user_intent)
 
         if user_intent == "parse_openapi":
-            logger.info("OpenAPI文档解析并存储完成")
+            logger.info(f"OpenAPI文档解析并存储完成")
         elif user_intent == "run_test":
             summary = result.get("test_summary", {})
             report_path = result.get("report_path", "")
             if summary:
                 logger.info(
-                    f"测试执行结果, total: {summary.get('total', 0)}, passed: {summary.get('passed', 0)}, failed: {summary.get('failed', 0)}, pass_rate: {summary.get('pass_rate', 0)}%",
+                    f"[main] 测试执行结果 - 总数: {summary.get('total', 0)}, "
+                    f"通过: {summary.get('passed', 0)}, 失败: {summary.get('failed', 0)}, "
+                    f"通过率: {summary.get('pass_rate', 0)}%",
                     total=summary.get("total", 0),
                     passed=summary.get("passed", 0),
                     failed=summary.get("failed", 0),
-                    pass_rate=f"{summary.get('pass_rate', 0)}%",
+                    pass_rate=summary.get("pass_rate", 0),
                 )
             if report_path:
-                logger.info(f"测试报告已生成, path: {report_path}", path=report_path)
+                logger.info(f"测试报告已生成: {report_path}", path=report_path)
         else:
-            logger.info("工作流已完成")
+            logger.info(f"工作流已完成，意图: {user_intent}", intent=user_intent)
 
-        logger.info("执行成功")
+        logger.info(f"全部执行成功")
 
     except ImportError as e:
-        logger.error(f"依赖缺失, error: {e}", error=str(e))
+        logger.error(f"依赖缺失: {e}", error=str(e))
         sys.exit(1)
     except Exception as e:
-        logger.exception(f"执行异常, error: {e}", error=str(e))
+        logger.exception(f"执行异常: {e}", error=str(e))
         sys.exit(1)
 
 

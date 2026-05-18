@@ -33,7 +33,7 @@ def select_endpoints_agent_node(state: AgentState) -> dict:
     Returns:
         部分状态更新，包含新的 messages
     """
-    logger.info("节点进入, node: select_endpoints_agent", node="select_endpoints_agent")
+    logger.info(f"进入接口挑选Agent节点", node="select_endpoints_agent")
 
     model = get_chat_model()
     model_with_tools = model.bind_tools(AVAILABLE_TOOLS)
@@ -45,12 +45,12 @@ def select_endpoints_agent_node(state: AgentState) -> dict:
             SystemMessage(content=messages_dicts[0]["content"]),
             HumanMessage(content=messages_dicts[1]["content"]),
         ]
-        logger.debug(f"初始化消息列表, message_count: {len(messages)}", message_count=len(messages))
+        logger.debug(f"初始化消息列表，共{len(messages)}条", node="select_endpoints_agent", message_count=len(messages))
         response = model_with_tools.invoke(messages)
         return {"messages": messages + [response]}
     else:
         messages = state["messages"]
-        logger.debug(f"继续对话循环, message_count: {len(messages)}", message_count=len(messages))
+        logger.debug(f"继续对话循环，消息数: {len(messages)}", node="select_endpoints_agent", message_count=len(messages))
         response = model_with_tools.invoke(messages)
         return {"messages": [response]}
 
@@ -64,23 +64,23 @@ def parse_endpoints_result_node(state: AgentState) -> dict:
     Returns:
         部分状态更新，包含 selected_endpoints
     """
-    logger.info("解析接口挑选结果, node: parse_result", node="parse_result")
+    logger.info(f"解析接口挑选结果", node="parse_result")
 
     messages = state.get("messages", [])
     if not messages:
-        logger.warning("无消息可解析")
+        logger.warning(f"无消息可解析", node="parse_result")
         return {"selected_endpoints": []}
 
     last_message = messages[-1]
     final_content = last_message.content if hasattr(last_message, "content") else ""
 
     if not final_content:
-        logger.warning("最终消息内容为空")
+        logger.warning(f"最终消息内容为空", node="parse_result")
         return {"selected_endpoints": []}
 
-    logger.debug(f"LLM最终输出, content: {final_content[:500]}", content=final_content[:500])
+    logger.debug(f"LLM最终输出: {final_content[:200]}", node="parse_result", content_length=len(final_content))
     selected = _parse_selected_endpoints(final_content)
-    logger.info(f"接口挑选完成, count: {len(selected)}", count=len(selected))
+    logger.info(f"接口挑选完成，选中{len(selected)}个接口", node="parse_result", count=len(selected))
     return {
         "selected_endpoints": selected
     }
@@ -107,12 +107,12 @@ def _parse_selected_endpoints(response: str) -> List[Dict[str, Any]]:
 
     start = response.find('"selected_endpoint_ids"')
     if start == -1:
-        logger.warning("LLM响应中未找到selected_endpoint_ids字段")
+        logger.warning(f"LLM响应中未找到selected_endpoint_ids字段", node="parse_result")
         return []
 
     brace_start = response.rfind('{', 0, start)
     if brace_start == -1:
-        logger.warning("LLM响应中未找到JSON起始位置")
+        logger.warning(f"LLM响应中未找到JSON起始位置", node="parse_result")
         return []
 
     depth = 0
@@ -128,7 +128,7 @@ def _parse_selected_endpoints(response: str) -> List[Dict[str, Any]]:
                 except json.JSONDecodeError:
                     break
 
-    logger.warning("LLM响应JSON解析失败")
+    logger.warning(f"LLM响应JSON解析失败", node="parse_result")
     return []
 
 

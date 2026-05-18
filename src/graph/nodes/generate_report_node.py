@@ -32,11 +32,11 @@ def generate_report_node(state: AgentState) -> dict:
     Returns:
         部分状态更新，包含 report_path 字段
     """
-    logger.info("节点进入, node: generate_report", node="generate_report")
-
     run_id = state.get("run_id", 0)
+    logger.info(f"进入报告生成节点，run_id: {run_id}", node="generate_report", run_id=run_id)
+
     if not run_id:
-        logger.warning("run_id为空，跳过报告生成")
+        logger.warning(f"run_id为空，跳过报告生成", node="generate_report")
         return {"report_path": ""}
 
     config = get_config()
@@ -46,15 +46,15 @@ def generate_report_node(state: AgentState) -> dict:
         with get_db_manager().get_session() as session:
             test_run = session.get(TestRun, run_id)
             if not test_run:
-                logger.error(f"TestRun不存在, run_id: {run_id}", run_id=run_id)
+                logger.error(f"TestRun不存在: run_id={run_id}", node="generate_report", run_id=run_id)
                 return {"report_path": "", "error_message": f"TestRun 不存在: {run_id}"}
 
             stmt = select(TestResult).where(TestResult.run_id == run_id)
             results: List[TestResult] = list(session.scalars(stmt).all())
 
             logger.info(
-                f"报告数据汇总, run_id: {run_id}, result_count: {len(results)}, passed: {test_run.passed_cases}, failed: {test_run.failed_cases}",
-                run_id=run_id, result_count=len(results),
+                f"[generate_report] 报告数据汇总 - 结果数: {len(results)}, 通过: {test_run.passed_cases}, 失败: {test_run.failed_cases}",
+                node="generate_report", run_id=run_id, result_count=len(results),
                 passed=test_run.passed_cases, failed=test_run.failed_cases,
             )
 
@@ -66,14 +66,14 @@ def generate_report_node(state: AgentState) -> dict:
             report_file.write_text(report_content, encoding="utf-8")
 
             report_path = str(report_file)
-            logger.info(f"报告生成成功, path: {report_path}", path=report_path)
+            logger.info(f"报告生成成功: {report_path}", node="generate_report", path=report_path)
             return {
                 "current_step": "end",
                 "report_path": report_path
             }
 
     except Exception as e:
-        logger.error(f"报告生成异常, error: {e}", error=str(e))
+        logger.error(f"报告生成异常: {str(e)}", node="generate_report", error=str(e))
         return {
             "current_step": "error",
             "report_path": "",

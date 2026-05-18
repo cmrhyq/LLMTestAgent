@@ -39,7 +39,7 @@ def init_database_from_orm(manager: Optional[DatabaseManager] = None) -> None:
     mgr = manager or get_db_manager()
     Base.metadata.create_all(mgr.engine)
     _create_views(mgr)
-    logger.info("database_initialized_from_orm")
+    logger.info(f"通过ORM模型初始化数据库完成", method="orm")
 
 
 def init_database_from_sql(
@@ -68,7 +68,7 @@ def init_database_from_sql(
             conn.execute(text(stmt))
         conn.commit()
 
-    logger.info(f"SQL文件建表完成, file: {sql_file}, statement_count: {len(statements)}", file=sql_file, statement_count=len(statements))
+    logger.info(f"通过SQL文件初始化数据库完成: {sql_file}，语句数: {len(statements)}", method="sql", file=sql_file, statement_count=len(statements))
 
 
 def check_tables_exist(manager: Optional[DatabaseManager] = None) -> List[str]:
@@ -139,16 +139,16 @@ def ensure_database(
 
     if not is_database_ready(mgr):
         missing = get_missing_tables(mgr)
-        logger.info(f"数据库缺少表, tables: {missing}", tables=missing)
+        logger.info(f"数据库缺失表: {missing}", tables=missing)
 
         if use_sql_file:
             init_database_from_sql(sql_file, mgr)
         else:
             init_database_from_orm(mgr)
 
-        logger.info("database_setup_complete")
+        logger.info(f"数据库初始化完成", action="setup_complete")
     else:
-        logger.debug("database_already_ready")
+        logger.debug(f"数据库已就绪，无需初始化", action="already_ready")
 
     return mgr
 
