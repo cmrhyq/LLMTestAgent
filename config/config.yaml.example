@@ -2,14 +2,14 @@
 llm:
   # 提供商: openai / bedrock / zhipu / qwen
   provider: bedrock
-  
+
   # OpenAI配置
   openai:
     api_key: ${OPENAI_API_KEY}
     model: gpt-4
     temperature: 0.7
     max_tokens: 4096
-  
+
   # AWS Bedrock配置
   bedrock:
     region: us-east-1
@@ -18,12 +18,12 @@ llm:
     access_key: ${AWS_ACCESS_KEY_ID}
     secret_key: ${AWS_SECRET_ACCESS_KEY}
     session_token: ${AWS_SESSION_TOKEN}
-  
+
   # 智谱AI配置
   zhipu:
     api_key: ${ZHIPU_API_KEY}
     model: glm-4
-  
+
   # 通义千问配置
   qwen:
     api_key: ${DASHSCOPE_API_KEY}
@@ -35,24 +35,24 @@ execution:
   connect_timeout: 5
   read_timeout: 30
   total_timeout: 60
-  
+
   # 重试配置
   retry:
     max_retries: 2
     retry_interval: 1  # 秒
     retry_on_status: [500, 502, 503, 504]
-  
+
   # 并发配置
   concurrency:
     enabled: true
     max_workers: 5
-  
+
   # 依赖失败处理
   dependency_failure: skip  # skip / abort
 
 # 数据库配置
 database:
-  url: "sqlite:///C:/Users/EDY/Desktop/Code/LLMTestAgent/db/LLMTest.db"
+  url: "sqlite:///i:/Code/LLMTestAgent/db/LLMTest.db"
   echo: false
   pool_size: 5
   max_overflow: 10
