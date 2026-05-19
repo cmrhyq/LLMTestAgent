@@ -1,0 +1,50 @@
+from __future__ import annotations
+
+from typing import Optional, List, TYPE_CHECKING
+
+from sqlalchemy import (
+    Integer, Text, ForeignKey, Index, CheckConstraint, UniqueConstraint
+)
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from src.data.models.base import Base, local_now
+
+if TYPE_CHECKING:
+    from src.data.models.project import Project
+    from src.data.models.test_case import TestCase
+
+
+class Endpoint(Base):
+    """API 定义表"""
+    __tablename__ = "endpoint"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    project_id: Mapped[int] = mapped_column(Integer, ForeignKey("project.id", ondelete="CASCADE"), nullable=False)
+    operation_id: Mapped[str] = mapped_column(Text, nullable=False)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    path: Mapped[str] = mapped_column(Text, nullable=False)
+    method: Mapped[str] = mapped_column(Text, nullable=False)
+    tags: Mapped[str] = mapped_column(Text, default="[]")
+    summary: Mapped[Optional[str]] = mapped_column(Text, default=None)
+    description: Mapped[str] = mapped_column(Text, default="")
+    params: Mapped[Optional[str]] = mapped_column(Text, default=None)
+    headers: Mapped[str] = mapped_column(Text, default="{}")
+    body: Mapped[Optional[str]] = mapped_column(Text, default=None)
+    responses: Mapped[str] = mapped_column(Text, default="[]")
+    security: Mapped[str] = mapped_column(Text, default="[]")
+    content_type: Mapped[str] = mapped_column(Text, default="application/json")
+    deprecated: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    status: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    created_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
+    updated_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
+
+    project: Mapped[Project] = relationship(back_populates="endpoint")
+    test_cases: Mapped[List[TestCase]] = relationship(back_populates="endpoint")
+
+    __table_args__ = (
+        CheckConstraint("method IN ('GET','POST','PUT','DELETE','PATCH','HEAD','OPTIONS')", name="ck_api_method"),
+        UniqueConstraint("project_id", "path", "method", name="uq_project_path_method"),
+        Index("idx_endpoint_project", "project_id"),
+        Index("idx_endpoint_operation_id", "operation_id"),
+    )

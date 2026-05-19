@@ -4,16 +4,15 @@
 LLM API自动化测试工具 - 主入口
 
 用法:
-    python main.py --input <输入文件路径> [--output <输出目录>] [--config <配置文件路径>]
-    
+    python main.py "<自然语言指令>" [--api-doc <OpenAPI文档路径>] [--config <配置文件路径>]
+
 示例:
-    python main.py --input examples/input_example.json
-    python main.py --input examples/input_example.json --output output/
-    python main.py --input examples/input_example.json --config config/config.yaml
+    python main.py "解析这份API文档" --api-doc docs/openapi.yaml
+    python main.py "对用户模块执行测试" --api-doc docs/openapi.json
+    python main.py "解析API文档并存储" --api-doc docs/petstore.yaml --config config/config.yaml
 """
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
@@ -21,12 +20,11 @@ from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-# 添加项目根目录到路径
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 from src.core.config import init_config
-from src.workflows.workflow import run_workflow
+from src.workflow import TestWorkflow
 
 
 def parse_args():
@@ -36,115 +34,89 @@ def parse_args():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
-    python main.py --input examples/input_example.json
-    python main.py --input examples/input_example.json --output output/
-    python main.py --input examples/input_example.json --config config/config.yaml
-        """
+    python main.py "解析这份API文档" --api-doc docs/openapi.yaml
+    python main.py "对用户模块执行测试" --api-doc docs/openapi.json
+        """,
     )
-    
+
     parser.add_argument(
-        "--input", "-i",
-        required=True,
-        help="输入文件路径（JSON格式）"
+        "instruction",
+        help="自然语言指令（LLM 根据指令判断意图）",
     )
-    
+
     parser.add_argument(
-        "--output", "-o",
-        default="output",
-        help="输出目录（默认: output）"
+        "--api-doc", "-a",
+        default=None,
+        help="OpenAPI 文档文件路径（YAML/JSON）",
     )
-    
+
     parser.add_argument(
         "--config", "-c",
         default=None,
-        help="配置文件路径（默认: config/config.yaml）"
+        help="配置文件路径（默认: config/config.yaml）",
     )
-    
-    parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="详细输出模式"
-    )
-    
+
     return parser.parse_args()
-
-
-def load_input(input_path: str) -> dict:
-    """
-    加载输入文件
-    
-    Args:
-        input_path: 输入文件路径
-        
-    Returns:
-        dict: 输入数据
-    """
-    path = Path(input_path)
-    
-    if not path.exists():
-        raise FileNotFoundError(f"输入文件不存在: {input_path}")
-    
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
 
 
 def main():
     """主函数"""
-    # 解析参数
     args = parse_args()
-    
-    # 初始化配置
+
     config = init_config(args.config)
-    
-    logger.info("=" * 60)
-    logger.info("🧪 LLM API自动化测试工具")
-    logger.info("=" * 60)
-    
-    try:
-        # 加载输入
-        logger.info(f"📂 加载输入文件: {args.input}")
-        input_data = load_input(args.input)
-        
-        # 确保输出目录存在
-        for dir_path in [config.output.test_cases_dir, config.output.reports_dir]:
-            Path(dir_path).mkdir(parents=True, exist_ok=True)
-        
-        result = run_workflow(input_data, config)
-        
-        # 输出结果
-        logger.info("=" * 60)
-        logger.info("📊 执行结果")
-        logger.info("=" * 60)
-        
-        if result.get("success") or result.get("report_paths"):
-            summary = result.get("test_summary", {})
-            logger.info(f"✅ 执行成功")
-            logger.info(f"   总用例数: {summary.get('total', 0)}")
-            logger.info(f"   通过: {summary.get('passed', 0)}")
-            logger.info(f"   失败: {summary.get('failed', 0)}")
-            logger.info(f"   跳过: {summary.get('skipped', 0)}")
-            logger.info(f"   通过率: {summary.get('pass_rate', 0)}%")
-            logger.info(f"   平均耗时: {summary.get('avg_response_time', 0):.2f}ms")
-            
-            if result.get("excel_path"):
-                logger.info(f"📊 Excel用例: {result['excel_path']}")
-            
-            if result.get("report_paths"):
-                logger.info(f"📝 测试报告:")
-                for format_name, path in result["report_paths"].items():
-                    logger.info(f"   - {format_name}: {path}")
-        else:
-            logger.error(f"❌ 执行失败: {result.get('error_message', '未知错误')}")
+
+    logger.info(f"LLM API 自动化测试工具启动，指令: {args.instruction[:80]}", instruction=args.instruction)
+
+    api_doc_path: Path | None = None
+    if args.api_doc:
+        api_doc_path = Path(args.api_doc)
+        if not api_doc_path.exists():
+            logger.error(f"API文档文件不存在: {api_doc_path}", path=str(api_doc_path))
             sys.exit(1)
-        
-    except FileNotFoundError as e:
-        logger.error(f"❌ 文件未找到: {e}")
-        sys.exit(1)
-    except json.JSONDecodeError as e:
-        logger.error(f"❌ JSON解析错误: {e}")
+        logger.info(f"加载API文档: {api_doc_path}", path=str(api_doc_path))
+
+    try:
+        workflow = TestWorkflow(config)
+        result = workflow.run(
+            raw_input=args.instruction,
+            api_doc_file_path=api_doc_path,
+        )
+
+        error_message = result.get("error_message", "")
+        if error_message:
+            logger.error(f"执行过程中出现错误: {error_message[:200]}", error=error_message)
+            sys.exit(1)
+
+        user_intent = result.get("user_intent", "")
+        logger.info(f"意图识别完成，意图: {user_intent}", intent=user_intent)
+
+        if user_intent == "parse_openapi":
+            logger.info(f"OpenAPI文档解析并存储完成")
+        elif user_intent == "run_test":
+            summary = result.get("test_summary", {})
+            report_path = result.get("report_path", "")
+            if summary:
+                logger.info(
+                    f"[main] 测试执行结果 - 总数: {summary.get('total', 0)}, "
+                    f"通过: {summary.get('passed', 0)}, 失败: {summary.get('failed', 0)}, "
+                    f"通过率: {summary.get('pass_rate', 0)}%",
+                    total=summary.get("total", 0),
+                    passed=summary.get("passed", 0),
+                    failed=summary.get("failed", 0),
+                    pass_rate=summary.get("pass_rate", 0),
+                )
+            if report_path:
+                logger.info(f"测试报告已生成: {report_path}", path=report_path)
+        else:
+            logger.info(f"工作流已完成，意图: {user_intent}", intent=user_intent)
+
+        logger.info(f"全部执行成功")
+
+    except ImportError as e:
+        logger.error(f"依赖缺失: {e}", error=str(e))
         sys.exit(1)
     except Exception as e:
-        logger.exception(f"❌ 执行异常: {e}")
+        logger.exception(f"执行异常: {e}", error=str(e))
         sys.exit(1)
 
 

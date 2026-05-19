@@ -89,7 +89,7 @@ class StructLogger:
             from src.core.config import get_config
 
             settings = get_config()
-            cls._debug = settings.logging.debug
+            cls._debug = getattr(settings.logging, 'format', 'console') == 'console'
 
             # 获取并验证日志级别
             if log_level is None:
@@ -132,7 +132,7 @@ class StructLogger:
         valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
         log_level = log_level.upper()
         if log_level not in valid_levels:
-            print(f"警告: 无效的日志级别 '{log_level}'，使用默认值 'INFO'")
+            logging.warning("无效的日志级别 '%s'，使用默认值 'INFO'", log_level)
             return "INFO"
         return log_level
 
@@ -343,10 +343,3 @@ def log_execution_time(name: str = None, level: str = "info", log_args: bool = F
         return wrapper
 
     return decorator
-
-
-# 使用示例
-@log_execution_time(level="info", log_args=True)
-def example_with_args(x: str) -> str:
-    time.sleep(0.2)
-    return f"Hello {x}"
