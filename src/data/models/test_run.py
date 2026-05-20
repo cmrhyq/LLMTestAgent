@@ -8,6 +8,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.data.models.base import Base, local_now
+from src.utils.id import next_id
 
 if TYPE_CHECKING:
     from src.data.models.environment import Environment
@@ -22,7 +23,7 @@ class TestRun(Base):
     """执行批次表"""
     __tablename__ = "test_run"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False, default=next_id)
     project_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("project.id", ondelete="SET NULL"))
     environment_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("environment.id", ondelete="SET NULL"))
     name: Mapped[str] = mapped_column(Text, default="")

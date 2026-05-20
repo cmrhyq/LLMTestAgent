@@ -12,7 +12,7 @@ PRAGMA encoding = 'UTF-8';
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS project
 (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    id          INTEGER PRIMARY KEY,
     name        TEXT    NOT NULL UNIQUE,
     base_url    TEXT    NOT NULL, -- 默认基础URL
     description TEXT             DEFAULT '',
@@ -29,7 +29,7 @@ CREATE INDEX idx_project_name    ON project(name);
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS environment
 (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    id          INTEGER PRIMARY KEY,
     project_id  INTEGER NOT NULL,
     name        TEXT    NOT NULL,
     base_url    TEXT    NOT NULL,
@@ -49,7 +49,7 @@ CREATE INDEX idx_env_project ON environment (project_id);
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS endpoint
 (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    id           INTEGER PRIMARY KEY,
     project_id   INTEGER NOT NULL,
     operation_id TEXT    NOT NULL, -- OpenAPI operationId
     name         TEXT    NOT NULL,
@@ -82,7 +82,7 @@ CREATE INDEX idx_endpoint_operation_id ON endpoint (operation_id);
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS test_run
 (
-    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    id              INTEGER PRIMARY KEY,
     project_id      INTEGER,
     environment_id  INTEGER,
     name            TEXT             DEFAULT '',
@@ -119,7 +119,7 @@ CREATE INDEX idx_run_env ON test_run (environment_id);
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS test_case
 (
-    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    id              INTEGER PRIMARY KEY,
     run_id          INTEGER NOT NULL,
     endpoint_id     INTEGER,
     case_id         TEXT    NOT NULL,
@@ -161,7 +161,7 @@ CREATE INDEX idx_case_case_id ON test_case (case_id);
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS test_result
 (
-    id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+    id                   INTEGER PRIMARY KEY,
     run_id               INTEGER NOT NULL,
     test_case_id         INTEGER NOT NULL,
     case_id              TEXT    NOT NULL,
@@ -197,7 +197,7 @@ CREATE INDEX idx_result_case ON test_result (test_case_id);
 --     每次执行批次聚合一条摘要记录
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS test_summary (
-    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    id                  INTEGER PRIMARY KEY,
     run_id              INTEGER NOT NULL UNIQUE,
     total               INTEGER NOT NULL DEFAULT 0,
     passed              INTEGER NOT NULL DEFAULT 0,
@@ -226,7 +226,7 @@ CREATE INDEX idx_summary_pass_rate ON test_summary(pass_rate);
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS report
 (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    id           INTEGER PRIMARY KEY,
     run_id       INTEGER NOT NULL,
     format       TEXT    NOT NULL CHECK (format IN ('excel', 'html', 'markdown', 'json')),
     file_path    TEXT    NOT NULL,
@@ -341,14 +341,12 @@ FROM test_case tc
 GROUP BY tc.scenario_type;
 
 -- ============================================================================
--- 初始数据
+-- 初始数据（ID 由应用层雪花算法生成，此处使用固定种子值）
 -- ============================================================================
--- 初始化Project数据
-INSERT INTO project (name, base_url, description, status)
-VALUES ('HTTP Bin Project', 'https://httpbin.org', '', 1);
+INSERT INTO project (id, name, base_url, description, status)
+VALUES (100000000000001, 'HTTP Bin Project', 'https://httpbin.org', '', 1);
 
--- 初始化Environment数据
-INSERT INTO environment (project_id, name, base_url, description, variables, is_default, status)
-VALUES (1, 'httpbin dev', 'https://httpbin.org', 'dev env', '{"name": "alan"}', 1, 1);
-INSERT INTO environment (project_id, name, base_url, description, variables, is_default, status)
-VALUES (1, 'httpbin prod', 'https://httpbin.org', 'prod env', '{"name": "anna"}', 2, 1);
+INSERT INTO environment (id, project_id, name, base_url, description, variables, is_default, status)
+VALUES (200000000000001, 100000000000001, 'httpbin dev', 'https://httpbin.org', 'dev env', '{"name": "alan"}', 1, 1);
+INSERT INTO environment (id, project_id, name, base_url, description, variables, is_default, status)
+VALUES (200000000000002, 100000000000001, 'httpbin prod', 'https://httpbin.org', 'prod env', '{"name": "anna"}', 2, 1);
