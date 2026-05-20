@@ -57,7 +57,8 @@ graph TD
 
 ```text
 LLMTestAgent/
-├── main.py                          # 主入口
+├── main.py                          # CLI 主入口
+├── app.py                           # FastAPI Web 服务入口
 ├── config/
 │   └── config.yaml                  # 应用配置文件
 ├── db/
@@ -75,6 +76,15 @@ LLMTestAgent/
 │       └── reports/                 # 测试报告（Excel/HTML）
 ├── src/
 │   ├── __init__.py                  # 包入口，版本信息
+│   ├── api/                         # FastAPI 路由层
+│   │   ├── deps.py                  # 依赖注入（DB Session）
+│   │   └── v1/
+│   │       ├── router.py            # 路由汇总
+│   │       ├── project.py           # 项目管理 CRUD
+│   │       ├── endpoint.py          # 接口管理 CRUD
+│   │       ├── environment.py       # 环境管理 CRUD
+│   │       ├── test_run.py          # 测试运行查询
+│   │       └── workflow.py          # 工作流触发接口
 │   ├── core/
 │   │   ├── config.py                # 配置加载与管理
 │   │   ├── database/
@@ -423,6 +433,77 @@ HTML 报告支持双层折叠结构：
 
 ---
 
+## Web API 服务（FastAPI）
+
+除命令行方式外，项目还提供基于 FastAPI 的 RESTful API 服务，支持通过 HTTP 接口管理数据和触发工作流。
+
+### 启动服务
+
+```bash
+# 方式一：直接运行
+python app.py
+
+# 方式二：使用 uvicorn（支持热重载）
+uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+```
+
+启动后访问以下地址：
+
+| 地址 | 说明 |
+|------|------|
+| http://localhost:8000/docs | Swagger 交互式文档 |
+| http://localhost:8000/redoc | ReDoc 格式文档 |
+| http://localhost:8000/health | 健康检查接口 |
+
+### API 接口一览
+
+| 模块 | 路径前缀 | 功能 |
+|------|---------|------|
+| 项目管理 | `/api/v1/projects` | 项目的增删改查 |
+| 接口管理 | `/api/v1/endpoints` | API 接口定义的增删改查（支持批量创建） |
+| 环境管理 | `/api/v1/environments` | 测试环境配置的增删改查 |
+| 测试运行 | `/api/v1/test-runs` | 查询测试执行记录及详情 |
+| 工作流 | `/api/v1/workflows` | 解析 OpenAPI 文档、触发测试、查询状态 |
+
+### 使用示例
+
+#### 上传并解析 OpenAPI 文档
+
+```bash
+curl -X POST http://localhost:8000/api/v1/workflows/parse-openapi \
+  -F "file=@input/httpbin_service.json"
+```
+
+#### 触发测试执行
+
+```bash
+curl -X POST http://localhost:8000/api/v1/workflows/run-test \
+  -H "Content-Type: application/json" \
+  -d '{"instruction": "对所有接口执行单接口测试"}'
+```
+
+#### 查询测试执行状态
+
+```bash
+curl http://localhost:8000/api/v1/workflows/status/1
+```
+
+#### 创建项目
+
+```bash
+curl -X POST http://localhost:8000/api/v1/projects/ \
+  -H "Content-Type: application/json" \
+  -d '{"name": "示例项目", "base_url": "https://api.example.com", "description": "测试项目"}'
+```
+
+#### 查询项目列表
+
+```bash
+curl http://localhost:8000/api/v1/projects/?page=1&page_size=10
+```
+
+---
+
 ## 工作流详解
 
 本项目基于 [LangGraph](https://github.com/langchain-ai/langgraph) 实现有状态工作流。核心流程如下：
@@ -536,6 +617,7 @@ python -m unittest tests.test_module_name
 |------|------|
 | 工作流引擎 | LangGraph |
 | LLM 框架 | LangChain |
+| Web 框架 | FastAPI + Uvicorn |
 | 数据库 ORM | SQLAlchemy 2.0 |
 | 数据校验 | Pydantic 2.0 |
 | HTTP 客户端 | httpx / requests |
