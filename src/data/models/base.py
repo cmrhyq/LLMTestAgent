@@ -1,6 +1,9 @@
 from datetime import datetime
+
 from sqlalchemy import Integer, DateTime, Boolean, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+from src.utils.id import next_id
 
 
 def local_now() -> str:
@@ -48,7 +51,7 @@ class BaseModel(Base, TimestampMixin):
     __abstract__ = True
 
     id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, autoincrement=True
+        Integer, primary_key=True, autoincrement=False, default=next_id
     )
 
     def to_dict(self):

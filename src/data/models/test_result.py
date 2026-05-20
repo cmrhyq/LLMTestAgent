@@ -8,6 +8,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.data.models.base import Base, local_now
+from src.utils.id import next_id
 
 if TYPE_CHECKING:
     from src.data.models.test_run import TestRun
@@ -18,7 +19,7 @@ class TestResult(Base):
     """测试结果表"""
     __tablename__ = "test_result"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False, default=next_id)
     run_id: Mapped[int] = mapped_column(Integer, ForeignKey("test_run.id", ondelete="CASCADE"), nullable=False)
     test_case_id: Mapped[int] = mapped_column(Integer, ForeignKey("test_case.id", ondelete="CASCADE"), nullable=False)
     case_id: Mapped[str] = mapped_column(Text, nullable=False)

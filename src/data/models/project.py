@@ -6,6 +6,7 @@ from sqlalchemy import Integer, Text, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.data.models.base import Base, local_now
+from src.utils.id import next_id
 
 if TYPE_CHECKING:
     from src.data.models.endpoint import Endpoint
@@ -16,7 +17,7 @@ class Project(Base):
     """项目表 - 管理多个被测服务"""
     __tablename__ = "project"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False, default=next_id)
     name: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
     base_url: Mapped[str] = mapped_column(Text, nullable=False)
     description: Mapped[str] = mapped_column(Text, default="")
