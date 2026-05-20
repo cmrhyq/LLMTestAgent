@@ -5,11 +5,14 @@
     uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 """
 
+import json
 from contextlib import asynccontextmanager
+from typing import Any
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from src.api.v1.router import api_router
 from src.core.config import init_config
@@ -18,6 +21,39 @@ from src.core.logging import get_logger
 from src.data.migration.migration import init_database_from_orm
 
 logger = get_logger(__name__)
+
+MAX_SAFE_INTEGER = 9007199254740991
+
+
+class SafeIntEncoder(json.JSONEncoder):
+    """将超过 JavaScript 安全整数范围的 int 序列化为字符串，避免前端精度丢失。"""
+
+    def default(self, o: Any) -> Any:
+        return super().default(o)
+
+    def encode(self, o: Any) -> str:
+        return super().encode(self._convert(o))
+
+    def _convert(self, obj: Any) -> Any:
+        if isinstance(obj, dict):
+            return {k: self._convert(v) for k, v in obj.items()}
+        if isinstance(obj, (list, tuple)):
+            return [self._convert(i) for i in obj]
+        if isinstance(obj, int) and not isinstance(obj, bool):
+            if obj > MAX_SAFE_INTEGER or obj < -MAX_SAFE_INTEGER:
+                return str(obj)
+        return obj
+
+
+class SafeJSONResponse(JSONResponse):
+    """使用 SafeIntEncoder 确保大整数 ID 以字符串形式返回。"""
+
+    def render(self, content: Any) -> bytes:
+        return json.dumps(
+            content,
+            cls=SafeIntEncoder,
+            ensure_ascii=False,
+        ).encode("utf-8")
 
 
 @asynccontextmanager
@@ -39,6 +75,7 @@ app = FastAPI(
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
+    default_response_class=SafeJSONResponse,
 )
 
 app.add_middleware(
