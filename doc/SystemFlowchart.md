@@ -1,4 +1,4 @@
-<![CDATA[# ⛧ 系统流程图 — LLMTestAgent ⛧
+# ⛧ 系统流程图 — LLMTestAgent ⛧
 
 ---
 
@@ -14,39 +14,52 @@
 
 ## 二、系统主流程
 
-```mermaid
-flowchart TD
-    %% ═══════════════════════════════════════
-    %% 入口
-    %% ═══════════════════════════════════════
-    Input([🜲 输入测试内容])
-    Input --> IntentRouter{{"⚙ 意图识别<br/>(LLM 分类)"}}
+![系统流程图](images/system-flowchart.svg)
 
-    %% ═══════════════════════════════════════
-    %% 左侧分支 — 文档解析
-    %% ═══════════════════════════════════════
-    IntentRouter -->|"解析API文档"| ParseDoc["📜 解析文档<br/>(OpenAPI 3.x)"]
-    ParseDoc --> FeatureExtract["🔍 数据特征识别<br/>(调用 LLM 分析)"]
-    FeatureExtract --> AI_Engine[/"🤖 AI 引擎"/]
-    FeatureExtract --> DataStore[("💾 数据存储<br/>Database")]
-    DataStore --> Finish([🜲 结束])
+<details>
+<summary>PlantUML 源码（点击展开）</summary>
 
-    %% ═══════════════════════════════════════
-    %% 右侧分支 — 执行测试
-    %% ═══════════════════════════════════════
-    IntentRouter -->|"执行测试"| ParseInput["📋 解析输入"]
-    ParseInput --> FetchData["📡 获取数据"]
-    FetchData --> QueryTool["🔧 Query Tool<br/>(数据库查询)"]
-    QueryTool --> DB_Source[("💾 Database<br/>API 数据")]
-    DB_Source -->|"API 数据"| QueryTool
-    QueryTool -->|"让AI选择需要的API"| AI_Select[/"🤖 AI 选择接口"/]
-    AI_Select -->|"分析后的API信息存储"| DB_Source
-    AI_Select -->|"AI编写测试代码"| GenCode["⚗ 生成测试代码<br/>(LLM 用例生成)"]
-    GenCode --> ExecCode["▶ 执行测试代码"]
-    ExecCode --> AnalyzeResult["📊 分析测试结果"]
-    AnalyzeResult --> GenReport["📰 生成测试报告<br/>(HTML)"]
-    GenReport --> Finish
+```plantuml
+@startuml system-flowchart
+start
+:User Input (Natural Language Instruction + OpenAPI Doc);
+:Intent Recognition (LLM Classification);
+
+if (Intent?) then (parse_openapi)
+  :Parse OpenAPI Document (JSON / YAML);
+  :Feature Extraction (LLM Analysis);
+  :Persist to Database (Project + Endpoints);
+else (run_test)
+  :Parse Input (Extract test mode & scope);
+  :Select Endpoints Agent (LLM + Tool Calling Loop);
+
+  partition "Agent Tool Loop" {
+    :search_project(name);
+    :get_project_endpoints(project_id);
+    :Parse Selected Endpoints;
+  }
+
+  if (Test Mode?) then (single)
+    :Generate Single Cases (Per-endpoint LLM generation);
+  else (flow)
+    :Generate Flow Cases (Cross-endpoint orchestration);
+  endif
+
+  partition "Test Execution" {
+    :CacheResolver.inject();
+    :HTTP Request (with retry);
+    :AssertionEngine.evaluate_all();
+    :CacheResolver.extract();
+    :Write TestResult to DB;
+  }
+
+  :Generate HTML Report;
+endif
+stop
+@enduml
 ```
+
+</details>
 
 ---
 
@@ -74,20 +87,19 @@ flowchart TD
 
 ## 四、分支路由详情
 
-```mermaid
-flowchart LR
-    subgraph intentRouting ["意图路由"]
-        direction LR
-        A["parse_input"] -->|"intent = parse_openapi"| B["parse_openapi_doc"]
-        A -->|"intent = run_test"| C["select_endpoints"]
-    end
+### 意图路由
 
-    subgraph modeRouting ["测试模式路由"]
-        direction LR
-        D["parse_result"] -->|"mode = single"| E["generate_single_cases"]
-        D -->|"mode = flow"| F["generate_flow_cases"]
-    end
-```
+| 输入 | 条件 | 输出节点 |
+|------|------|----------|
+| `parse_input` | `intent = parse_openapi` | `parse_openapi_doc` |
+| `parse_input` | `intent = run_test` | `select_endpoints` |
+
+### 测试模式路由
+
+| 输入 | 条件 | 输出节点 |
+|------|------|----------|
+| `parse_result` | `mode = single` | `generate_single_cases` |
+| `parse_result` | `mode = flow` | `generate_flow_cases` |
 
 ---
 
@@ -95,26 +107,25 @@ flowchart LR
 
 > *「智能体与工具之间的对话，如同巫师与魔典的低语。」*
 
-```mermaid
-flowchart TD
-    AgentNode["select_endpoints_agent<br/>(LLM 推理)"]
-    AgentNode -->|"发出 tool_calls"| ToolsNode["tools<br/>(执行数据库查询)"]
-    ToolsNode -->|"返回查询结果"| AgentNode
-    AgentNode -->|"无 tool_calls<br/>(推理完成)"| ParseResult["parse_result<br/>(解析选中接口)"]
-```
+| 步骤 | 行为 | 说明 |
+|:----:|------|------|
+| 1 | Agent 推理 | LLM 根据上下文决定是否调用工具 |
+| 2 | 发出 tool_calls | 调用 `search_project` 或 `get_project_endpoints` |
+| 3 | Tools 执行 | 执行数据库查询并返回结果 |
+| 4 | 循环判断 | 若 LLM 仍需信息 → 回到步骤 1；否则 → 进入 parse_result |
 
 ---
 
 ## 六、执行引擎管线
 
-```mermaid
-flowchart LR
-    A["反序列化<br/>TestCase"] --> B["CacheResolver<br/>.inject()"]
-    B --> C["HttpRequest<br/>发送请求"]
-    C --> D["AssertionEngine<br/>.evaluate_all()"]
-    D --> E["CacheResolver<br/>.extract()"]
-    E --> F["写入<br/>TestResult"]
-```
+| 阶段 | 模块 | 说明 |
+|:----:|------|------|
+| 1 | 反序列化 TestCase | 将 JSON 字段解析为 Python 对象 |
+| 2 | CacheResolver.inject() | 从 DataCache 注入动态参数 |
+| 3 | HttpRequest | 发送 HTTP 请求（支持重试） |
+| 4 | AssertionEngine.evaluate_all() | 执行所有断言规则 |
+| 5 | CacheResolver.extract() | 从响应中提取值存入 DataCache |
+| 6 | 写入 TestResult | 结果持久化至数据库 |
 
 ---
 
@@ -123,4 +134,3 @@ flowchart LR
 ---
 
 *📎 相关文档：[ER 图](ER.md) · [数据库设计](DatabaseDesign.md)*
-]]>

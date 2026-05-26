@@ -1,4 +1,4 @@
-<![CDATA[# ⛧ 数据库实体关系图 — LLMTestAgent ⛧
+# ⛧ 数据库实体关系图 — LLMTestAgent ⛧
 
 ---
 
@@ -8,168 +8,107 @@
 
 ## 一、实体关系总览
 
-```mermaid
-erDiagram
-    PROJECT ||--o{ ENVIRONMENT : "拥有环境"
-    PROJECT ||--o{ ENDPOINT : "包含接口"
-    PROJECT ||--o{ TEST_RUN : "发起测试"
-    ENVIRONMENT ||--o{ TEST_RUN : "关联环境"
-    TEST_RUN ||--o{ TEST_CASE : "包含用例"
-    TEST_RUN ||--o{ TEST_RESULT : "产出结果"
-    TEST_RUN ||--|| TEST_SUMMARY : "汇总统计"
-    TEST_RUN ||--o{ REPORT : "生成报告"
-    ENDPOINT ||--o{ TEST_CASE : "对应用例"
-    TEST_CASE ||--o{ TEST_RESULT : "执行结果"
+![ER 实体关系图](images/er-diagram.svg)
 
-    PROJECT {
-        int id PK
-        text name UK
-        text base_url
-        text description
-        int status
-        text created_at
-        text updated_at
-    }
+<details>
+<summary>PlantUML 源码（点击展开）</summary>
 
-    ENVIRONMENT {
-        int id PK
-        int project_id FK
-        text name
-        text base_url
-        text description
-        text variables
-        int is_default
-        int status
-        text created_at
-        text updated_at
-    }
+```plantuml
+@startuml er-diagram
+entity "project" as project {
+  * id : Integer <<PK>>
+  --
+  * name : Text <<UNIQUE>>
+  * base_url : Text
+  description : Text
+  * status : Integer
+  * created_at : Text
+  * updated_at : Text
+}
 
-    ENDPOINT {
-        int id PK
-        int project_id FK
-        text operation_id
-        text name
-        text path
-        text method
-        text tags
-        text summary
-        text description
-        text params
-        text headers
-        text body
-        text responses
-        text security
-        text content_type
-        int deprecated
-        int status
-        int version
-        text created_at
-        text updated_at
-    }
+entity "environment" as environment {
+  * id : Integer <<PK>>
+  --
+  * project_id : Integer <<FK>>
+  * name : Text
+  * base_url : Text
+  description : Text
+  variables : Text (JSON)
+  * is_default : Integer
+  * status : Integer
+}
 
-    TEST_RUN {
-        int id PK
-        int project_id FK
-        int environment_id FK
-        text name
-        text status
-        text trigger_type
-        text input_file
-        text input_snapshot
-        text config_snapshot
-        text llm_provider
-        text llm_model
-        int total_cases
-        int passed_cases
-        int failed_cases
-        int skipped_cases
-        int error_cases
-        float pass_rate
-        text started_at
-        text finished_at
-        float total_duration
-        text error_message
-        text created_at
-        text updated_at
-    }
+entity "endpoint" as endpoint {
+  * id : Integer <<PK>>
+  --
+  * project_id : Integer <<FK>>
+  * operation_id : Text
+  * name : Text
+  * path : Text
+  * method : Text
+  ...
+}
 
-    TEST_CASE {
-        int id PK
-        int run_id FK
-        int endpoint_id FK
-        text case_id
-        text case_name
-        text url
-        text method
-        text scenario_type
-        text priority
-        text headers
-        text body
-        text params
-        text cache_rules
-        text assert_rules
-        text expected_result
-        text description
-        text remark
-        text unique_hash
-        text generated_by
-        int status
-        text created_at
-        text updated_at
-    }
+entity "test_run" as test_run {
+  * id : Integer <<PK>>
+  --
+  project_id : Integer <<FK>>
+  environment_id : Integer <<FK>>
+  * status : Text
+  * trigger_type : Text
+  ...
+}
 
-    TEST_RESULT {
-        int id PK
-        int run_id FK
-        int test_case_id FK
-        text case_id
-        text case_name
-        text status
-        text request_url
-        text request_method
-        text request_headers
-        text request_body
-        text query_params
-        int response_status_code
-        text response_headers
-        text response_body
-        float response_time
-        text error_message
-        int retry_count
-        text started_at
-        text finished_at
-        text created_at
-    }
+entity "test_case" as test_case {
+  * id : Integer <<PK>>
+  --
+  * run_id : Integer <<FK>>
+  endpoint_id : Integer <<FK>>
+  * case_id : Text
+  * case_name : Text
+  ...
+}
 
-    TEST_SUMMARY {
-        int id PK
-        int run_id FK
-        int total
-        int passed
-        int failed
-        int skipped
-        int error
-        float pass_rate
-        float avg_response_time
-        float min_response_time
-        float max_response_time
-        float p95_response_time
-        float total_duration
-        text failure_reasons
-        text started_at
-        text finished_at
-        text created_at
-    }
+entity "test_result" as test_result {
+  * id : Integer <<PK>>
+  --
+  * run_id : Integer <<FK>>
+  * test_case_id : Integer <<FK>>
+  * status : Text
+  ...
+}
 
-    REPORT {
-        int id PK
-        int run_id FK
-        text format
-        text file_path
-        int file_size
-        text generated_at
-    }
+entity "test_summary" as test_summary {
+  * id : Integer <<PK>>
+  --
+  * run_id : Integer <<FK, UNIQUE>>
+  * total : Integer
+  * pass_rate : Float
+  ...
+}
+
+entity "report" as report {
+  * id : Integer <<PK>>
+  --
+  * run_id : Integer <<FK>>
+  * format : Text
+  * file_path : Text
+}
+
+project ||--o{ environment : "CASCADE"
+project ||--o{ endpoint : "CASCADE"
+project ||--o{ test_run : "SET NULL"
+environment ||--o{ test_run : "SET NULL"
+test_run ||--o{ test_case : "CASCADE"
+test_run ||--o{ test_result : "CASCADE"
+test_run ||--|| test_summary : "CASCADE (1:1)"
+test_run ||--o{ report : "CASCADE"
+endpoint ||--o{ test_case : "SET NULL"
+test_case ||--o{ test_result : "CASCADE"
+@enduml
 ```
+
+</details>
 
 ---
 
@@ -194,36 +133,44 @@ erDiagram
 
 ## 三、关系拓扑图
 
-```mermaid
-flowchart TD
-    subgraph core ["核心实体"]
-        PROJECT["🏛 project"]
-        TEST_RUN["🔄 test_run"]
-    end
+![关系拓扑图](images/er-topology.svg)
 
-    subgraph resources ["资源实体"]
-        ENVIRONMENT["🌍 environment"]
-        ENDPOINT["🔌 endpoint"]
-    end
+<details>
+<summary>PlantUML 源码（点击展开）</summary>
 
-    subgraph results ["结果实体"]
-        TEST_CASE["📋 test_case"]
-        TEST_RESULT["✅ test_result"]
-        TEST_SUMMARY["📊 test_summary"]
-        REPORT["📰 report"]
-    end
+```plantuml
+@startuml er-topology
+package "Core" {
+  [project] as P
+  [test_run] as TR
+}
 
-    PROJECT -->|"1:N CASCADE"| ENVIRONMENT
-    PROJECT -->|"1:N CASCADE"| ENDPOINT
-    PROJECT -->|"1:N SET NULL"| TEST_RUN
-    ENVIRONMENT -->|"1:N SET NULL"| TEST_RUN
-    TEST_RUN -->|"1:N CASCADE"| TEST_CASE
-    TEST_RUN -->|"1:N CASCADE"| TEST_RESULT
-    TEST_RUN -->|"1:1 CASCADE"| TEST_SUMMARY
-    TEST_RUN -->|"1:N CASCADE"| REPORT
-    ENDPOINT -->|"1:N SET NULL"| TEST_CASE
-    TEST_CASE -->|"1:N CASCADE"| TEST_RESULT
+package "Resources" {
+  [environment] as ENV
+  [endpoint] as EP
+}
+
+package "Results" {
+  [test_case] as TC
+  [test_result] as TRES
+  [test_summary] as TS
+  [report] as RPT
+}
+
+P -down-> ENV : "1:N CASCADE"
+P -down-> EP : "1:N CASCADE"
+P -right-> TR : "1:N SET NULL"
+ENV -right-> TR : "1:N SET NULL"
+TR -down-> TC : "1:N CASCADE"
+TR -down-> TRES : "1:N CASCADE"
+TR -down-> TS : "1:1 CASCADE"
+TR -down-> RPT : "1:N CASCADE"
+EP -down-> TC : "1:N SET NULL"
+TC -right-> TRES : "1:N CASCADE"
+@enduml
 ```
+
+</details>
 
 ---
 
@@ -245,4 +192,3 @@ flowchart TD
 ---
 
 *📎 相关文档：[系统流程图](SystemFlowchart.md) · [数据库设计](DatabaseDesign.md)*
-]]>

@@ -319,7 +319,7 @@ rm db/LLMTest.db           # macOS / Linux
 
 ### ER 图
 
-详见 [数据库 ER 图](doc/ER.md)（Mermaid 格式）及 [数据库设计文档](doc/DatabaseDesign.md)。
+详见 [数据库 ER 图](doc/ER.md)（PlantUML + SVG）及 [数据库设计文档](doc/DatabaseDesign.md)。
 
 ---
 

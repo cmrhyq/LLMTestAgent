@@ -1,4 +1,4 @@
-<![CDATA[# ⛧ 数据库设计文档 — LLMTestAgent ⛧
+# ⛧ 数据库设计文档 — LLMTestAgent ⛧
 
 ---
 
@@ -475,4 +475,3 @@ python main.py "解析这份API文档并存储" --api-doc input/httpbin_service.
 ---
 
 *📎 相关文档：[系统流程图](SystemFlowchart.md) · [ER 图](ER.md)*
-]]>

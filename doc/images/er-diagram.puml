@@ -1,0 +1,183 @@
+@startuml er-diagram
+!theme plain
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName "Microsoft YaHei, SimHei, sans-serif"
+skinparam linetype ortho
+
+skinparam entity {
+  BackgroundColor #F8F9FA
+  BorderColor #495057
+}
+
+title LLMTestAgent - Entity Relationship Diagram
+
+entity "project" as project {
+  * **id** : Integer <<PK>>
+  --
+  * name : Text <<UNIQUE>>
+  * base_url : Text
+  description : Text
+  * status : Integer
+  * created_at : Text
+  * updated_at : Text
+}
+
+entity "environment" as environment {
+  * **id** : Integer <<PK>>
+  --
+  * project_id : Integer <<FK>>
+  * name : Text
+  * base_url : Text
+  description : Text
+  variables : Text (JSON)
+  * is_default : Integer
+  * status : Integer
+  * created_at : Text
+  * updated_at : Text
+}
+
+entity "endpoint" as endpoint {
+  * **id** : Integer <<PK>>
+  --
+  * project_id : Integer <<FK>>
+  * operation_id : Text
+  * name : Text
+  * path : Text
+  * method : Text
+  tags : Text (JSON)
+  summary : Text
+  description : Text
+  params : Text (JSON)
+  headers : Text (JSON)
+  body : Text (JSON)
+  responses : Text (JSON)
+  security : Text (JSON)
+  content_type : Text
+  * deprecated : Integer
+  * status : Integer
+  * version : Integer
+  * created_at : Text
+  * updated_at : Text
+}
+
+entity "test_run" as test_run {
+  * **id** : Integer <<PK>>
+  --
+  project_id : Integer <<FK>>
+  environment_id : Integer <<FK>>
+  name : Text
+  * status : Text
+  * trigger_type : Text
+  input_file : Text
+  input_snapshot : Text (JSON)
+  config_snapshot : Text (JSON)
+  llm_provider : Text
+  llm_model : Text
+  * total_cases : Integer
+  * passed_cases : Integer
+  * failed_cases : Integer
+  * skipped_cases : Integer
+  * error_cases : Integer
+  * pass_rate : Float
+  started_at : Text
+  finished_at : Text
+  * total_duration : Float
+  error_message : Text
+  * created_at : Text
+  * updated_at : Text
+}
+
+entity "test_case" as test_case {
+  * **id** : Integer <<PK>>
+  --
+  * run_id : Integer <<FK>>
+  endpoint_id : Integer <<FK>>
+  * case_id : Text
+  * case_name : Text
+  * url : Text
+  * method : Text
+  * scenario_type : Text
+  * priority : Text
+  headers : Text (JSON)
+  body : Text (JSON)
+  params : Text (JSON)
+  cache_rules : Text (JSON)
+  assert_rules : Text (JSON)
+  expected_result : Text
+  description : Text
+  remark : Text
+  unique_hash : Text
+  * generated_by : Text
+  * status : Integer
+  * created_at : Text
+  * updated_at : Text
+}
+
+entity "test_result" as test_result {
+  * **id** : Integer <<PK>>
+  --
+  * run_id : Integer <<FK>>
+  * test_case_id : Integer <<FK>>
+  * case_id : Text
+  * case_name : Text
+  * status : Text
+  request_url : Text
+  request_method : Text
+  request_headers : Text (JSON)
+  request_body : Text
+  query_params : Text
+  response_status_code : Integer
+  response_headers : Text (JSON)
+  response_body : Text
+  * response_time : Float
+  error_message : Text
+  * retry_count : Integer
+  started_at : Text
+  finished_at : Text
+  * created_at : Text
+}
+
+entity "test_summary" as test_summary {
+  * **id** : Integer <<PK>>
+  --
+  * run_id : Integer <<FK, UNIQUE>>
+  * total : Integer
+  * passed : Integer
+  * failed : Integer
+  * skipped : Integer
+  * error : Integer
+  * pass_rate : Float
+  * avg_response_time : Float
+  * min_response_time : Float
+  * max_response_time : Float
+  * p95_response_time : Float
+  * total_duration : Float
+  failure_reasons : Text (JSON)
+  started_at : Text
+  finished_at : Text
+  * created_at : Text
+}
+
+entity "report" as report {
+  * **id** : Integer <<PK>>
+  --
+  * run_id : Integer <<FK>>
+  * format : Text
+  * file_path : Text
+  file_size : Integer
+  * generated_at : Text
+}
+
+project ||--o{ environment : "CASCADE"
+project ||--o{ endpoint : "CASCADE"
+project ||--o{ test_run : "SET NULL"
+environment ||--o{ test_run : "SET NULL"
+test_run ||--o{ test_case : "CASCADE"
+test_run ||--o{ test_result : "CASCADE"
+test_run ||--|| test_summary : "CASCADE (1:1)"
+test_run ||--o{ report : "CASCADE"
+endpoint ||--o{ test_case : "SET NULL"
+test_case ||--o{ test_result : "CASCADE"
+
+@enduml

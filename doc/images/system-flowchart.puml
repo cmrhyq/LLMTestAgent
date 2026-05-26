@@ -1,0 +1,64 @@
+@startuml system-flowchart
+!theme plain
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName "Microsoft YaHei, SimHei, sans-serif"
+skinparam activity {
+  BackgroundColor #F8F9FA
+  BorderColor #495057
+  FontSize 13
+}
+skinparam diamond {
+  BackgroundColor #FFF3CD
+  BorderColor #856404
+}
+
+title LLMTestAgent System Flowchart
+
+start
+
+:User Input\n(Natural Language Instruction + OpenAPI Doc);
+
+:Intent Recognition\n(LLM Classification);
+
+if (Intent?) then (parse_openapi)
+
+  :Parse OpenAPI Document\n(JSON / YAML);
+
+  :Feature Extraction\n(LLM Analysis);
+
+  :Persist to Database\n(Project + Endpoints);
+
+else (run_test)
+
+  :Parse Input\n(Extract test mode & scope);
+
+  :Select Endpoints Agent\n(LLM + Tool Calling Loop);
+
+  partition "Agent Tool Loop" {
+    :search_project(name);
+    :get_project_endpoints(project_id);
+    :Parse Selected Endpoints;
+  }
+
+  if (Test Mode?) then (single)
+    :Generate Single Cases\n(Per-endpoint LLM generation);
+  else (flow)
+    :Generate Flow Cases\n(Cross-endpoint orchestration);
+  endif
+
+  partition "Test Execution" {
+    :CacheResolver.inject();
+    :HTTP Request\n(with retry);
+    :AssertionEngine.evaluate_all();
+    :CacheResolver.extract();
+    :Write TestResult to DB;
+  }
+
+  :Generate HTML Report;
+
+endif
+
+stop
+
+@enduml
