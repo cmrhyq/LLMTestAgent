@@ -8,13 +8,12 @@ import json
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
-from sqlalchemy import select
-
 from src.core.config import get_config
 from src.core.database import get_db_manager
 from src.core.logging import get_logger
 from src.data.models.test_case import TestCase
-from src.data.models.test_run import TestRun
+from src.data.models.test_result import TestResult
+from src.data.repositories import TestCaseRepository, TestRunRepository
 from src.graph.executor.test_executor import TestExecutor
 from src.graph.nodes.utils import ensure_db
 from src.graph.state import AgentState
@@ -47,16 +46,15 @@ def execute_flow_tests_node(state: AgentState) -> dict:
     ensure_db()
 
     with get_db_manager().get_session() as session:
-        test_run = session.get(TestRun, run_id)
+        test_case_repo = TestCaseRepository(session)
+        test_run_repo = TestRunRepository(session)
+
+        test_run = test_run_repo.get_by_id(run_id)
         if not test_run:
             logger.error(f"TestRun不存在: run_id={run_id}", node="execute_flow_tests", run_id=run_id)
             return {"test_results_summary": {}, "error_message": f"TestRun 不存在: {run_id}", "current_step": "error"}
 
-        stmt = select(TestCase).where(
-            TestCase.run_id == run_id,
-            TestCase.status == 1,
-        )
-        test_cases: List[TestCase] = list(session.scalars(stmt).all())
+        test_cases: List[TestCase] = test_case_repo.get_by_run_and_status(run_id, 1)
 
         if not test_cases:
             logger.warning(f"无可执行的用例，run_id: {run_id}", node="execute_flow_tests", run_id=run_id)
@@ -66,9 +64,7 @@ def execute_flow_tests_node(state: AgentState) -> dict:
 
         test_cases.sort(key=lambda tc: _extract_step_order(tc))
 
-        test_run.status = "running"
-        test_run.started_at = datetime.now().isoformat()
-        session.flush()
+        test_run_repo.update_status(run_id, "running")
 
         passed = 0
         failed = 0
@@ -80,7 +76,8 @@ def execute_flow_tests_node(state: AgentState) -> dict:
             cache_rules = _parse_cache_rules(test_case.cache_rules)
 
             if _has_dependency_on_failed(cache_rules, failed_cache_keys):
-                logger.info(f"用例前置步骤失败，标记为skipped: {test_case.case_id}", node="execute_flow_tests", case_id=test_case.case_id)
+                logger.info(f"用例前置步骤失败，标记为skipped: {test_case.case_id}", node="execute_flow_tests",
+                            case_id=test_case.case_id)
                 _record_skipped(test_case, run_id, session, "前置步骤失败，跳过执行")
                 skipped += 1
                 _mark_extract_keys_failed(cache_rules, failed_cache_keys)
@@ -102,7 +99,8 @@ def execute_flow_tests_node(state: AgentState) -> dict:
                     error += 1
                     _mark_extract_keys_failed(cache_rules, failed_cache_keys)
             except Exception as e:
-                logger.error(f"流程步骤执行异常: {test_case.case_id}, 错误: {e}", node="execute_flow_tests", case_id=test_case.case_id, error=str(e))
+                logger.error(f"流程步骤执行异常: {test_case.case_id}, 错误: {e}", node="execute_flow_tests",
+                             case_id=test_case.case_id, error=str(e))
                 error += 1
                 _mark_extract_keys_failed(cache_rules, failed_cache_keys)
 
@@ -198,8 +196,6 @@ def _record_skipped(
         reason: str,
 ) -> None:
     """为跳过的用例记录一条 TestResult。"""
-    from src.data.models.test_result import TestResult
-
     result = TestResult(
         run_id=run_id,
         test_case_id=test_case.id,

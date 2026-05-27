@@ -25,7 +25,7 @@ class Project(Base):
     created_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
     updated_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
 
-    endpoint: Mapped[List[Endpoint]] = relationship(back_populates="project", cascade="all, delete-orphan")
+    endpoints: Mapped[List[Endpoint]] = relationship(back_populates="project", cascade="all, delete-orphan")
     test_runs: Mapped[List[TestRun]] = relationship(back_populates="project")
 
     __table_args__ = (

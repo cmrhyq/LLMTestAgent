@@ -40,7 +40,7 @@ class Endpoint(Base):
     created_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
     updated_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
 
-    project: Mapped[Project] = relationship(back_populates="endpoint")
+    project: Mapped[Project] = relationship(back_populates="endpoints")
     test_cases: Mapped[List[TestCase]] = relationship(back_populates="endpoint")
 
     __table_args__ = (

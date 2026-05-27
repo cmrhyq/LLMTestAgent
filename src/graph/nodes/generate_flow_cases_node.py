@@ -9,16 +9,14 @@ import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import select
-
 from src.core.config import get_config
 from src.core.database.connection import get_db_manager
 from src.core.llm.llm_client import get_llm_client
 from src.core.logging import get_logger
 from src.data.models.endpoint import Endpoint
-from src.data.models.project import Project
 from src.data.models.test_case import TestCase
 from src.data.models.test_run import TestRun
+from src.data.repositories import EndpointRepository, ProjectRepository, TestCaseRepository, TestRunRepository
 from src.graph.nodes.utils import ensure_db, get_model_name, safe_json_loads
 from src.graph.state import AgentState
 from src.prompts.builders.flow_case_builder import FlowCasePromptBuilder
@@ -54,18 +52,19 @@ def generate_flow_cases_node(state: AgentState) -> dict:
     endpoint_ids = [ep.get("endpoint_id") for ep in selected_endpoints if ep.get("endpoint_id")]
 
     with get_db_manager().get_session() as session:
-        project = session.get(Project, project_id)
+        project_repo = ProjectRepository(session)
+        endpoint_repo = EndpointRepository(session)
+        test_run_repo = TestRunRepository(session)
+        test_case_repo = TestCaseRepository(session)
+
+        project = project_repo.get_by_id(project_id)
         if not project:
             logger.error(f"项目不存在: project_id={project_id}", node="generate_flow_cases", project_id=project_id)
             return {"run_id": 0, "test_cases_count": 0, "error_message": f"项目不存在: project_id={project_id}", "current_step": "error"}
 
         base_url = project.base_url.rstrip("/")
 
-        stmt = select(Endpoint).where(
-            Endpoint.id.in_(endpoint_ids),
-            Endpoint.status == 1,
-        )
-        endpoints: List[Endpoint] = list(session.scalars(stmt).all())
+        endpoints: List[Endpoint] = endpoint_repo.get_active_by_ids(endpoint_ids)
 
         if not endpoints:
             logger.error(f"未查询到有效的接口定义", node="generate_flow_cases", endpoint_ids=endpoint_ids)
@@ -80,8 +79,7 @@ def generate_flow_cases_node(state: AgentState) -> dict:
             llm_model=get_model_name(config),
             started_at=datetime.now().isoformat(),
         )
-        session.add(test_run)
-        session.flush()
+        test_run_repo.add(test_run)
         run_id = test_run.id
 
         endpoints_info = _build_endpoints_info(endpoints, base_url)
@@ -109,7 +107,7 @@ def generate_flow_cases_node(state: AgentState) -> dict:
                 run_id=run_id,
                 idx=idx,
             )
-            session.add(case)
+            test_case_repo.add(case)
             total_cases += 1
 
         test_run.total_cases = total_cases

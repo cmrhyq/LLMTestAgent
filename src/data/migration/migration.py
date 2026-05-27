@@ -19,10 +19,8 @@ from src.data.models.base import Base
 logger = get_logger(__name__)
 
 EXPECTED_TABLES = [
-    "project", "environment", "api_info", "api_dependency",
-    "tag", "api_tag", "test_run", "test_case", "test_result",
-    "assert_result", "test_summary", "param_cache", "report",
-    "llm_invocation_log", "execution_log",
+    "project", "environment", "endpoint", "test_run",
+    "test_case", "test_result", "test_summary", "report",
 ]
 
 
@@ -160,9 +158,7 @@ def _create_views(manager: DatabaseManager) -> None:
         CREATE VIEW IF NOT EXISTS v_run_overview AS
         SELECT
             tr.id           AS run_id,
-            tr.run_id       AS run_code,
             p.name          AS project_name,
-            p.domain        AS project_domain,
             e.name          AS environment_name,
             tr.status       AS run_status,
             tr.trigger_type,
@@ -207,30 +203,6 @@ def _create_views(manager: DatabaseManager) -> None:
         FROM test_case tc
         LEFT JOIN test_result tr ON tr.test_case_id = tc.id
         GROUP BY tc.scenario_type
-        """,
-        """
-        CREATE VIEW IF NOT EXISTS v_top_failed_assertions AS
-        SELECT
-            ar.rule_expression,
-            COUNT(*)                                                AS total_checks,
-            SUM(CASE WHEN ar.passed = 0 THEN 1 ELSE 0 END)        AS fail_count,
-            ROUND(SUM(CASE WHEN ar.passed = 0 THEN 1.0 ELSE 0 END)
-                  / NULLIF(COUNT(*), 0) * 100, 2)                  AS fail_rate
-        FROM assert_result ar
-        GROUP BY ar.rule_expression
-        HAVING fail_count > 0
-        ORDER BY fail_count DESC
-        """,
-        """
-        CREATE VIEW IF NOT EXISTS v_llm_usage_stats AS
-        SELECT
-            provider, model, purpose,
-            COUNT(*)                          AS invocation_count,
-            SUM(total_tokens)                 AS total_tokens_used,
-            ROUND(AVG(latency_ms), 2)        AS avg_latency_ms,
-            SUM(CASE WHEN is_success = 0 THEN 1 ELSE 0 END) AS failure_count
-        FROM llm_invocation_log
-        GROUP BY provider, model, purpose
         """,
     ]
 

@@ -1,15 +1,12 @@
 from datetime import datetime
-from typing import List, Dict, Any, TypeVar
+from typing import List, Dict, Any
 
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
-from src.data.models.base import Base
 from src.data.models.test_run import TestRun
 
 from src.data.repositories.base import BaseRepository
-
-T = TypeVar("T", bound=Base)
 
 
 class TestRunRepository(BaseRepository[TestRun]):

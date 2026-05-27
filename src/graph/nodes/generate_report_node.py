@@ -8,13 +8,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
-from sqlalchemy import select
-
 from src.core.config import get_config
 from src.core.database.connection import get_db_manager
 from src.core.logging import get_logger
 from src.data.models.test_result import TestResult
-from src.data.models.test_run import TestRun
+from src.data.repositories import TestResultRepository, TestRunRepository
 from src.graph.nodes.utils import ensure_db
 from src.graph.state import AgentState
 
@@ -44,13 +42,15 @@ def generate_report_node(state: AgentState) -> dict:
 
     try:
         with get_db_manager().get_session() as session:
-            test_run = session.get(TestRun, run_id)
+            test_result_repo = TestResultRepository(session=session)
+            test_run_repo = TestRunRepository(session=session)
+
+            test_run = test_run_repo.get_by_id(run_id)
             if not test_run:
                 logger.error(f"TestRun不存在: run_id={run_id}", node="generate_report", run_id=run_id)
                 return {"report_path": "", "error_message": f"TestRun 不存在: {run_id}"}
 
-            stmt = select(TestResult).where(TestResult.run_id == run_id)
-            results: List[TestResult] = list(session.scalars(stmt).all())
+            results: List[TestResult] = test_result_repo.get_by_run(run_id)
 
             logger.info(
                 f"[generate_report] 报告数据汇总 - 结果数: {len(results)}, 通过: {test_run.passed_cases}, 失败: {test_run.failed_cases}",

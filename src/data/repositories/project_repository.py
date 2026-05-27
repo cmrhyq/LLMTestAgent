@@ -1,16 +1,11 @@
-from typing import Optional, List, TypeVar
+from typing import Optional, List
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from src.data.enum.workflow import DataStatus
-from src.data.models.base import Base
 from src.data.models.project import Project
 
 from src.data.repositories.base import BaseRepository
-
-
-T = TypeVar("T", bound=Base)
 
 
 class ProjectRepository(BaseRepository[Project]):
@@ -24,7 +19,7 @@ class ProjectRepository(BaseRepository[Project]):
         return self._session.scalar(stmt)
 
     def get_active_projects(self) -> List[Project]:
-        stmt = select(Project).where(Project.status == DataStatus.ENABLE.value)
+        stmt = select(Project).where(Project.status == 1)
         return list(self._session.scalars(stmt).all())
 
     def find_or_create(self, name: str, base_url: str, description: str = "") -> Project:

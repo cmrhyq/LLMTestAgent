@@ -1,12 +1,13 @@
 """
-数据模型模块
+工作流枚举定义
 
-定义API测试相关的Pydantic数据模型，包括：
-- APIInfo: API信息
-- TestCase: 测试用例
-- TestResult: 测试结果
-- Dependency: 依赖关系
-- AssertRule: 断言规则
+定义 API 测试相关的状态、类型等枚举值，包括：
+- DataStatus: 数据状态
+- HttpMethod: HTTP 请求方法
+- Priority: 用例优先级
+- TestStatus: 测试状态
+- ScenarioType: 场景类型
+- AssertOperator: 断言运算符
 """
 
 from enum import Enum

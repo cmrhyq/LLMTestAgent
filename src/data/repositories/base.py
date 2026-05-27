@@ -48,7 +48,7 @@ class BaseRepository(Generic[T]):
     def bulk_create(self, objects: list[dict]) -> List[T]:
         db_objects = [self._model(**obj) for obj in objects]
         self._session.add_all(db_objects)
-        self._session.commit()
+        self._session.flush()
         for obj in db_objects:
             self._session.refresh(obj)
         return db_objects

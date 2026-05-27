@@ -1,15 +1,13 @@
-from typing import TypeVar, List
+from typing import List
 
 from sqlalchemy.orm import Session
 
 from src.core.logging import get_logger
 from src.data.models import Endpoint
-from src.data.models.base import Base
 from src.data.repositories import EndpointRepository
 from src.data.schemas.endpoint import EndpointCreate
 
 logger = get_logger(__name__)
-T = TypeVar("T", bound=Base)
 
 
 class EndpointService:

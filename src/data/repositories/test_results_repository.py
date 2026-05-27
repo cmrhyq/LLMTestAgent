@@ -1,14 +1,11 @@
-from typing import List, TypeVar
+from typing import List
 
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, func
 from sqlalchemy.orm import Session
 
-from src.data.models.base import Base
 from src.data.models.test_result import TestResult
 
 from src.data.repositories.base import BaseRepository
-
-T = TypeVar("T", bound=Base)
 
 
 class TestResultRepository(BaseRepository[TestResult]):
@@ -36,3 +33,13 @@ class TestResultRepository(BaseRepository[TestResult]):
             and_(TestResult.run_id == run_id, TestResult.status.in_(["failed", "error"]))
         )
         return list(self._session.scalars(stmt).all())
+
+    def count_by_run(self, run_id: int) -> int:
+        stmt = select(func.count()).select_from(TestResult).where(TestResult.run_id == run_id)
+        return self._session.scalar(stmt) or 0
+
+    def count_by_status(self, run_id: int, status: str) -> int:
+        stmt = select(func.count()).select_from(TestResult).where(
+            and_(TestResult.run_id == run_id, TestResult.status == status)
+        )
+        return self._session.scalar(stmt) or 0

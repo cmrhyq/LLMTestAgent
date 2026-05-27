@@ -1,14 +1,11 @@
-from typing import Optional, List, TypeVar
+from typing import Optional, List
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from src.data.models.base import Base
 from src.data.models.environment import Environment
 
 from src.data.repositories.base import BaseRepository
-
-T = TypeVar("T", bound=Base)
 
 
 class EnvironmentRepository(BaseRepository[Environment]):
@@ -42,9 +39,9 @@ class EnvironmentRepository(BaseRepository[Environment]):
         stmt = select(Environment).where(Environment.status == 1)
         return list(self._session.scalars(stmt).all())
 
-    def find_or_create(self, name: str, base_url: str, description: str = "") -> Environment:
-        existing = self.get_by_name(name)
+    def find_or_create(self, project_id: int, name: str, base_url: str, description: str = "") -> Environment:
+        existing = self.get_by_project_and_name(project_id, name)
         if existing is not None:
             return existing
-        env = Environment(name=name, base_url=base_url, description=description)
+        env = Environment(project_id=project_id, name=name, base_url=base_url, description=description)
         return self.add(env)
