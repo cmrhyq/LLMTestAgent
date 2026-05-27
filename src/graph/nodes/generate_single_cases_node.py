@@ -9,16 +9,14 @@ import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import select
-
 from src.core.config import get_config
 from src.core.database.connection import get_db_manager
 from src.core.llm.llm_client import get_llm_client
 from src.core.logging import get_logger
 from src.data.models.endpoint import Endpoint
-from src.data.models.project import Project
 from src.data.models.test_case import TestCase
 from src.data.models.test_run import TestRun
+from src.data.repositories import EndpointRepository, ProjectRepository, TestCaseRepository, TestRunRepository
 from src.graph.nodes.utils import ensure_db, get_model_name, safe_json_loads
 from src.graph.state import AgentState
 from src.prompts.builders.case_builder import CasePromptBuilder
@@ -55,18 +53,19 @@ def generate_single_cases_node(state: AgentState) -> dict:
     endpoint_ids = [ep.get("endpoint_id") for ep in selected_endpoints if ep.get("endpoint_id")]
 
     with get_db_manager().get_session() as session:
-        project = session.get(Project, project_id)
+        project_repo = ProjectRepository(session)
+        endpoint_repo = EndpointRepository(session)
+        test_run_repo = TestRunRepository(session)
+        test_case_repo = TestCaseRepository(session)
+
+        project = project_repo.get_by_id(project_id)
         if not project:
             logger.error(f"项目不存在: project_id={project_id}", node="generate_single_cases", project_id=project_id)
             return {"run_id": 0, "test_cases_count": 0, "error_message": f"项目不存在: project_id={project_id}", "current_step": "error"}
 
         base_url = project.base_url.rstrip("/")
 
-        stmt = select(Endpoint).where(
-            Endpoint.id.in_(endpoint_ids),
-            Endpoint.status == 1,
-        )
-        endpoints: List[Endpoint] = list(session.scalars(stmt).all())
+        endpoints: List[Endpoint] = endpoint_repo.get_active_by_ids(endpoint_ids)
 
         if not endpoints:
             logger.error(f"未查询到有效的接口定义", node="generate_single_cases", endpoint_ids=endpoint_ids)
@@ -81,8 +80,7 @@ def generate_single_cases_node(state: AgentState) -> dict:
             llm_model=get_model_name(config),
             started_at=datetime.now().isoformat(),
         )
-        session.add(test_run)
-        session.flush()
+        test_run_repo.add(test_run)
         run_id = test_run.id
 
         total_cases = 0
@@ -97,7 +95,7 @@ def generate_single_cases_node(state: AgentState) -> dict:
                     scenario_types_text=scenario_types_text,
                     prompt_builder=prompt_builder,
                     llm_client=llm_client,
-                    session=session,
+                    test_case_repo=test_case_repo,
                 )
                 total_cases += len(cases)
                 logger.info(f"接口用例生成完成: {endpoint.name}，生成{len(cases)}个用例", node="generate_single_cases", endpoint=endpoint.name, count=len(cases))
@@ -117,7 +115,7 @@ def _generate_cases_for_endpoint(
     scenario_types_text: str,
     prompt_builder: CasePromptBuilder,
     llm_client: Any,
-    session: Any,
+    test_case_repo: TestCaseRepository,
 ) -> List[TestCase]:
     """为单个 Endpoint 生成测试用例。"""
     full_url = f"{base_url}{endpoint.path}"
@@ -161,7 +159,7 @@ def _generate_cases_for_endpoint(
             idx=idx,
             default_assert_rules=default_assert_rules,
         )
-        session.add(case)
+        test_case_repo.add(case)
         orm_cases.append(case)
 
     return orm_cases

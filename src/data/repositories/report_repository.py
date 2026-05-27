@@ -1,14 +1,11 @@
-from typing import Optional, List, TypeVar
+from typing import Optional, List
 
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
 
-from src.data.models.base import Base
 from src.data.models.report import Report
 
 from src.data.repositories.base import BaseRepository
-
-T = TypeVar("T", bound=Base)
 
 
 class ReportRepository(BaseRepository[Report]):
@@ -20,3 +17,9 @@ class ReportRepository(BaseRepository[Report]):
     def get_by_run(self, run_id: int) -> List[Report]:
         stmt = select(Report).where(Report.run_id == run_id)
         return list(self._session.scalars(stmt).all())
+
+    def get_by_run_and_format(self, run_id: int, format: str) -> Optional[Report]:
+        stmt = select(Report).where(
+            and_(Report.run_id == run_id, Report.format == format)
+        )
+        return self._session.scalar(stmt)

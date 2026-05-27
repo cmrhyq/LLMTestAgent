@@ -1,14 +1,11 @@
-from typing import Optional, List, TypeVar
+from typing import Optional, List
 
 from sqlalchemy import select, func, and_
 from sqlalchemy.orm import Session
 
-from src.data.models.base import Base
 from src.data.models.test_case import TestCase
 
 from src.data.repositories.base import BaseRepository
-
-T = TypeVar("T", bound=Base)
 
 
 class TestCaseRepository(BaseRepository[TestCase]):
@@ -19,6 +16,13 @@ class TestCaseRepository(BaseRepository[TestCase]):
 
     def get_by_run(self, run_id: int) -> List[TestCase]:
         stmt = select(TestCase).where(TestCase.run_id == run_id)
+        return list(self._session.scalars(stmt).all())
+
+    def get_by_run_and_status(self, run_id: int, status: int) -> List[TestCase]:
+        stmt = select(TestCase).where(
+            TestCase.run_id == run_id,
+            TestCase.status == status
+        )
         return list(self._session.scalars(stmt).all())
 
     def get_by_case_id(self, case_id: str) -> Optional[TestCase]:

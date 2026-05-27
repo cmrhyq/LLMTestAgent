@@ -1,10 +1,7 @@
-from src.data.enum.workflow import HttpMethod, Priority
-from src.utils.id.snow_id_utils import SnowflakeIdGenerator
+from src.data.enum.workflow import HttpMethod
 from typing import Optional, List
 from pydantic import BaseModel, Field, field_validator
 import json
-
-snow_id = SnowflakeIdGenerator(datacenter_id=1, worker_id=1)
 
 
 # ==================== 基础 Schema ====================

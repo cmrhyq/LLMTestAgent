@@ -6,14 +6,12 @@
 from datetime import datetime
 from typing import Any, Dict, List
 
-from sqlalchemy import select
-
 from src.core.cache.data_cache import DataCache
 from src.core.config import get_config
 from src.core.database import get_db_manager
 from src.core.logging import get_logger
 from src.data.models.test_case import TestCase
-from src.data.models.test_run import TestRun
+from src.data.repositories import TestCaseRepository, TestRunRepository
 from src.graph.executor.test_executor import TestExecutor
 from src.graph.nodes.utils import ensure_db
 from src.graph.state import AgentState
@@ -49,16 +47,15 @@ def execute_single_tests_node(state: AgentState) -> dict:
     ensure_db()
 
     with get_db_manager().get_session() as session:
-        test_run = session.get(TestRun, run_id)
+        test_case_repo = TestCaseRepository(session)
+        test_run_repo = TestRunRepository(session)
+
+        test_run = test_run_repo.get_by_id(run_id)
         if not test_run:
             logger.error(f"TestRun不存在: run_id={run_id}", node="execute_single_tests", run_id=run_id)
             return {"test_results_summary": {}, "error_message": f"TestRun 不存在: {run_id}", "current_step": "error"}
 
-        stmt = select(TestCase).where(
-            TestCase.run_id == run_id,
-            TestCase.status == 1,
-        )
-        test_cases: List[TestCase] = list(session.scalars(stmt).all())
+        test_cases: List[TestCase] = test_case_repo.get_by_run_and_status(run_id, 1)
 
         if not test_cases:
             logger.warning(f"无可执行的用例，run_id: {run_id}", node="execute_single_tests", run_id=run_id)
@@ -68,9 +65,7 @@ def execute_single_tests_node(state: AgentState) -> dict:
 
         test_cases.sort(key=lambda tc: _PRIORITY_ORDER.get(tc.priority, 99))
 
-        test_run.status = "running"
-        test_run.started_at = datetime.now().isoformat()
-        session.flush()
+        test_run_repo.update_status(run_id, "running")
 
         passed = 0
         failed = 0
@@ -91,7 +86,8 @@ def execute_single_tests_node(state: AgentState) -> dict:
                 else:
                     error += 1
             except Exception as e:
-                logger.error(f"用例执行异常: {test_case.case_id}, 错误: {e}", node="execute_single_tests", case_id=test_case.case_id, error=str(e))
+                logger.error(f"用例执行异常: {test_case.case_id}, 错误: {e}", node="execute_single_tests",
+                             case_id=test_case.case_id, error=str(e))
                 error += 1
 
         total = passed + failed + skipped + error

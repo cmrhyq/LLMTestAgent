@@ -1,14 +1,11 @@
-from typing import Optional, List, TypeVar
+from typing import Optional, List
 
 from sqlalchemy import select, and_, literal
 from sqlalchemy.orm import Session
 
-from src.data.models.base import Base
 from src.data.models.endpoint import Endpoint
 
 from src.data.repositories.base import BaseRepository
-
-T = TypeVar("T", bound=Base)
 
 
 class EndpointRepository(BaseRepository[Endpoint]):
@@ -64,6 +61,16 @@ class EndpointRepository(BaseRepository[Endpoint]):
             )
         )
         return self._session.scalar(stmt)
+
+    def get_active_by_ids(self, endpoint_ids: List[int]) -> List[Endpoint]:
+        """按 ID 列表查询启用状态的接口"""
+        stmt = select(Endpoint).where(
+            and_(
+                Endpoint.id.in_(endpoint_ids),
+                Endpoint.status == 1,
+            )
+        )
+        return list(self._session.scalars(stmt).all())
 
     def get_by_method(self, project_id: int, method: str) -> List[Endpoint]:
         stmt = select(Endpoint).where(
