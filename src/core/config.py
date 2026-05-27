@@ -104,6 +104,14 @@ class LoggingConfig(BaseModel):
     debug: bool = Field(default=False, deprecated="debug参数已废弃，请使用format字段", description="调试模式(已废弃)")
 
 
+class LangSmithConfig(BaseModel):
+    """LangSmith 可观测性配置"""
+    enabled: bool = Field(default=False, description="是否启用 LangSmith 追踪")
+    api_key: str = Field(default="", description="LangSmith API 密钥")
+    project: str = Field(default="LLMTestAgent", description="LangSmith 项目名称")
+    endpoint: str = Field(default="https://api.smith.langchain.com", description="LangSmith 服务端点")
+
+
 class AppConfig(BaseModel):
     """应用配置"""
     llm: LLMConfig = Field(default_factory=LLMConfig)
@@ -111,6 +119,7 @@ class AppConfig(BaseModel):
     output: OutputConfig = Field(default_factory=OutputConfig)
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
+    langsmith: LangSmithConfig = Field(default_factory=LangSmithConfig)
 
 
 def _resolve_env_vars(value: Any) -> Any:
@@ -189,6 +198,31 @@ def ensure_output_dirs(config: AppConfig) -> None:
         logger.debug("输出目录已确认: %s", dir_path)
 
 
+def _setup_langsmith(config: AppConfig) -> None:
+    """
+    根据配置启用或禁用 LangSmith 追踪。
+
+    LangChain/LangGraph 通过检测环境变量自动决定是否上报追踪数据，
+    此函数在应用启动时统一设置相关环境变量。
+
+    Args:
+        config: 应用配置
+    """
+    if config.langsmith.enabled and config.langsmith.api_key:
+        os.environ["LANGSMITH_TRACING"] = "true"
+        os.environ["LANGSMITH_API_KEY"] = config.langsmith.api_key
+        os.environ["LANGSMITH_PROJECT"] = config.langsmith.project
+        if config.langsmith.endpoint:
+            os.environ["LANGSMITH_ENDPOINT"] = config.langsmith.endpoint
+        logger.info("LangSmith 追踪已启用, project=%s", config.langsmith.project)
+    else:
+        os.environ.pop("LANGSMITH_TRACING", None)
+        os.environ.pop("LANGSMITH_API_KEY", None)
+        os.environ.pop("LANGSMITH_PROJECT", None)
+        os.environ.pop("LANGSMITH_ENDPOINT", None)
+        logger.info("LangSmith 追踪未启用")
+
+
 # 全局配置实例
 _config: Optional[AppConfig] = None
 
@@ -219,4 +253,5 @@ def init_config(config_path: Optional[str] = None) -> AppConfig:
     global _config
     _config = load_config(config_path)
     ensure_output_dirs(_config)
+    _setup_langsmith(_config)
     return _config

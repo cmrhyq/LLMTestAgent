@@ -195,6 +195,12 @@ execution:
 logging:
   level: INFO
   format: console                      # console / json
+
+langsmith:
+  enabled: false                       # true 启用 LangSmith 追踪
+  api_key: ${LANGSMITH_API_KEY}
+  project: LLMTestAgent
+  endpoint: https://api.smith.langchain.com
 ```
 
 ---
@@ -349,6 +355,7 @@ python -m unittest discover tests/
 |------|------|
 | 工作流引擎 | LangGraph |
 | LLM 框架 | LangChain |
+| 可观测性 | LangSmith（可选） |
 | Web 框架 | FastAPI + Uvicorn |
 | 数据库 ORM | SQLAlchemy 2.0 |
 | 数据校验 | Pydantic 2.0 |
@@ -356,6 +363,34 @@ python -m unittest discover tests/
 | 日志 | structlog |
 | 报告生成 | Jinja2（HTML 模板） |
 | 配置管理 | PyYAML + python-dotenv |
+
+---
+
+## LangSmith 可观测性（可选）
+
+项目支持 [LangSmith](https://smith.langchain.com/) 追踪，启用后所有 LangChain/LangGraph 调用（LLM 请求、工具调用、节点流转）会自动上报到 LangSmith 平台，便于调试和性能分析。
+
+### 启用步骤
+
+1. 在 `.env` 中填写 API 密钥：
+
+```dotenv
+LANGSMITH_API_KEY=your-langsmith-api-key
+```
+
+2. 在 `config/config.yaml` 中启用：
+
+```yaml
+langsmith:
+  enabled: true
+  api_key: ${LANGSMITH_API_KEY}
+  project: LLMTestAgent              # LangSmith 中的项目名称
+  endpoint: https://api.smith.langchain.com
+```
+
+### 禁用
+
+将 `langsmith.enabled` 设为 `false`（默认值），不会产生任何网络请求或性能开销。
 
 ---
 
@@ -368,6 +403,8 @@ python -m unittest discover tests/
 **如何切换 LLM 提供商？** 修改 `config/config.yaml` 中 `llm.provider` 字段为 `openai` / `bedrock` / `zhipu` / `qwen`，并确保对应密钥已配置。
 
 **运行后没有生成报告？** 确认 OpenAPI 文档格式正确（3.0.x / 3.1.x）、LLM 凭证可用、数据库中已有接口数据（先执行"解析文档"指令）。
+
+**如何启用 LangSmith 追踪？** 在 `config/config.yaml` 中设置 `langsmith.enabled: true`，并在 `.env` 中填写 `LANGSMITH_API_KEY`。启用后无需修改任何业务代码，LangChain SDK 会自动上报追踪数据。
 
 ---
 
