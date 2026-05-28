@@ -69,7 +69,7 @@ python -m venv .venv
 # macOS / Linux
 source .venv/bin/activate
 
-pip install -r requirements.txt
+pip install -e .
 ```
 
 ### 2. Configure Environment Variables
@@ -147,7 +147,7 @@ LLMTestAgent/
 │   └── utils/                       # Utilities (HTTP, parser, ID generation)
 ├── pyproject.toml                   # Project metadata and tool config
 ├── .env.example                     # Environment variable template
-└── requirements.txt                 # Python dependencies
+└── conftest.py                      # Pytest global fixtures
 ```
 
 ---
