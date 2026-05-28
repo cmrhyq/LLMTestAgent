@@ -12,6 +12,7 @@ from src.core.config import get_config
 from src.core.database.connection import get_db_manager
 from src.core.logging import get_logger
 from src.data.models.test_result import TestResult
+from src.data.models.test_run import TestRun
 from src.data.repositories import TestResultRepository, TestRunRepository
 from src.graph.nodes.utils import ensure_db
 from src.graph.state import AgentState

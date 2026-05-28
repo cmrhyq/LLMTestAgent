@@ -63,3 +63,10 @@ database:
 logging:
   level: INFO  # DEBUG / INFO / WARNING / ERROR
   format: console  # console (彩色开发输出) / json (生产环境JSON输出)
+
+# LangSmith 可观测性配置
+langsmith:
+  enabled: false  # 设为 true 启用 LangSmith 追踪
+  api_key: ${LANGSMITH_API_KEY}
+  project: LLMTestAgent
+  endpoint: https://api.smith.langchain.com

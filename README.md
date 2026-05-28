@@ -9,56 +9,58 @@
 ![LangGraph](https://img.shields.io/badge/LangGraph-0.3+-orange.svg)
 ![SQLite](https://img.shields.io/badge/SQLite-3-lightgrey.svg)
 
-**基于大模型的 API 自动化测试智能体**
+**LLM-Driven API Automation Testing Agent**
 
-自然语言驱动，串联「解析 → 用例生成 → 执行 → 报告」全流程。
+Natural language powered, orchestrating the full pipeline: Parse → Generate → Execute → Report.
 
-[快速开始](#快速开始) · [配置说明](#配置说明) · [使用示例](#使用示例) · [工作流详解](#工作流详解)
+[Quick Start](#quick-start) · [Configuration](#configuration) · [Usage](#usage) · [Workflow](#workflow-details)
+
+[中文](README_zh.md) | English
 
 </div>
 
 ---
 
-## 主要功能
+## Features
 
-- 多模型支持：`OpenAI` / `AWS Bedrock` / `智谱 GLM` / `通义千问`
-- 基于 LangGraph 的有状态工作流编排，LLM 自动识别意图并路由
-- OpenAPI 3.x 文档解析（JSON / YAML），自动提取接口信息并持久化
-- LLM 驱动测试用例生成（单接口模式 + 流程模式）
-- 测试执行支持依赖拓扑排序、并发执行、动态参数注入（`{{dep:...}}`）
-- 内置断言引擎，支持 JSONPath 表达式断言
-- HTML 可视化报告，支持按接口分组折叠、按用例展开详情
-- 全流程数据持久化（SQLite），支持测试历史追溯与统计分析
-- 提供 FastAPI RESTful API 服务，支持 Web 端触发与管理
+- Multi-model support: `OpenAI` / `AWS Bedrock` / `Zhipu GLM` / `Tongyi Qwen`
+- Stateful workflow orchestration based on LangGraph with LLM-driven intent recognition and routing
+- OpenAPI 3.x document parsing (JSON / YAML) with automatic endpoint extraction and persistence
+- LLM-driven test case generation (single-endpoint mode + flow mode)
+- Test execution with dependency topological sort, concurrent execution, and dynamic parameter injection (`{{dep:...}}`)
+- Built-in assertion engine supporting JSONPath expressions
+- HTML visual reports with collapsible endpoint groups and expandable case details
+- Full pipeline data persistence (SQLite) for test history tracing and statistical analysis
+- FastAPI RESTful API service for web-based triggering and management
 
 ---
 
-## 架构概览
+## Architecture
 
 ```mermaid
 graph TD
-    Start[开始] --> ParseInput[意图解析]
-    ParseInput -->|run_test| SelectEndpoints[接口挑选]
-    ParseInput -->|parse_openapi| ParseOpenAPI[解析OpenAPI文档]
-    SelectEndpoints --> RouteMode{测试模式}
-    RouteMode -->|single| GenSingle[单接口用例生成]
-    RouteMode -->|flow| GenFlow[流程用例生成]
-    GenSingle --> ExecSingle[单接口测试执行]
-    GenFlow --> ExecFlow[流程测试执行]
-    ExecSingle --> Report[生成报告]
+    Start[Start] --> ParseInput[Intent Parsing]
+    ParseInput -->|run_test| SelectEndpoints[Endpoint Selection]
+    ParseInput -->|parse_openapi| ParseOpenAPI[Parse OpenAPI Doc]
+    SelectEndpoints --> RouteMode{Test Mode}
+    RouteMode -->|single| GenSingle[Single Endpoint Case Gen]
+    RouteMode -->|flow| GenFlow[Flow Case Gen]
+    GenSingle --> ExecSingle[Single Endpoint Execution]
+    GenFlow --> ExecFlow[Flow Execution]
+    ExecSingle --> Report[Generate Report]
     ExecFlow --> Report
-    Report --> EndNode[结束]
+    Report --> EndNode[End]
     ParseOpenAPI --> EndNode
 ```
 
 ---
 
-## 快速开始
+## Quick Start
 
-### 1. 克隆并安装
+### 1. Clone and Install
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/cmrhyq/LLMTestAgent.git
 cd LLMTestAgent
 
 python -m venv .venv
@@ -67,19 +69,19 @@ python -m venv .venv
 # macOS / Linux
 source .venv/bin/activate
 
-pip install -r requirements.txt
+pip install -e .
 ```
 
-### 2. 配置环境变量
+### 2. Configure Environment Variables
 
 ```bash
 cp .env.example .env
 ```
 
-编辑 `.env`，填入对应 LLM 提供商的密钥：
+Edit `.env` and fill in the API keys for your LLM provider:
 
 ```dotenv
-# AWS Bedrock（推荐）
+# AWS Bedrock (recommended)
 AWS_ACCESS_KEY_ID=your-access-key-id
 AWS_SECRET_ACCESS_KEY=your-secret-access-key
 AWS_SESSION_TOKEN=your-session-token
@@ -87,73 +89,74 @@ AWS_SESSION_TOKEN=your-session-token
 # OpenAI
 OPENAI_API_KEY=your-openai-api-key
 
-# 智谱 AI
+# Zhipu AI
 ZHIPU_API_KEY=your-zhipu-api-key
 
-# 通义千问
+# Tongyi Qwen
 DASHSCOPE_API_KEY=your-dashscope-api-key
 ```
 
-### 3. 运行
+### 3. Run
 
 ```bash
-# 解析 OpenAPI 文档并存储到数据库
-python main.py "解析这份API文档并存储" --api-doc input/httpbin_service.json
+# Parse an OpenAPI document and store it in the database
+python main.py "Parse this API document and store it" --api-doc input/httpbin_service.json
 
-# 对已存储的接口执行测试
-python main.py "对所有接口执行单接口测试" --api-doc input/httpbin_service.json
+# Execute tests on stored endpoints
+python main.py "Run single-endpoint tests on all endpoints" --api-doc input/httpbin_service.json
 ```
 
-> 首次运行时，数据库（`db/LLMTest.db`）和所有表结构会自动创建，无需手动初始化。
+> On first run, the database (`db/LLMTest.db`) and all table schemas are created automatically — no manual initialization required.
 
 ---
 
-## 项目结构
+## Project Structure
 
 ```text
 LLMTestAgent/
-├── main.py                          # CLI 主入口
-├── app.py                           # FastAPI Web 服务入口
+├── main.py                          # CLI entry point
+├── app.py                           # FastAPI web service entry
 ├── config/
-│   └── config.yaml                  # 应用配置文件
+│   └── config.yaml                  # Application config
 ├── db/
-│   └── LLMTest.db                   # SQLite 数据库（自动创建）
-├── input/                           # OpenAPI 文档输入目录
-├── output/                          # 测试报告输出目录
-│   └── <timestamp>/reports/         # HTML 测试报告
+│   └── LLMTest.db                   # SQLite database (auto-created)
+├── input/                           # OpenAPI document input directory
+├── output/                          # Test report output directory
+│   └── <timestamp>/reports/         # HTML test reports
 ├── src/
-│   ├── workflow.py                  # LangGraph 工作流编排
-│   ├── api/                         # FastAPI 路由层
+│   ├── workflow.py                  # LangGraph workflow orchestration
+│   ├── api/                         # FastAPI route layer
 │   ├── core/
-│   │   ├── config.py                # 配置加载
-│   │   ├── database/                # 数据库连接管理
-│   │   ├── llm/                     # LLM 统一客户端
-│   │   └── logging.py              # 结构化日志
+│   │   ├── config.py                # Configuration loading
+│   │   ├── database/                # Database connection management
+│   │   ├── llm/                     # Unified LLM client
+│   │   └── logging.py              # Structured logging
 │   ├── data/
-│   │   ├── models/                  # SQLAlchemy ORM 模型
-│   │   ├── repositories/            # 数据仓储层
-│   │   ├── schemas/                 # Pydantic 数据校验
-│   │   ├── services/                # 业务逻辑服务层
-│   │   └── migration/               # 数据库迁移
+│   │   ├── models/                  # SQLAlchemy ORM models
+│   │   ├── repositories/            # Data repository layer
+│   │   ├── schemas/                 # Pydantic data validation
+│   │   ├── services/                # Business logic services
+│   │   └── migration/               # Database migrations
 │   ├── graph/
-│   │   ├── state.py                 # 工作流状态定义
-│   │   ├── route.py                 # 条件路由函数
-│   │   ├── nodes/                   # 工作流节点实现
-│   │   ├── executor/                # 测试执行引擎
-│   │   └── tools/                   # LangGraph Agent 工具
-│   ├── prompts/                     # 提示词模板（YAML）
-│   └── utils/                       # 工具模块（HTTP、解析器、ID生成）
-├── .env.example                     # 环境变量模板
-└── requirements.txt                 # Python 依赖
+│   │   ├── state.py                 # Workflow state definition
+│   │   ├── route.py                 # Conditional routing functions
+│   │   ├── nodes/                   # Workflow node implementations
+│   │   ├── executor/                # Test execution engine
+│   │   └── tools/                   # LangGraph Agent tools
+│   ├── prompts/                     # Prompt templates (YAML)
+│   └── utils/                       # Utilities (HTTP, parser, ID generation)
+├── pyproject.toml                   # Project metadata and tool config
+├── .env.example                     # Environment variable template
+└── conftest.py                      # Pytest global fixtures
 ```
 
 ---
 
-## 配置说明
+## Configuration
 
-配置文件：`config/config.yaml`，支持 `${ENV_VAR}` 语法引用环境变量。
+Config file: `config/config.yaml`, supports `${ENV_VAR}` syntax for referencing environment variables.
 
-### 完整配置示例
+### Full Configuration Example
 
 ```yaml
 llm:
@@ -195,179 +198,218 @@ execution:
 logging:
   level: INFO
   format: console                      # console / json
+
+langsmith:
+  enabled: false                       # set to true to enable LangSmith tracing
+  api_key: ${LANGSMITH_API_KEY}
+  project: LLMTestAgent
+  endpoint: https://api.smith.langchain.com
 ```
 
 ---
 
-## 使用示例
+## Usage
 
-### CLI 模式
-
-```bash
-python main.py "<自然语言指令>" [--api-doc <路径>] [--config <路径>]
-```
-
-| 参数 | 简写 | 说明 | 必填 |
-|------|------|------|------|
-| `instruction` | - | 自然语言指令 | 是 |
-| `--api-doc` | `-a` | OpenAPI 文档路径 | 否 |
-| `--config` | `-c` | 配置文件路径 | 否 |
+### CLI Mode
 
 ```bash
-# 解析文档
-python main.py "解析这份API文档并存储" --api-doc input/httpbin_service.json
-
-# 单接口测试
-python main.py "对所有接口执行单接口测试" --api-doc input/httpbin_service.json
-
-# 流程测试（接口间有依赖关系）
-python main.py "执行流程测试" --api-doc input/panji.yaml
+python main.py "<natural language instruction>" [--api-doc <path>] [--config <path>]
 ```
 
-### Web API 模式（FastAPI）
+| Argument | Short | Description | Required |
+|----------|-------|-------------|----------|
+| `instruction` | - | Natural language instruction | Yes |
+| `--api-doc` | `-a` | OpenAPI document path | No |
+| `--config` | `-c` | Config file path | No |
+
+```bash
+# Parse document
+python main.py "Parse this API document and store it" --api-doc input/httpbin_service.json
+
+# Single-endpoint testing
+python main.py "Run single-endpoint tests on all endpoints" --api-doc input/httpbin_service.json
+
+# Flow testing (with inter-endpoint dependencies)
+python main.py "Run flow tests" --api-doc input/panji.yaml
+```
+
+### Web API Mode (FastAPI)
 
 ```bash
 python app.py
-# 或
+# or
 uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-启动后访问 http://localhost:8000/docs 查看 Swagger 文档。
+Visit http://localhost:8000/docs for the Swagger documentation after startup.
 
-| 模块 | 路径前缀 | 功能 |
-|------|---------|------|
-| 项目管理 | `/api/v1/projects` | 项目 CRUD |
-| 接口管理 | `/api/v1/endpoints` | 接口定义 CRUD |
-| 环境管理 | `/api/v1/environments` | 环境配置 CRUD |
-| 测试运行 | `/api/v1/test-runs` | 执行记录查询 |
-| 工作流 | `/api/v1/workflows` | 解析文档、触发测试 |
+| Module | Path Prefix | Function |
+|--------|-------------|----------|
+| Projects | `/api/v1/projects` | Project CRUD |
+| Endpoints | `/api/v1/endpoints` | Endpoint definition CRUD |
+| Environments | `/api/v1/environments` | Environment config CRUD |
+| Test Runs | `/api/v1/test-runs` | Execution history query |
+| Workflows | `/api/v1/workflows` | Parse docs, trigger tests |
 
 ```bash
-# 上传解析 OpenAPI 文档
+# Upload and parse an OpenAPI document
 curl -X POST http://localhost:8000/api/v1/workflows/parse-openapi \
   -F "file=@input/httpbin_service.json"
 
-# 触发测试
+# Trigger test execution
 curl -X POST http://localhost:8000/api/v1/workflows/run-test \
   -H "Content-Type: application/json" \
-  -d '{"instruction": "对所有接口执行单接口测试"}'
+  -d '{"instruction": "Run single-endpoint tests on all endpoints"}'
 ```
 
 ---
 
-## 测试报告
+## Test Reports
 
-执行完成后，HTML 报告输出在 `output/<timestamp>/reports/` 目录。
+After execution, HTML reports are output to `output/<timestamp>/reports/`.
 
-报告采用双层折叠结构：
-- **第 1 层**：按接口分组折叠
-- **第 2 层**：按用例展开，包含请求方法、URL、请求头、请求体、响应码、响应数据、耗时、错误信息
-
----
-
-## 工作流详解
-
-基于 [LangGraph](https://github.com/langchain-ai/langgraph) StateGraph 实现。
-
-### 节点说明
-
-| 节点 | 功能 |
-|------|------|
-| `start` | 验证输入，初始化状态 |
-| `parse_input` | LLM 意图识别（`run_test` / `parse_openapi`） |
-| `select_endpoints_agent` | Agent + Tool 循环，自主查询数据库挑选目标接口 |
-| `generate_single_cases` | LLM 生成单接口测试用例 |
-| `generate_flow_cases` | LLM 生成流程测试用例（含依赖关系） |
-| `execute_single_tests` | HTTP 执行 + 断言校验 |
-| `execute_flow_tests` | 顺序执行 + 上下文传递 |
-| `generate_report` | 汇总结果，生成 HTML 报告 |
-| `parse_openapi_doc` | 解析 OpenAPI 文档并持久化 |
-
-### 路由逻辑
-
-- **意图路由**：`parse_input` → LLM 识别指令意图 → 路由到测试流程或文档解析
-- **模式路由**：根据测试模式（`single` / `flow`）进入对应分支
-- **步骤路由**：每个节点通过 `current_step` 控制流转，异常进入 `error` 节点
+Reports use a two-level collapsible structure:
+- **Level 1**: Grouped by endpoint (collapsible)
+- **Level 2**: Expanded by test case, including request method, URL, headers, body, status code, response data, latency, and error messages
 
 ---
 
-## 数据库
+## Workflow Details
 
-使用 SQLite + SQLAlchemy ORM，首次运行自动建库建表。
+Built on [LangGraph](https://github.com/langchain-ai/langgraph) StateGraph.
 
-### 核心表
+### Node Descriptions
 
-| 表名 | 说明 |
-|------|------|
-| `project` | 项目信息 |
-| `environment` | 测试环境配置 |
-| `api_info` | API 接口信息 |
-| `api_dependency` | 接口依赖关系 |
-| `test_run` | 测试运行记录 |
-| `test_case` | 测试用例 |
-| `test_result` | 测试结果 |
-| `test_summary` | 测试汇总统计 |
-| `report` | 报告记录 |
+| Node | Function |
+|------|----------|
+| `start` | Validate input, initialize state |
+| `parse_input` | LLM intent recognition (`run_test` / `parse_openapi`) |
+| `select_endpoints_agent` | Agent + Tool loop, autonomously queries DB to select target endpoints |
+| `generate_single_cases` | LLM generates single-endpoint test cases |
+| `generate_flow_cases` | LLM generates flow test cases (with dependencies) |
+| `execute_single_tests` | HTTP execution + assertion validation |
+| `execute_flow_tests` | Sequential execution + context passing |
+| `generate_report` | Aggregate results, generate HTML report |
+| `parse_openapi_doc` | Parse OpenAPI document and persist |
 
-### 重置数据库
+### Routing Logic
+
+- **Intent routing**: `parse_input` → LLM identifies instruction intent → routes to test flow or document parsing
+- **Mode routing**: Routes to corresponding branch based on test mode (`single` / `flow`)
+- **Step routing**: Each node controls flow via `current_step`; exceptions route to `error` node
+
+---
+
+## Database
+
+Uses SQLite + SQLAlchemy ORM. Database and tables are created automatically on first run.
+
+### Core Tables
+
+| Table | Description |
+|-------|-------------|
+| `project` | Project information |
+| `environment` | Test environment configuration |
+| `api_info` | API endpoint information |
+| `api_dependency` | Endpoint dependency relationships |
+| `test_run` | Test run records |
+| `test_case` | Test cases |
+| `test_result` | Test results |
+| `test_summary` | Test summary statistics |
+| `report` | Report records |
+
+### Reset Database
 
 ```bash
-# 删除后重新运行即可重建
+# Delete and re-run to rebuild
 del db\LLMTest.db          # Windows
 rm db/LLMTest.db           # macOS / Linux
 ```
 
-### ER 图
+### ER Diagram
 
-详见 [数据库 ER 图](doc/ER.md)（PlantUML + SVG）及 [数据库设计文档](doc/DatabaseDesign.md)。
+See [Database ER Diagram](doc/ER.md) (PlantUML + SVG) and [Database Design Document](doc/DatabaseDesign.md).
 
 ---
 
-## 开发指南
+## Development
 
-### 运行测试
+### Run Tests
 
 ```bash
-python -m unittest discover tests/
+pytest
+# or with coverage
+pytest --cov=src --cov-report=html
 ```
 
-### 添加工作流节点
+### Add a Workflow Node
 
-1. 在 `src/graph/nodes/` 下创建节点函数
-2. 在 `src/workflow.py` 中注册节点和边
-3. 如需路由逻辑，在 `src/graph/route.py` 中添加
+1. Create a node function in `src/graph/nodes/`
+2. Register the node and edges in `src/workflow.py`
+3. If routing logic is needed, add it to `src/graph/route.py`
 
-### 数据库变更
+### Database Changes
 
-模型定义在 `src/data/models/`，修改后删除 `.db` 文件重新运行即可重建（开发环境）。生产环境可使用 Alembic 迁移。
-
----
-
-## 技术栈
-
-| 组件 | 技术 |
-|------|------|
-| 工作流引擎 | LangGraph |
-| LLM 框架 | LangChain |
-| Web 框架 | FastAPI + Uvicorn |
-| 数据库 ORM | SQLAlchemy 2.0 |
-| 数据校验 | Pydantic 2.0 |
-| HTTP 客户端 | httpx |
-| 日志 | structlog |
-| 报告生成 | Jinja2（HTML 模板） |
-| 配置管理 | PyYAML + python-dotenv |
+Models are defined in `src/data/models/`. After modification, delete the `.db` file and re-run to rebuild (development). For production, use Alembic migrations.
 
 ---
 
-## 常见问题
+## Tech Stack
 
-**数据库文件在哪里？** 默认 `db/LLMTest.db`，首次运行自动创建。修改路径编辑 `config/config.yaml` 中的 `database.url`。
+| Component | Technology |
+|-----------|------------|
+| Workflow Engine | LangGraph |
+| LLM Framework | LangChain |
+| Observability | LangSmith (optional) |
+| Web Framework | FastAPI + Uvicorn |
+| Database ORM | SQLAlchemy 2.0 |
+| Data Validation | Pydantic 2.0 |
+| HTTP Client | httpx |
+| Logging | structlog |
+| Report Generation | Jinja2 (HTML templates) |
+| Configuration | PyYAML + python-dotenv |
 
-**Bedrock 报错 `security token is invalid`？** 检查 AK/SK 是否正确，使用临时凭证时确保设置了 `AWS_SESSION_TOKEN`，确认凭证未过期。
+---
 
-**如何切换 LLM 提供商？** 修改 `config/config.yaml` 中 `llm.provider` 字段为 `openai` / `bedrock` / `zhipu` / `qwen`，并确保对应密钥已配置。
+## LangSmith Observability (Optional)
 
-**运行后没有生成报告？** 确认 OpenAPI 文档格式正确（3.0.x / 3.1.x）、LLM 凭证可用、数据库中已有接口数据（先执行"解析文档"指令）。
+The project supports [LangSmith](https://smith.langchain.com/) tracing. When enabled, all LangChain/LangGraph calls (LLM requests, tool invocations, node transitions) are automatically reported to the LangSmith platform for debugging and performance analysis.
+
+### Enable
+
+1. Fill in the API key in `.env`:
+
+```dotenv
+LANGSMITH_API_KEY=your-langsmith-api-key
+```
+
+2. Enable in `config/config.yaml`:
+
+```yaml
+langsmith:
+  enabled: true
+  api_key: ${LANGSMITH_API_KEY}
+  project: LLMTestAgent              # Project name in LangSmith
+  endpoint: https://api.smith.langchain.com
+```
+
+### Disable
+
+Set `langsmith.enabled` to `false` (default) — no network requests or performance overhead will occur.
+
+---
+
+## FAQ
+
+**Where is the database file?** Default `db/LLMTest.db`, created automatically on first run. Modify the path in `config/config.yaml` under `database.url`.
+
+**Bedrock error `security token is invalid`?** Verify your AK/SK are correct; when using temporary credentials ensure `AWS_SESSION_TOKEN` is set; confirm credentials haven't expired.
+
+**How to switch LLM provider?** Change `llm.provider` in `config/config.yaml` to `openai` / `bedrock` / `zhipu` / `qwen`, and ensure the corresponding API keys are configured.
+
+**No report generated after running?** Verify the OpenAPI document format is correct (3.0.x / 3.1.x), LLM credentials are valid, and the database contains endpoint data (run the "parse document" instruction first).
+
+**How to enable LangSmith tracing?** Set `langsmith.enabled: true` in `config/config.yaml` and fill in `LANGSMITH_API_KEY` in `.env`. Once enabled, no business code changes are needed — the LangChain SDK automatically reports tracing data.
 
 ---
 
