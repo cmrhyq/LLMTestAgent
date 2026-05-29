@@ -5,18 +5,17 @@
 """
 
 import time
-from typing import List, Dict, Optional
 
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, BaseMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 
-from src.core.config import get_config, AppConfig
+from src.core.config import AppConfig, get_config
 from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
 
-def create_chat_model(config: Optional[AppConfig] = None) -> BaseChatModel:
+def create_chat_model(config: AppConfig | None = None) -> BaseChatModel:
     """根据配置创建 LangChain ChatModel 实例。
 
     Args:
@@ -31,16 +30,16 @@ def create_chat_model(config: Optional[AppConfig] = None) -> BaseChatModel:
     provider = config.llm.provider.lower()
 
     if provider == "openai":
-        logger.info(f"LLM提供商初始化: OpenAI", provider="openai")
+        logger.info("LLM提供商初始化: OpenAI", provider="openai")
         return _create_openai_model(config)
     elif provider == "bedrock":
-        logger.info(f"LLM提供商初始化: AWS Bedrock", provider="bedrock")
+        logger.info("LLM提供商初始化: AWS Bedrock", provider="bedrock")
         return _create_bedrock_model(config)
     elif provider == "zhipu":
-        logger.info(f"LLM提供商初始化: 智谱AI", provider="zhipu")
+        logger.info("LLM提供商初始化: 智谱AI", provider="zhipu")
         return _create_zhipu_model(config)
     elif provider == "qwen":
-        logger.info(f"LLM提供商初始化: 通义千问", provider="qwen")
+        logger.info("LLM提供商初始化: 通义千问", provider="qwen")
         return _create_qwen_model(config)
     else:
         logger.warning(f"未知的LLM提供商: {provider}，使用OpenAI作为默认", provider=provider)
@@ -98,7 +97,7 @@ def _create_qwen_model(config: AppConfig) -> BaseChatModel:
     )
 
 
-def convert_to_langchain_messages(messages: List[Dict[str, str]]) -> List[BaseMessage]:
+def convert_to_langchain_messages(messages: list[dict[str, str]]) -> list[BaseMessage]:
     """将字典格式消息列表转换为 LangChain BaseMessage 列表。
 
     Args:
@@ -107,7 +106,7 @@ def convert_to_langchain_messages(messages: List[Dict[str, str]]) -> List[BaseMe
     Returns:
         LangChain 消息列表
     """
-    result: List[BaseMessage] = []
+    result: list[BaseMessage] = []
     for msg in messages:
         role = msg.get("role", "user")
         content = msg.get("content", "")
@@ -138,19 +137,23 @@ class LLMClient:
     def model(self) -> BaseChatModel:
         return self._model
 
-    def chat(self, messages: List[Dict[str, str]], **kwargs) -> str:
+    def chat(self, messages: list[dict[str, str]], **kwargs) -> str:
         """发送聊天请求，返回纯文本响应。"""
         logger.debug(f"LLM调用开始，消息数: {len(messages)}", message_count=len(messages))
         start_time = time.perf_counter()
         langchain_messages = convert_to_langchain_messages(messages)
         response = self._model.invoke(langchain_messages)
         elapsed_ms = round((time.perf_counter() - start_time) * 1000, 2)
-        logger.debug(f"LLM调用完成，耗时: {elapsed_ms}ms，响应长度: {len(response.content)}", elapsed_ms=elapsed_ms, response_length=len(response.content))
+        logger.debug(
+            f"LLM调用完成，耗时: {elapsed_ms}ms，响应长度: {len(response.content)}",
+            elapsed_ms=elapsed_ms,
+            response_length=len(response.content),
+        )
         return response.content
 
     def invoke_with_tools(
         self,
-        messages: List[BaseMessage],
+        messages: list[BaseMessage],
         tools,
         **kwargs,
     ) -> BaseMessage:
@@ -162,15 +165,15 @@ class LLMClient:
         return self._model
 
     @staticmethod
-    def _convert_messages_base(messages: List[Dict[str, str]]) -> List[BaseMessage]:
+    def _convert_messages_base(messages: list[dict[str, str]]) -> list[BaseMessage]:
         return convert_to_langchain_messages(messages)
 
 
-_chat_model: Optional[BaseChatModel] = None
-_llm_client: Optional[LLMClient] = None
+_chat_model: BaseChatModel | None = None
+_llm_client: LLMClient | None = None
 
 
-def get_chat_model(config: Optional[AppConfig] = None) -> BaseChatModel:
+def get_chat_model(config: AppConfig | None = None) -> BaseChatModel:
     """获取全局 ChatModel 单例。"""
     global _chat_model
     if _chat_model is None:
@@ -178,7 +181,7 @@ def get_chat_model(config: Optional[AppConfig] = None) -> BaseChatModel:
     return _chat_model
 
 
-def get_llm_client(config: Optional[AppConfig] = None) -> LLMClient:
+def get_llm_client(config: AppConfig | None = None) -> LLMClient:
     """获取全局 LLMClient 单例（兼容旧接口）。"""
     global _llm_client
     if _llm_client is None:
@@ -187,7 +190,7 @@ def get_llm_client(config: Optional[AppConfig] = None) -> LLMClient:
     return _llm_client
 
 
-def init_llm_client(config: Optional[AppConfig] = None) -> LLMClient:
+def init_llm_client(config: AppConfig | None = None) -> LLMClient:
     """重新初始化全局 LLM 客户端。"""
     global _chat_model, _llm_client
     _chat_model = create_chat_model(config)

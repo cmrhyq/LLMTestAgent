@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-from sqlalchemy import (
-    Integer, Text, ForeignKey, Index
-)
+from sqlalchemy import ForeignKey, Index, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.data.models.base import Base, local_now
@@ -16,6 +14,7 @@ if TYPE_CHECKING:
 
 class Environment(Base):
     """测试环境表"""
+
     __tablename__ = "environment"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False, default=next_id)
@@ -29,8 +28,6 @@ class Environment(Base):
     created_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
     updated_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
 
-    test_runs: Mapped[List[TestRun]] = relationship(back_populates="environment")
+    test_runs: Mapped[list[TestRun]] = relationship(back_populates="environment")
 
-    __table_args__ = (
-        Index("idx_env_project", "project_id"),
-    )
+    __table_args__ = (Index("idx_env_project", "project_id"),)

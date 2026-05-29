@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from typing import Optional, List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-from sqlalchemy import (
-    Integer, Text, ForeignKey, Index, CheckConstraint, UniqueConstraint
-)
+from sqlalchemy import CheckConstraint, ForeignKey, Index, Integer, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.data.models.base import Base, local_now
@@ -17,6 +15,7 @@ if TYPE_CHECKING:
 
 class Endpoint(Base):
     """API 定义表"""
+
     __tablename__ = "endpoint"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False, default=next_id)
@@ -26,11 +25,11 @@ class Endpoint(Base):
     path: Mapped[str] = mapped_column(Text, nullable=False)
     method: Mapped[str] = mapped_column(Text, nullable=False)
     tags: Mapped[str] = mapped_column(Text, default="[]")
-    summary: Mapped[Optional[str]] = mapped_column(Text, default=None)
+    summary: Mapped[str | None] = mapped_column(Text, default=None)
     description: Mapped[str] = mapped_column(Text, default="")
-    params: Mapped[Optional[str]] = mapped_column(Text, default=None)
+    params: Mapped[str | None] = mapped_column(Text, default=None)
     headers: Mapped[str] = mapped_column(Text, default="{}")
-    body: Mapped[Optional[str]] = mapped_column(Text, default=None)
+    body: Mapped[str | None] = mapped_column(Text, default=None)
     responses: Mapped[str] = mapped_column(Text, default="[]")
     security: Mapped[str] = mapped_column(Text, default="[]")
     content_type: Mapped[str] = mapped_column(Text, default="application/json")
@@ -41,7 +40,7 @@ class Endpoint(Base):
     updated_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
 
     project: Mapped[Project] = relationship(back_populates="endpoints")
-    test_cases: Mapped[List[TestCase]] = relationship(back_populates="endpoint")
+    test_cases: Mapped[list[TestCase]] = relationship(back_populates="endpoint")
 
     __table_args__ = (
         CheckConstraint("method IN ('GET','POST','PUT','DELETE','PATCH','HEAD','OPTIONS')", name="ck_api_method"),

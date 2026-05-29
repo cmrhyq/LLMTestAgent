@@ -18,11 +18,13 @@ def start_node(state: AgentState) -> dict:
     api_doc = state.get("api_doc_file_path", "无")
     logger.info(
         f"进入开始节点，指令: {raw_input[:80]}，文档: {api_doc}",
-        node="start", raw_input=raw_input, api_doc=api_doc,
+        node="start",
+        raw_input=raw_input,
+        api_doc=api_doc,
     )
 
     if not raw_input:
-        logger.warning(f"输入为空，无法继续工作流", node="start")
+        logger.warning("输入为空，无法继续工作流", node="start")
         return {
             "current_step": "error",
             "error_message": "输入为空，无法进行工作流",

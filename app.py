@@ -39,9 +39,8 @@ class SafeIntEncoder(json.JSONEncoder):
             return {k: self._convert(v) for k, v in obj.items()}
         if isinstance(obj, (list, tuple)):
             return [self._convert(i) for i in obj]
-        if isinstance(obj, int) and not isinstance(obj, bool):
-            if obj > MAX_SAFE_INTEGER or obj < -MAX_SAFE_INTEGER:
-                return str(obj)
+        if isinstance(obj, int) and not isinstance(obj, bool) and (obj > MAX_SAFE_INTEGER or obj < -MAX_SAFE_INTEGER):
+            return str(obj)
         return obj
 
 
@@ -93,6 +92,7 @@ app.include_router(api_router, prefix="/api/v1")
 def health_check():
     """健康检查接口。"""
     from src.core.database.connection import get_db_manager
+
     db_ok = get_db_manager().check_connection()
     return {
         "status": "healthy" if db_ok else "degraded",

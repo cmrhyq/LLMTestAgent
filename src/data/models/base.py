@@ -9,4 +9,5 @@ def local_now() -> str:
 
 class Base(DeclarativeBase):
     """所有模型的声明性基类"""
+
     pass

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-from sqlalchemy import Integer, Text, Index
+from sqlalchemy import Index, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.data.models.base import Base, local_now
@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
 class Project(Base):
     """项目表 - 管理多个被测服务"""
+
     __tablename__ = "project"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False, default=next_id)
@@ -25,9 +26,7 @@ class Project(Base):
     created_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
     updated_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
 
-    endpoints: Mapped[List[Endpoint]] = relationship(back_populates="project", cascade="all, delete-orphan")
-    test_runs: Mapped[List[TestRun]] = relationship(back_populates="project")
+    endpoints: Mapped[list[Endpoint]] = relationship(back_populates="project", cascade="all, delete-orphan")
+    test_runs: Mapped[list[TestRun]] = relationship(back_populates="project")
 
-    __table_args__ = (
-        Index("idx_project_name", "name"),
-    )
+    __table_args__ = (Index("idx_project_name", "name"),)

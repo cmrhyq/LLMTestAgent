@@ -33,11 +33,11 @@ OpenAPI 接口文档解析工具类
     print(parser.stats)
 """
 
-import json
 import copy
+import json
 import sys
 from pathlib import Path
-from typing import Union, Optional, Any, TextIO
+from typing import Any, TextIO
 
 from src.core.logging import get_logger
 
@@ -45,15 +45,18 @@ logger = get_logger(__name__)
 
 try:
     import yaml
+
     _HAS_YAML = True
 except ImportError:
     _HAS_YAML = False
 
 try:
     import requests as _requests
+
     _HAS_REQUESTS = True
 except ImportError:
     _HAS_REQUESTS = False
+
 
 # TODO [外部依赖] servers.variables 中的 enum 验证依赖运行时用户输入，当前仅使用 default 值替换
 class OpenAPIParser:
@@ -69,17 +72,17 @@ class OpenAPIParser:
 
     _HTTP_METHODS = frozenset({"get", "post", "put", "delete", "patch", "head", "options", "trace"})
 
-    def __init__(self, source: Union[str, dict, Path]):
+    def __init__(self, source: str | dict | Path):
         self._raw: dict = self._load(source)
         self._version: str = self._detect_version()
         self._ref_cache: dict = {}
 
         # 解析结果缓存(懒加载)
-        self._info: Optional[dict] = None
-        self._tags: Optional[list] = None
-        self._endpoints: Optional[list] = None
-        self._schemas: Optional[list] = None
-        self._security_schemes: Optional[list] = None
+        self._info: dict | None = None
+        self._tags: list | None = None
+        self._endpoints: list | None = None
+        self._schemas: list | None = None
+        self._security_schemes: list | None = None
 
     # ----------------------------------------------------------------
     #  公开属性 - 基本信息
@@ -146,8 +149,7 @@ class OpenAPIParser:
         """
         if self._tags is None:
             self._tags = [
-                {"name": t.get("name", ""), "description": t.get("description", "")}
-                for t in self._raw.get("tags", [])
+                {"name": t.get("name", ""), "description": t.get("description", "")} for t in self._raw.get("tags", [])
             ]
         return self._tags
 
@@ -227,7 +229,7 @@ class OpenAPIParser:
     #  公开方法 - 查询 & 过滤
     # ----------------------------------------------------------------
 
-    def get_endpoint(self, path: str, method: str) -> Optional[dict]:
+    def get_endpoint(self, path: str, method: str) -> dict | None:
         """
         获取指定接口
 
@@ -266,14 +268,16 @@ class OpenAPIParser:
         kw = keyword.lower()
         results = []
         for ep in self.endpoints:
-            if (kw in ep["path"].lower()
-                    or kw in ep["summary"].lower()
-                    or kw in ep["description"].lower()
-                    or kw in ep["operation_id"].lower()):
+            if (
+                kw in ep["path"].lower()
+                or kw in ep["summary"].lower()
+                or kw in ep["description"].lower()
+                or kw in ep["operation_id"].lower()
+            ):
                 results.append(ep)
         return results
 
-    def get_schema(self, name: str) -> Optional[dict]:
+    def get_schema(self, name: str) -> dict | None:
         """按名称获取数据模型"""
         for s in self.schemas:
             if s["name"] == name:
@@ -308,10 +312,12 @@ class OpenAPIParser:
             out.write(f"  Base URL: {self.base_url}\n")
         out.write(f"{'=' * 60}\n")
         s = self.stats
-        out.write(f"  接口: {s['total_endpoints']}  "
-                  f"模型: {s['total_schemas']}  "
-                  f"标签: {s['total_tags']}  "
-                  f"已废弃: {s['deprecated_count']}\n")
+        out.write(
+            f"  接口: {s['total_endpoints']}  "
+            f"模型: {s['total_schemas']}  "
+            f"标签: {s['total_tags']}  "
+            f"已废弃: {s['deprecated_count']}\n"
+        )
         out.write(f"  方法: {s['methods']}\n\n")
 
     def print_endpoints(self, tag: str = None, output: TextIO = None):
@@ -351,12 +357,12 @@ class OpenAPIParser:
         if ep["tags"]:
             out.write(f"  标签: {', '.join(ep['tags'])}\n")
         if ep["deprecated"]:
-            out.write(f"  状态: 已废弃\n")
+            out.write("  状态: 已废弃\n")
 
         if ep["parameters"]:
-            out.write(f"\n  参数:\n")
+            out.write("\n  参数:\n")
             out.write(f"  {'名称':<20s} {'位置':<8s} {'类型':<15s} {'必填':<5s} 描述\n")
-            out.write(f"  {'─'*20} {'─'*8} {'─'*15} {'─'*5} {'─'*20}\n")
+            out.write(f"  {'─' * 20} {'─' * 8} {'─' * 15} {'─' * 5} {'─' * 20}\n")
             for p in ep["parameters"]:
                 req = "是" if p["required"] else ""
                 out.write(f"  {p['name']:<20s} {p['in']:<8s} {p['type']:<15s} {req:<5s} {p['description']}\n")
@@ -369,7 +375,7 @@ class OpenAPIParser:
                 self._print_schema_props(schema.get("schema", {}), indent=6, output=out)
 
         if ep["responses"]:
-            out.write(f"\n  响应:\n")
+            out.write("\n  响应:\n")
             for r in ep["responses"]:
                 out.write(f"    {r['status_code']}: {r['description']}\n")
                 for ct, schema in r.get("content", {}).items():
@@ -396,7 +402,7 @@ class OpenAPIParser:
     # ================================================================
 
     @staticmethod
-    def _load(source: Union[str, dict, Path]) -> dict:
+    def _load(source: str | dict | Path) -> dict:
         """加载文档"""
         if isinstance(source, dict):
             return source
@@ -487,9 +493,7 @@ class OpenAPIParser:
             return obj
         if isinstance(obj, dict):
             if "$ref" in obj:
-                return self._deep_resolve(
-                    copy.deepcopy(self._resolve_ref(obj["$ref"])), depth + 1
-                )
+                return self._deep_resolve(copy.deepcopy(self._resolve_ref(obj["$ref"])), depth + 1)
             return {k: self._deep_resolve(v, depth + 1) for k, v in obj.items()}
         if isinstance(obj, list):
             return [self._deep_resolve(item, depth + 1) for item in obj]
@@ -531,11 +535,15 @@ class OpenAPIParser:
                 "name": contact.get("name", ""),
                 "email": contact.get("email", ""),
                 "url": contact.get("url", ""),
-            } if contact else None,
+            }
+            if contact
+            else None,
             "license": {
                 "name": lic.get("name", ""),
                 "url": lic.get("url", ""),
-            } if lic else None,
+            }
+            if lic
+            else None,
             "base_url": "",
             "servers": [],
         }
@@ -551,11 +559,13 @@ class OpenAPIParser:
             for s in self._raw.get("servers", []):
                 variables = self._parse_server_variables(s.get("variables", "{}"))
                 resolved_url = self._resolve_server_url(s.get("url", ""), variables)
-                result["servers"].append({
-                    "url": resolved_url,
-                    "description": s.get("description", ""),
-                    "variables": variables,
-                })
+                result["servers"].append(
+                    {
+                        "url": resolved_url,
+                        "description": s.get("description", ""),
+                        "variables": variables,
+                    }
+                )
             if result["servers"]:
                 result["base_url"] = result["servers"][0]["url"]
 
@@ -621,14 +631,16 @@ class OpenAPIParser:
 
         result = []
         for name, data in defs.items():
-            result.append({
-                "name": name,
-                "type": data.get("type", ""),
-                "description": data.get("description", ""),
-                "in": data.get("in", ""),
-                "scheme": data.get("scheme", ""),
-                "bearer_format": data.get("bearerFormat", ""),
-            })
+            result.append(
+                {
+                    "name": name,
+                    "type": data.get("type", ""),
+                    "description": data.get("description", ""),
+                    "in": data.get("in", ""),
+                    "scheme": data.get("scheme", ""),
+                    "bearer_format": data.get("bearerFormat", ""),
+                }
+            )
         return result
 
     def _parse_schemas(self) -> list:
@@ -654,13 +666,15 @@ class OpenAPIParser:
                     "example": pdata.get("example"),
                 }
 
-            result.append({
-                "name": name,
-                "type": resolved.get("type", "object"),
-                "description": resolved.get("description", ""),
-                "required": required_fields,
-                "properties": properties,
-            })
+            result.append(
+                {
+                    "name": name,
+                    "type": resolved.get("type", "object"),
+                    "description": resolved.get("description", ""),
+                    "required": required_fields,
+                    "properties": properties,
+                }
+            )
 
         return result
 

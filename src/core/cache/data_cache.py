@@ -26,7 +26,7 @@ class DataCache:
         cache.clear()
     """
 
-    _instance: Optional['DataCache'] = None
+    _instance: Optional["DataCache"] = None
     _lock = threading.Lock()
     _initialized = False
 
@@ -44,7 +44,7 @@ class DataCache:
             DataCache._initialized = True
 
     @classmethod
-    def get_instance(cls) -> 'DataCache':
+    def get_instance(cls) -> "DataCache":
         """
         获取 DataCache 的单例实例
 

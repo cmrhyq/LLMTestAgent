@@ -1,5 +1,3 @@
-from typing import List
-
 from sqlalchemy.orm import Session
 
 from src.core.logging import get_logger
@@ -14,30 +12,27 @@ class EnvironmentService:
     def __init__(self, session: Session):
         self.repo = EnvironmentRepository(session)
 
-    def _get_existing_keys(self, env_list: List[EnvironmentCreate]) -> set:
+    def _get_existing_keys(self, env_list: list[EnvironmentCreate]) -> set:
         """批量查询已存在的 (project_id, name) 组合"""
         project_ids = {env.project_id for env in env_list}
         names = {env.name for env in env_list}
         existing = self.repo.bulk_query(project_ids, names)
         return {(item.project_id, item.name) for item in existing}
 
-    def create_env(self, env_list: List[EnvironmentCreate]) -> List[Environment]:
+    def create_env(self, env_list: list[EnvironmentCreate]) -> list[Environment]:
         """
         去重批量创建环境
         """
         if len(env_list) == 0:
-            logger.warning(f"无环境数据需创建", action="create_env")
+            logger.warning("无环境数据需创建", action="create_env")
             return []
 
         logger.info(f"开始创建环境，数量: {len(env_list)}", action="create_env", count=len(env_list))
         try:
             existing_keys = self._get_existing_keys(env_list)
-            new_data = [
-                env.model_dump() for env in env_list
-                if (env.project_id, env.name) not in existing_keys
-            ]
+            new_data = [env.model_dump() for env in env_list if (env.project_id, env.name) not in existing_keys]
             if not new_data:
-                logger.warning(f"所有环境已存在，跳过插入", action="create_env")
+                logger.warning("所有环境已存在，跳过插入", action="create_env")
                 return []
             skipped = len(env_list) - len(new_data)
             if skipped:

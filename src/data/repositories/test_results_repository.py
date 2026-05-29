@@ -1,10 +1,7 @@
-from typing import List
-
-from sqlalchemy import select, and_, func
+from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
 
 from src.data.models.test_result import TestResult
-
 from src.data.repositories.base import BaseRepository
 
 
@@ -14,24 +11,20 @@ class TestResultRepository(BaseRepository[TestResult]):
     def __init__(self, session: Session) -> None:
         super().__init__(TestResult, session)
 
-    def get_by_run(self, run_id: int) -> List[TestResult]:
+    def get_by_run(self, run_id: int) -> list[TestResult]:
         stmt = select(TestResult).where(TestResult.run_id == run_id)
         return list(self._session.scalars(stmt).all())
 
-    def get_by_test_case(self, test_case_id: int) -> List[TestResult]:
+    def get_by_test_case(self, test_case_id: int) -> list[TestResult]:
         stmt = select(TestResult).where(TestResult.test_case_id == test_case_id)
         return list(self._session.scalars(stmt).all())
 
-    def get_by_status(self, run_id: int, status: str) -> List[TestResult]:
-        stmt = select(TestResult).where(
-            and_(TestResult.run_id == run_id, TestResult.status == status)
-        )
+    def get_by_status(self, run_id: int, status: str) -> list[TestResult]:
+        stmt = select(TestResult).where(and_(TestResult.run_id == run_id, TestResult.status == status))
         return list(self._session.scalars(stmt).all())
 
-    def get_failed_results(self, run_id: int) -> List[TestResult]:
-        stmt = select(TestResult).where(
-            and_(TestResult.run_id == run_id, TestResult.status.in_(["failed", "error"]))
-        )
+    def get_failed_results(self, run_id: int) -> list[TestResult]:
+        stmt = select(TestResult).where(and_(TestResult.run_id == run_id, TestResult.status.in_(["failed", "error"])))
         return list(self._session.scalars(stmt).all())
 
     def count_by_run(self, run_id: int) -> int:
@@ -39,7 +32,9 @@ class TestResultRepository(BaseRepository[TestResult]):
         return self._session.scalar(stmt) or 0
 
     def count_by_status(self, run_id: int, status: str) -> int:
-        stmt = select(func.count()).select_from(TestResult).where(
-            and_(TestResult.run_id == run_id, TestResult.status == status)
+        stmt = (
+            select(func.count())
+            .select_from(TestResult)
+            .where(and_(TestResult.run_id == run_id, TestResult.status == status))
         )
         return self._session.scalar(stmt) or 0

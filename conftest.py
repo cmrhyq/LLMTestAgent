@@ -4,7 +4,6 @@ Pytest 全局配置和 fixtures。
 提供测试所需的通用 fixture（项目路径、临时目录、mock 配置等）。
 """
 
-import os
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 

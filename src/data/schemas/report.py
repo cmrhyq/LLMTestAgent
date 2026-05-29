@@ -1,10 +1,9 @@
-from typing import List
-
 from pydantic import BaseModel, Field
 
 
 class ReportResponse(BaseModel):
     """Report 响应体"""
+
     id: int = Field(..., description="报告ID")
     run_id: int = Field(..., description="所属执行批次ID")
     format: str = Field(..., description="报告格式: excel/html/markdown/json")
@@ -17,5 +16,6 @@ class ReportResponse(BaseModel):
 
 class ReportListResponse(BaseModel):
     """Report 列表响应"""
-    items: List[ReportResponse] = Field(default=[], description="报告列表")
+
+    items: list[ReportResponse] = Field(default=[], description="报告列表")
     total: int = Field(default=0, description="总数")

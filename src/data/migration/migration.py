@@ -8,9 +8,8 @@
 """
 
 from pathlib import Path
-from typing import Optional, List
 
-from sqlalchemy import text, inspect
+from sqlalchemy import inspect, text
 
 from src.core.database.connection import DatabaseManager, get_db_manager
 from src.core.logging import get_logger
@@ -19,12 +18,18 @@ from src.data.models.base import Base
 logger = get_logger(__name__)
 
 EXPECTED_TABLES = [
-    "project", "environment", "endpoint", "test_run",
-    "test_case", "test_result", "test_summary", "report",
+    "project",
+    "environment",
+    "endpoint",
+    "test_run",
+    "test_case",
+    "test_result",
+    "test_summary",
+    "report",
 ]
 
 
-def init_database_from_orm(manager: Optional[DatabaseManager] = None) -> None:
+def init_database_from_orm(manager: DatabaseManager | None = None) -> None:
     """
     通过 ORM 模型自动创建所有表
 
@@ -37,12 +42,12 @@ def init_database_from_orm(manager: Optional[DatabaseManager] = None) -> None:
     mgr = manager or get_db_manager()
     Base.metadata.create_all(mgr.engine)
     _create_views(mgr)
-    logger.info(f"通过ORM模型初始化数据库完成", method="orm")
+    logger.info("通过ORM模型初始化数据库完成", method="orm")
 
 
 def init_database_from_sql(
     sql_file: str = "sql/schema.sql",
-    manager: Optional[DatabaseManager] = None,
+    manager: DatabaseManager | None = None,
 ) -> None:
     """
     通过 SQL 文件执行建表
@@ -66,10 +71,15 @@ def init_database_from_sql(
             conn.execute(text(stmt))
         conn.commit()
 
-    logger.info(f"通过SQL文件初始化数据库完成: {sql_file}，语句数: {len(statements)}", method="sql", file=sql_file, statement_count=len(statements))
+    logger.info(
+        f"通过SQL文件初始化数据库完成: {sql_file}，语句数: {len(statements)}",
+        method="sql",
+        file=sql_file,
+        statement_count=len(statements),
+    )
 
 
-def check_tables_exist(manager: Optional[DatabaseManager] = None) -> List[str]:
+def check_tables_exist(manager: DatabaseManager | None = None) -> list[str]:
     """
     检查哪些预期的表已存在
 
@@ -85,7 +95,7 @@ def check_tables_exist(manager: Optional[DatabaseManager] = None) -> List[str]:
     return [t for t in EXPECTED_TABLES if t in existing]
 
 
-def get_missing_tables(manager: Optional[DatabaseManager] = None) -> List[str]:
+def get_missing_tables(manager: DatabaseManager | None = None) -> list[str]:
     """
     获取尚未创建的表
 
@@ -99,7 +109,7 @@ def get_missing_tables(manager: Optional[DatabaseManager] = None) -> List[str]:
     return [t for t in EXPECTED_TABLES if t not in existing]
 
 
-def is_database_ready(manager: Optional[DatabaseManager] = None) -> bool:
+def is_database_ready(manager: DatabaseManager | None = None) -> bool:
     """
     判断数据库是否已完整初始化（所有表均存在）
 
@@ -144,9 +154,9 @@ def ensure_database(
         else:
             init_database_from_orm(mgr)
 
-        logger.info(f"数据库初始化完成", action="setup_complete")
+        logger.info("数据库初始化完成", action="setup_complete")
     else:
-        logger.debug(f"数据库已就绪，无需初始化", action="already_ready")
+        logger.debug("数据库已就绪，无需初始化", action="already_ready")
 
     return mgr
 
@@ -212,14 +222,14 @@ def _create_views(manager: DatabaseManager) -> None:
         conn.commit()
 
 
-def _parse_sql_statements(sql_content: str) -> List[str]:
+def _parse_sql_statements(sql_content: str) -> list[str]:
     """
     将 SQL 文件内容解析为独立的 SQL 语句列表
 
     处理 TRIGGER / VIEW 等包含多个分号的复合语句。
     """
-    results: List[str] = []
-    current: List[str] = []
+    results: list[str] = []
+    current: list[str] = []
     in_trigger = False
 
     for line in sql_content.split("\n"):

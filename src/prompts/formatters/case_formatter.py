@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 
 def format_scenario_types(scenarios: Any) -> str:
@@ -12,6 +13,7 @@ def format_scenario_types(scenarios: Any) -> str:
 
     支持对象属性访问（如 pydantic model）和 dict 两种输入。
     """
+
     def _enabled(name: str) -> bool:
         if isinstance(scenarios, Mapping):
             return bool(scenarios.get(name, False))
@@ -31,7 +33,7 @@ def format_scenario_types(scenarios: Any) -> str:
     return "\n".join(lines)
 
 
-def format_api_info_for_prompt(api_info: Dict[str, Any]) -> Dict[str, Any]:
+def format_api_info_for_prompt(api_info: dict[str, Any]) -> dict[str, Any]:
     """规范化 API 信息，供 Jinja2 模板渲染。"""
     return {
         "name": api_info.get("name", ""),
@@ -39,9 +41,7 @@ def format_api_info_for_prompt(api_info: Dict[str, Any]) -> Dict[str, Any]:
         "method": str(api_info.get("method", "")),
         "headers": json.dumps(api_info.get("headers", {}), ensure_ascii=False, indent=2),
         "body": (
-            json.dumps(api_info.get("body"), ensure_ascii=False, indent=2)
-            if api_info.get("body") is not None
-            else "无"
+            json.dumps(api_info.get("body"), ensure_ascii=False, indent=2) if api_info.get("body") is not None else "无"
         ),
         "params": (
             json.dumps(api_info.get("params"), ensure_ascii=False, indent=2)
@@ -52,4 +52,3 @@ def format_api_info_for_prompt(api_info: Dict[str, Any]) -> Dict[str, Any]:
         "priority": str(api_info.get("priority", "P1")),
         "description": api_info.get("description") or "无",
     }
-

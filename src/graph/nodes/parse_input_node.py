@@ -6,7 +6,6 @@
 
 import json
 import re
-from typing import Dict
 
 from src.core.llm.llm_client import get_llm_client
 from src.core.logging import get_logger
@@ -28,8 +27,9 @@ def parse_input_node(state: AgentState) -> dict:
     Returns:
         部分状态更新，包含 user_intent 和 test_mode 字段
     """
-    logger.info(f"进入意图解析节点，用户指令: {state['raw_input'][:80]}",
-                node="parse_input", raw_input=state["raw_input"])
+    logger.info(
+        f"进入意图解析节点，用户指令: {state['raw_input'][:80]}", node="parse_input", raw_input=state["raw_input"]
+    )
 
     try:
         builder = IntentPromptBuilder()
@@ -37,28 +37,30 @@ def parse_input_node(state: AgentState) -> dict:
 
         llm_client = get_llm_client()
         response = llm_client.chat(messages)
-        logger.debug(f"LLM意图分类原始响应: {response[:300]}",
-                     node="parse_input", response_length=len(response))
+        logger.debug(f"LLM意图分类原始响应: {response[:300]}", node="parse_input", response_length=len(response))
 
         result = _extract_classification(response)
-        logger.info(f"意图识别完成，意图: {result['intent']}，模式: {result['test_mode']}",
-                    node="parse_input", intent=result["intent"], test_mode=result["test_mode"])
-        return {
-            "user_intent": result["intent"],
-            "test_mode": result["test_mode"]
-        }
+        logger.info(
+            f"意图识别完成，意图: {result['intent']}，模式: {result['test_mode']}",
+            node="parse_input",
+            intent=result["intent"],
+            test_mode=result["test_mode"],
+        )
+        return {"user_intent": result["intent"], "test_mode": result["test_mode"]}
 
     except Exception as e:
         error_msg = f"输入解析异常: {str(e)}"
-        logger.error(f"意图解析失败，使用默认值(run_test/single): {e}",
-                     node="parse_input", error=str(e), default_intent="run_test", default_mode="single")
-        return {
-            "user_intent": "run_test",
-            "test_mode": "single", "error_message": error_msg
-        }
+        logger.error(
+            f"意图解析失败，使用默认值(run_test/single): {e}",
+            node="parse_input",
+            error=str(e),
+            default_intent="run_test",
+            default_mode="single",
+        )
+        return {"user_intent": "run_test", "test_mode": "single", "error_message": error_msg}
 
 
-def _extract_classification(response: str) -> Dict[str, str]:
+def _extract_classification(response: str) -> dict[str, str]:
     """从 LLM 响应中提取意图和测试模式。
 
     优先使用 JSON 解析，失败时使用正则匹配作为后备。

@@ -6,16 +6,18 @@
 """
 
 import threading
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Optional, Generator
+from typing import Optional
 
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import sessionmaker, Session, DeclarativeBase
+from sqlalchemy.orm import Session, sessionmaker
 
 from src import AppConfig, get_config
 from src.core.logging import get_logger
+from src.data.models.base import Base
 
 logger = get_logger(__name__)
 
@@ -35,8 +37,8 @@ class DatabaseManager:
     _lock = threading.Lock()
 
     def __init__(self) -> None:
-        self._engine: Optional[Engine] = None
-        self._session_factory: Optional[sessionmaker] = None
+        self._engine: Engine | None = None
+        self._session_factory: sessionmaker | None = None
         self._initialized = False
 
     @classmethod
@@ -69,7 +71,7 @@ class DatabaseManager:
             pool_recycle: 连接回收时间（秒）
         """
         if self._initialized:
-            logger.debug(f"数据库已初始化，跳过重复初始化", action="initialize")
+            logger.debug("数据库已初始化，跳过重复初始化", action="initialize")
             return
 
         self._ensure_db_directory(db_url)
@@ -79,12 +81,14 @@ class DatabaseManager:
         if db_url.startswith("sqlite"):
             engine_kwargs["connect_args"] = {"check_same_thread": False}
         else:
-            engine_kwargs.update({
-                "pool_size": pool_size,
-                "max_overflow": max_overflow,
-                "pool_timeout": pool_timeout,
-                "pool_recycle": pool_recycle,
-            })
+            engine_kwargs.update(
+                {
+                    "pool_size": pool_size,
+                    "max_overflow": max_overflow,
+                    "pool_timeout": pool_timeout,
+                    "pool_recycle": pool_recycle,
+                }
+            )
 
         self._engine = create_engine(db_url, **engine_kwargs)
 
@@ -171,13 +175,13 @@ class DatabaseManager:
         """根据 ORM 模型创建所有表（如果不存在）"""
         self._check_initialized()
         Base.metadata.create_all(self._engine)  # type: ignore[arg-type]
-        logger.info(f"数据库表已创建", action="create_tables")
+        logger.info("数据库表已创建", action="create_tables")
 
     def drop_tables(self) -> None:
         """删除所有 ORM 模型对应的表（仅用于测试环境）"""
         self._check_initialized()
         Base.metadata.drop_all(self._engine)  # type: ignore[arg-type]
-        logger.warning(f"数据库表已删除（仅测试环境）", action="drop_tables")
+        logger.warning("数据库表已删除（仅测试环境）", action="drop_tables")
 
     def execute_sql_file(self, sql_file_path: str) -> None:
         """
@@ -193,9 +197,7 @@ class DatabaseManager:
 
         sql_content = path.read_text(encoding="utf-8")
         statements = [
-            stmt.strip()
-            for stmt in sql_content.split(";")
-            if stmt.strip() and not stmt.strip().startswith("--")
+            stmt.strip() for stmt in sql_content.split(";") if stmt.strip() and not stmt.strip().startswith("--")
         ]
 
         with self._engine.connect() as conn:  # type: ignore[union-attr]
@@ -204,7 +206,11 @@ class DatabaseManager:
                     conn.execute(text(statement))
             conn.commit()
 
-        logger.info(f"SQL文件执行完成: {sql_file_path}，语句数: {len(statements)}", file=sql_file_path, statements=len(statements))
+        logger.info(
+            f"SQL文件执行完成: {sql_file_path}，语句数: {len(statements)}",
+            file=sql_file_path,
+            statements=len(statements),
+        )
 
     def check_connection(self) -> bool:
         """
@@ -226,7 +232,7 @@ class DatabaseManager:
         """关闭数据库引擎并释放所有连接"""
         if self._engine is not None:
             self._engine.dispose()
-            logger.info(f"数据库引擎已释放", action="dispose")
+            logger.info("数据库引擎已释放", action="dispose")
         self._engine = None
         self._session_factory = None
         self._initialized = False
@@ -234,9 +240,7 @@ class DatabaseManager:
     def _check_initialized(self) -> None:
         """检查数据库是否已初始化"""
         if not self._initialized:
-            raise RuntimeError(
-                "数据库尚未初始化，请先调用 DatabaseManager.get_instance().initialize()"
-            )
+            raise RuntimeError("数据库尚未初始化，请先调用 DatabaseManager.get_instance().initialize()")
 
     @classmethod
     def reset_instance(cls) -> None:
@@ -286,7 +290,7 @@ def init_database(
     return manager
 
 
-def init_database_from_config(config: Optional[AppConfig] = None) -> DatabaseManager:
+def init_database_from_config(config: AppConfig | None = None) -> DatabaseManager:
     """
     从配置中初始化数据库并返回session
     Args:

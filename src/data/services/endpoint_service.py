@@ -1,5 +1,3 @@
-from typing import List
-
 from sqlalchemy.orm import Session
 
 from src.core.logging import get_logger
@@ -14,7 +12,7 @@ class EndpointService:
     def __init__(self, session: Session):
         self.repo = EndpointRepository(session)
 
-    def _get_existing_keys(self, endpoint_list: List[EndpointCreate]) -> set:
+    def _get_existing_keys(self, endpoint_list: list[EndpointCreate]) -> set:
         """批量查询已存在的 (project_id, path, method) 组合"""
         project_ids = {endpoint.project_id for endpoint in endpoint_list}
         paths = {endpoint.path for endpoint in endpoint_list}
@@ -22,22 +20,27 @@ class EndpointService:
         existing = self.repo.bulk_query(project_ids, paths, methods)
         return {(item.project_id, item.path, item.method) for item in existing}
 
-    def create_endpoint(self, endpoints: List[EndpointCreate]) -> List[Endpoint]:
+    def create_endpoint(self, endpoints: list[EndpointCreate]) -> list[Endpoint]:
         if len(endpoints) == 0:
-            logger.warning(f"无接口数据需创建", action="create_endpoint")
+            logger.warning("无接口数据需创建", action="create_endpoint")
             return []
 
         logger.info(f"开始创建接口，数量: {len(endpoints)}", action="create_endpoint", count=len(endpoints))
 
         try:
             existing_keys = self._get_existing_keys(endpoints)
-            logger.debug(f"已存在记录查询完成，重复数: {len(existing_keys)}", action="create_endpoint", existing_count=len(existing_keys))
+            logger.debug(
+                f"已存在记录查询完成，重复数: {len(existing_keys)}",
+                action="create_endpoint",
+                existing_count=len(existing_keys),
+            )
             new_data = [
-                endpoint.model_dump() for endpoint in endpoints
+                endpoint.model_dump()
+                for endpoint in endpoints
                 if (endpoint.project_id, endpoint.path, endpoint.method) not in existing_keys
             ]
             if not new_data:
-                logger.warning(f"所有接口已存在，跳过插入", action="create_endpoint")
+                logger.warning("所有接口已存在，跳过插入", action="create_endpoint")
                 return []
             skipped = len(endpoints) - len(new_data)
             if skipped:

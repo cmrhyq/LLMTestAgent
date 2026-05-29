@@ -4,7 +4,7 @@
 """
 
 import json
-from typing import Any, Optional
+from typing import Any
 
 from src.core.config import get_config
 from src.core.database.connection import get_db_manager
@@ -25,7 +25,7 @@ def ensure_db() -> None:
         )
 
 
-def safe_json_loads(value: Optional[str], default: Any) -> Any:
+def safe_json_loads(value: str | None, default: Any) -> Any:
     """安全解析 JSON 字段。"""
     if not value:
         return default

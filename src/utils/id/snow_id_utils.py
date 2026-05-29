@@ -1,6 +1,6 @@
 import os
-import time
 import threading
+import time
 
 
 class SnowflakeIdGenerator:
@@ -72,10 +72,7 @@ class SnowflakeIdGenerator:
             current_timestamp = self._current_millis()
 
             if current_timestamp < self._last_timestamp:
-                raise RuntimeError(
-                    f"时钟回拨，拒绝生成ID，回拨时间: "
-                    f"{self._last_timestamp - current_timestamp} 毫秒"
-                )
+                raise RuntimeError(f"时钟回拨，拒绝生成ID，回拨时间: {self._last_timestamp - current_timestamp} 毫秒")
 
             if current_timestamp == self._last_timestamp:
                 self._sequence = (self._sequence + 1) & self.MAX_SEQUENCE

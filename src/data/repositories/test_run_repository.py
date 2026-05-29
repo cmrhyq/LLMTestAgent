@@ -1,11 +1,10 @@
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import Any
 
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from src.data.models.test_run import TestRun
-
 from src.data.repositories.base import BaseRepository
 
 
@@ -15,21 +14,16 @@ class TestRunRepository(BaseRepository[TestRun]):
     def __init__(self, session: Session) -> None:
         super().__init__(TestRun, session)
 
-    def get_by_project(self, project_id: int, limit: int = 50) -> List[TestRun]:
-        stmt = (
-            select(TestRun)
-            .where(TestRun.project_id == project_id)
-            .order_by(TestRun.created_at.desc())
-            .limit(limit)
-        )
+    def get_by_project(self, project_id: int, limit: int = 50) -> list[TestRun]:
+        stmt = select(TestRun).where(TestRun.project_id == project_id).order_by(TestRun.created_at.desc()).limit(limit)
         return list(self._session.scalars(stmt).all())
 
-    def get_by_status(self, status: str) -> List[TestRun]:
+    def get_by_status(self, status: str) -> list[TestRun]:
         stmt = select(TestRun).where(TestRun.status == status)
         return list(self._session.scalars(stmt).all())
 
     def update_status(self, run_db_id: int, status: str, error_message: str = "") -> None:
-        values: Dict[str, Any] = {"status": status}
+        values: dict[str, Any] = {"status": status}
         if status == "running":
             values["started_at"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
         elif status in ("completed", "failed", "cancelled"):

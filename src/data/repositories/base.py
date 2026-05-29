@@ -1,6 +1,6 @@
-from typing import Optional, List, TypeVar, Type, Generic
+from typing import Generic, TypeVar
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from src.data.models.base import Base
@@ -11,14 +11,14 @@ T = TypeVar("T", bound=Base)
 class BaseRepository(Generic[T]):
     """通用 CRUD 基类"""
 
-    def __init__(self, model_class: Type[T], session: Session) -> None:
+    def __init__(self, model_class: type[T], session: Session) -> None:
         self._model = model_class
         self._session = session
 
-    def get_by_id(self, record_id: int) -> Optional[T]:
+    def get_by_id(self, record_id: int) -> T | None:
         return self._session.get(self._model, record_id)
 
-    def get_all(self, limit: int = 1000, offset: int = 0) -> List[T]:
+    def get_all(self, limit: int = 1000, offset: int = 0) -> list[T]:
         stmt = select(self._model).limit(limit).offset(offset)
         return list(self._session.scalars(stmt).all())
 
@@ -27,7 +27,7 @@ class BaseRepository(Generic[T]):
         self._session.flush()
         return entity
 
-    def add_many(self, entities: List[T]) -> List[T]:
+    def add_many(self, entities: list[T]) -> list[T]:
         self._session.add_all(entities)
         self._session.flush()
         return entities
@@ -45,7 +45,7 @@ class BaseRepository(Generic[T]):
         self._session.flush()
         return True
 
-    def bulk_create(self, objects: list[dict]) -> List[T]:
+    def bulk_create(self, objects: list[dict]) -> list[T]:
         db_objects = [self._model(**obj) for obj in objects]
         self._session.add_all(db_objects)
         self._session.flush()

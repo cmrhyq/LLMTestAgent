@@ -11,7 +11,7 @@
 """
 
 import re
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from src.core.logging import get_logger
 
@@ -37,11 +37,11 @@ class AssertionEngine:
 
     def evaluate_all(
         self,
-        rules: List[str],
+        rules: list[str],
         response_body: Any,
         status_code: int,
         response_time: float,
-    ) -> Tuple[bool, List[Dict[str, Any]]]:
+    ) -> tuple[bool, list[dict[str, Any]]]:
         """评估所有断言规则。
 
         Args:
@@ -53,7 +53,7 @@ class AssertionEngine:
         Returns:
             (all_passed, details) 其中 details 是每条规则的评估结果
         """
-        details: List[Dict[str, Any]] = []
+        details: list[dict[str, Any]] = []
         all_passed = True
 
         for rule_str in rules:
@@ -66,7 +66,9 @@ class AssertionEngine:
         if all_passed:
             logger.debug(f"断言全部通过，规则数: {len(rules)}", rule_count=len(rules))
         else:
-            logger.debug(f"断言部分失败 - 总数: {len(rules)}, 失败: {failed_count}", total=len(rules), failed=failed_count)
+            logger.debug(
+                f"断言部分失败 - 总数: {len(rules)}, 失败: {failed_count}", total=len(rules), failed=failed_count
+            )
 
         return all_passed, details
 
@@ -76,7 +78,7 @@ class AssertionEngine:
         response_body: Any,
         status_code: int,
         response_time: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """评估单条断言规则。"""
         try:
             path, operator, expected = self._parse_rule(rule_str)
@@ -100,7 +102,7 @@ class AssertionEngine:
                 "error": str(e),
             }
 
-    def _parse_rule(self, rule_str: str) -> Tuple[str, str, Any]:
+    def _parse_rule(self, rule_str: str) -> tuple[str, str, Any]:
         """解析断言规则字符串为 (path, operator, expected)。
 
         Args:
@@ -187,9 +189,9 @@ class AssertionEngine:
         return current
 
     @staticmethod
-    def _tokenize_path(path: str) -> List[str]:
+    def _tokenize_path(path: str) -> list[str]:
         """将 "a.b[0].c" 拆分为 ["a", "b", "0", "c"]。"""
-        tokens: List[str] = []
+        tokens: list[str] = []
         for segment in path.split("."):
             if not segment:
                 continue
@@ -285,8 +287,9 @@ class AssertionEngine:
         if value_str.lower() == "false":
             return False
 
-        if (value_str.startswith('"') and value_str.endswith('"')) or \
-           (value_str.startswith("'") and value_str.endswith("'")):
+        if (value_str.startswith('"') and value_str.endswith('"')) or (
+            value_str.startswith("'") and value_str.endswith("'")
+        ):
             return value_str[1:-1]
 
         try:

@@ -1,10 +1,9 @@
-from typing import Optional
-
 from pydantic import BaseModel, Field
 
 
 class TestSummaryResponse(BaseModel):
     """TestSummary 响应体"""
+
     id: int = Field(..., description="摘要ID")
     run_id: int = Field(..., description="所属执行批次ID")
     total: int = Field(default=0, description="总用例数")
@@ -19,8 +18,8 @@ class TestSummaryResponse(BaseModel):
     p95_response_time: float = Field(default=0.0, description="P95 响应时间 (秒)")
     total_duration: float = Field(default=0.0, description="总耗时 (秒)")
     failure_reasons: str = Field(default="{}", description="失败原因分布 JSON")
-    started_at: Optional[str] = Field(default=None, description="开始时间")
-    finished_at: Optional[str] = Field(default=None, description="结束时间")
+    started_at: str | None = Field(default=None, description="开始时间")
+    finished_at: str | None = Field(default=None, description="结束时间")
     created_at: str = Field(..., description="创建时间")
 
     model_config = {"from_attributes": True}

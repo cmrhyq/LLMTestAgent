@@ -4,7 +4,7 @@
 """
 
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 from src.core.cache.data_cache import DataCache
 from src.core.config import get_config
@@ -36,7 +36,7 @@ def execute_single_tests_node(state: AgentState) -> dict:
     logger.info(f"进入单接口测试执行节点，run_id: {run_id}", node="execute_single_tests", run_id=run_id)
 
     if not run_id:
-        logger.warning(f"run_id为空，跳过执行", node="execute_single_tests")
+        logger.warning("run_id为空，跳过执行", node="execute_single_tests")
         return {"test_results_summary": {}, "current_step": "error", "error_message": "run_id 为空"}
 
     config = get_config()
@@ -55,7 +55,7 @@ def execute_single_tests_node(state: AgentState) -> dict:
             logger.error(f"TestRun不存在: run_id={run_id}", node="execute_single_tests", run_id=run_id)
             return {"test_results_summary": {}, "error_message": f"TestRun 不存在: {run_id}", "current_step": "error"}
 
-        test_cases: List[TestCase] = test_case_repo.get_by_run_and_status(run_id, 1)
+        test_cases: list[TestCase] = test_case_repo.get_by_run_and_status(run_id, 1)
 
         if not test_cases:
             logger.warning(f"无可执行的用例，run_id: {run_id}", node="execute_single_tests", run_id=run_id)
@@ -86,8 +86,12 @@ def execute_single_tests_node(state: AgentState) -> dict:
                 else:
                     error += 1
             except Exception as e:
-                logger.error(f"用例执行异常: {test_case.case_id}, 错误: {e}", node="execute_single_tests",
-                             case_id=test_case.case_id, error=str(e))
+                logger.error(
+                    f"用例执行异常: {test_case.case_id}, 错误: {e}",
+                    node="execute_single_tests",
+                    case_id=test_case.case_id,
+                    error=str(e),
+                )
                 error += 1
 
         total = passed + failed + skipped + error
@@ -106,7 +110,7 @@ def execute_single_tests_node(state: AgentState) -> dict:
             end = datetime.fromisoformat(test_run.finished_at)
             test_run.total_duration = (end - start).total_seconds()
 
-    summary: Dict[str, Any] = {
+    summary: dict[str, Any] = {
         "total": total,
         "passed": passed,
         "failed": failed,
@@ -117,8 +121,13 @@ def execute_single_tests_node(state: AgentState) -> dict:
 
     logger.info(
         f"[execute_single_tests] 测试执行完成 - 总数: {total}, 通过: {passed}, 失败: {failed}, 跳过: {skipped}, 错误: {error}, 通过率: {pass_rate:.2f}%",
-        node="execute_single_tests", total=total, passed=passed, failed=failed,
-        skipped=skipped, error=error, pass_rate=round(pass_rate, 2),
+        node="execute_single_tests",
+        total=total,
+        passed=passed,
+        failed=failed,
+        skipped=skipped,
+        error=error,
+        pass_rate=round(pass_rate, 2),
     )
 
     return {"test_results_summary": summary, "current_step": "generate_report"}

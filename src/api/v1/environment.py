@@ -1,7 +1,5 @@
 """环境管理路由。"""
 
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -10,9 +8,9 @@ from src.data.models.environment import Environment
 from src.data.repositories import EnvironmentRepository
 from src.data.schemas.environment import (
     EnvironmentCreate,
-    EnvironmentUpdate,
-    EnvironmentResponse,
     EnvironmentListResponse,
+    EnvironmentResponse,
+    EnvironmentUpdate,
 )
 
 router = APIRouter(prefix="/environments", tags=["环境管理"])
@@ -32,8 +30,8 @@ def create_environment(body: EnvironmentCreate, db: Session = Depends(get_db)):
 
 @router.get("/", response_model=EnvironmentListResponse)
 def list_environments(
-    project_id: Optional[int] = Query(default=None, description="项目ID筛选"),
-    keyword: Optional[str] = Query(default=None, description="关键字搜索"),
+    project_id: int | None = Query(default=None, description="项目ID筛选"),
+    keyword: str | None = Query(default=None, description="关键字搜索"),
     page: int = Query(default=1, ge=1, description="页码"),
     page_size: int = Query(default=20, ge=1, le=100, description="每页数量"),
     db: Session = Depends(get_db),
@@ -47,15 +45,11 @@ def list_environments(
         filtered = [e for e in filtered if e.project_id == project_id]
     if keyword:
         kw = keyword.lower()
-        filtered = [
-            e for e in filtered
-            if kw in (e.name or "").lower()
-            or kw in (e.description or "").lower()
-        ]
+        filtered = [e for e in filtered if kw in (e.name or "").lower() or kw in (e.description or "").lower()]
 
     total = len(filtered)
     start = (page - 1) * page_size
-    items = filtered[start: start + page_size]
+    items = filtered[start : start + page_size]
     return EnvironmentListResponse(items=items, total=total, page=page, page_size=page_size)
 
 

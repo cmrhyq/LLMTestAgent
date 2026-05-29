@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..loader import get_loader
 
@@ -18,17 +18,17 @@ class BasePromptBuilder:
     def __init__(self) -> None:
         self.loader = get_loader()
 
-    def load_template(self, template_name: str) -> Dict[str, Any]:
+    def load_template(self, template_name: str) -> dict[str, Any]:
         return self.loader.load_yaml(template_name)
 
-    def render(self, template_name: str, context: Optional[Dict[str, Any]] = None, prompt_key: str = "prompt") -> str:
+    def render(self, template_name: str, context: dict[str, Any] | None = None, prompt_key: str = "prompt") -> str:
         return self.loader.render(template_name=template_name, context=context, prompt_key=prompt_key)
 
     def build_system_prompt(self) -> str:
         """构建系统提示词（从 SYSTEM_TEMPLATE 加载）。"""
         return self.render(self.SYSTEM_TEMPLATE)
 
-    def build_messages(self, user_content: str) -> List[Dict[str, str]]:
+    def build_messages(self, user_content: str) -> list[dict[str, str]]:
         """构建标准的 system + user 消息列表。
 
         子类可覆写此方法自定义 user_content 的组装逻辑。

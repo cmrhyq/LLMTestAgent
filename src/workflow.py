@@ -12,13 +12,13 @@
 """
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
-from langgraph.graph import StateGraph, START, END
+from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
-from src.core.config import get_config, AppConfig
+from src.core.config import AppConfig, get_config
 from src.core.logging import get_logger
 from src.graph.nodes.end_node import end_node
 from src.graph.nodes.error_node import error_node
@@ -35,7 +35,7 @@ from src.graph.nodes.select_endpoints_node import (
     select_endpoints_agent_node,
 )
 from src.graph.nodes.start_node import start_node
-from src.graph.route import route_by_intent, route_by_test_mode, route_by_step
+from src.graph.route import route_by_intent, route_by_step, route_by_test_mode
 from src.graph.state import AgentState
 
 logger = get_logger(__name__)
@@ -78,16 +78,8 @@ def build_graph() -> CompiledStateGraph:
     workflow.add_node("end", end_node)
     workflow.add_node("error", error_node)
 
-
     workflow.add_edge(START, "start")
-    workflow.add_conditional_edges(
-        "start",
-        route_by_step,
-        {
-            "parse_input": "parse_input",
-            "error": "error"
-        }
-    )
+    workflow.add_conditional_edges("start", route_by_step, {"parse_input": "parse_input", "error": "error"})
 
     workflow.add_conditional_edges(
         "parse_input",
@@ -119,56 +111,22 @@ def build_graph() -> CompiledStateGraph:
 
     # single 分支
     workflow.add_conditional_edges(
-        "generate_single_cases",
-        route_by_step,
-        {
-            "execute_single_tests": "execute_single_tests",
-            "error": "error"
-        }
+        "generate_single_cases", route_by_step, {"execute_single_tests": "execute_single_tests", "error": "error"}
     )
     workflow.add_conditional_edges(
-        "execute_single_tests",
-        route_by_step,
-        {
-            "generate_report": "generate_report",
-            "error": "error"
-        }
+        "execute_single_tests", route_by_step, {"generate_report": "generate_report", "error": "error"}
     )
 
     # flow 分支
     workflow.add_conditional_edges(
-        "generate_flow_cases",
-        route_by_step,
-        {
-            "execute_flow_tests": "execute_flow_tests",
-            "error": "error"
-        }
+        "generate_flow_cases", route_by_step, {"execute_flow_tests": "execute_flow_tests", "error": "error"}
     )
     workflow.add_conditional_edges(
-        "execute_flow_tests",
-        route_by_step,
-        {
-            "generate_report": "generate_report",
-            "error": "error"
-        }
+        "execute_flow_tests", route_by_step, {"generate_report": "generate_report", "error": "error"}
     )
 
-    workflow.add_conditional_edges(
-        "generate_report",
-        route_by_step,
-        {
-            "end": "end",
-            "error": "error"
-        }
-    )
-    workflow.add_conditional_edges(
-        "parse_openapi_doc",
-        route_by_step,
-        {
-            "end": "end",
-            "error": "error"
-        }
-    )
+    workflow.add_conditional_edges("generate_report", route_by_step, {"end": "end", "error": "error"})
+    workflow.add_conditional_edges("parse_openapi_doc", route_by_step, {"end": "end", "error": "error"})
 
     # 结束节点连接到 END
     workflow.add_edge("end", END)
@@ -187,15 +145,15 @@ class TestWorkflow:
         graph: 编译后的 LangGraph 图
     """
 
-    def __init__(self, config: Optional[AppConfig] = None):
+    def __init__(self, config: AppConfig | None = None):
         self.config = config or get_config()
         self.graph = build_graph()
 
     def run(
         self,
         raw_input: str,
-        api_doc_file_path: Optional[Path] = None,
-    ) -> Dict[str, Any]:
+        api_doc_file_path: Path | None = None,
+    ) -> dict[str, Any]:
         """运行工作流。
 
         Args:
@@ -205,10 +163,13 @@ class TestWorkflow:
         Returns:
             最终工作流状态字典
         """
-        logger.info(f"工作流开始执行，指令: {raw_input[:80]}，文档: {api_doc_file_path or '无'}",
-                    raw_input=raw_input, api_doc_file_path=str(api_doc_file_path) if api_doc_file_path else "")
+        logger.info(
+            f"工作流开始执行，指令: {raw_input[:80]}，文档: {api_doc_file_path or '无'}",
+            raw_input=raw_input,
+            api_doc_file_path=str(api_doc_file_path) if api_doc_file_path else "",
+        )
 
-        initial_state: Dict[str, Any] = {
+        initial_state: dict[str, Any] = {
             "raw_input": raw_input,
             "api_doc_file_path": str(api_doc_file_path) if api_doc_file_path else "",
             "current_step": "",
@@ -227,10 +188,12 @@ class TestWorkflow:
 
         try:
             final_state = self.graph.invoke(initial_state)
-            logger.info(f"工作流执行完成，意图: {final_state.get('user_intent', '')}, "
-                        f"步骤: {final_state.get('current_step', '')}",
-                        intent=final_state.get("user_intent", ""),
-                        current_step=final_state.get("current_step", ""))
+            logger.info(
+                f"工作流执行完成，意图: {final_state.get('user_intent', '')}, "
+                f"步骤: {final_state.get('current_step', '')}",
+                intent=final_state.get("user_intent", ""),
+                current_step=final_state.get("current_step", ""),
+            )
             return final_state
         except Exception as e:
             logger.error(f"工作流执行失败: {str(e)}", error=str(e), raw_input=raw_input[:100])

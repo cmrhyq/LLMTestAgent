@@ -1,7 +1,5 @@
 """接口管理路由。"""
 
-from typing import Optional, List
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -10,9 +8,9 @@ from src.data.models.endpoint import Endpoint
 from src.data.repositories import EndpointRepository
 from src.data.schemas.endpoint import (
     EndpointCreate,
-    EndpointUpdate,
-    EndpointResponse,
     EndpointListResponse,
+    EndpointResponse,
+    EndpointUpdate,
 )
 
 router = APIRouter(prefix="/endpoints", tags=["接口管理"])
@@ -32,10 +30,11 @@ def create_endpoint(body: EndpointCreate, db: Session = Depends(get_db)):
     return created
 
 
-@router.post("/batch", response_model=List[EndpointResponse], status_code=201)
-def batch_create_endpoints(body: List[EndpointCreate], db: Session = Depends(get_db)):
+@router.post("/batch", response_model=list[EndpointResponse], status_code=201)
+def batch_create_endpoints(body: list[EndpointCreate], db: Session = Depends(get_db)):
     """批量创建接口定义。"""
     from src.data.services.endpoint_service import EndpointService
+
     service = EndpointService(db)
     results = service.create_endpoint(body)
     return results
@@ -43,9 +42,9 @@ def batch_create_endpoints(body: List[EndpointCreate], db: Session = Depends(get
 
 @router.get("/", response_model=EndpointListResponse)
 def list_endpoints(
-    project_id: Optional[int] = Query(default=None, description="项目ID筛选"),
-    method: Optional[str] = Query(default=None, description="HTTP 方法筛选"),
-    keyword: Optional[str] = Query(default=None, description="关键字搜索"),
+    project_id: int | None = Query(default=None, description="项目ID筛选"),
+    method: str | None = Query(default=None, description="HTTP 方法筛选"),
+    keyword: str | None = Query(default=None, description="关键字搜索"),
     page: int = Query(default=1, ge=1, description="页码"),
     page_size: int = Query(default=20, ge=1, le=100, description="每页数量"),
     db: Session = Depends(get_db),
@@ -64,15 +63,14 @@ def list_endpoints(
     if keyword:
         kw = keyword.lower()
         filtered = [
-            e for e in filtered
-            if kw in (e.name or "").lower()
-            or kw in (e.path or "").lower()
-            or kw in (e.summary or "").lower()
+            e
+            for e in filtered
+            if kw in (e.name or "").lower() or kw in (e.path or "").lower() or kw in (e.summary or "").lower()
         ]
 
     total = len(filtered)
     start = (page - 1) * page_size
-    items = filtered[start: start + page_size]
+    items = filtered[start : start + page_size]
     return EndpointListResponse(items=items, total=total, page=page, page_size=page_size)
 
 
@@ -99,6 +97,7 @@ def update_endpoint(endpoint_id: int, body: EndpointUpdate, db: Session = Depend
         if value is not None:
             if isinstance(value, (list, dict)):
                 import json
+
                 setattr(endpoint, field, json.dumps(value, ensure_ascii=False))
             else:
                 setattr(endpoint, field, value)
