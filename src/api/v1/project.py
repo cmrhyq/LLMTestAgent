@@ -1,7 +1,5 @@
 """项目管理路由。"""
 
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -10,9 +8,9 @@ from src.data.models.project import Project
 from src.data.repositories import ProjectRepository
 from src.data.schemas.project import (
     ProjectCreate,
-    ProjectUpdate,
-    ProjectResponse,
     ProjectListResponse,
+    ProjectResponse,
+    ProjectUpdate,
 )
 
 router = APIRouter(prefix="/projects", tags=["项目管理"])
@@ -32,8 +30,8 @@ def create_project(body: ProjectCreate, db: Session = Depends(get_db)):
 
 @router.get("/", response_model=ProjectListResponse)
 def list_projects(
-    keyword: Optional[str] = Query(default=None, description="关键字搜索"),
-    status: Optional[int] = Query(default=None, description="状态筛选"),
+    keyword: str | None = Query(default=None, description="关键字搜索"),
+    status: int | None = Query(default=None, description="状态筛选"),
     page: int = Query(default=1, ge=1, description="页码"),
     page_size: int = Query(default=20, ge=1, le=100, description="每页数量"),
     db: Session = Depends(get_db),
@@ -47,14 +45,14 @@ def list_projects(
         filtered = [p for p in filtered if p.status == status]
     if keyword:
         filtered = [
-            p for p in filtered
-            if keyword.lower() in (p.name or "").lower()
-            or keyword.lower() in (p.description or "").lower()
+            p
+            for p in filtered
+            if keyword.lower() in (p.name or "").lower() or keyword.lower() in (p.description or "").lower()
         ]
 
     total = len(filtered)
     start = (page - 1) * page_size
-    items = filtered[start: start + page_size]
+    items = filtered[start : start + page_size]
     return ProjectListResponse(items=items, total=total, page=page, page_size=page_size)
 
 

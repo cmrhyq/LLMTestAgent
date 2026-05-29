@@ -1,10 +1,7 @@
-from typing import Optional
-
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from src.data.models.test_summary import TestSummary
-
 from src.data.repositories.base import BaseRepository
 
 
@@ -14,7 +11,7 @@ class TestSummaryRepository(BaseRepository[TestSummary]):
     def __init__(self, session: Session) -> None:
         super().__init__(TestSummary, session)
 
-    def get_by_run(self, run_id: int) -> Optional[TestSummary]:
+    def get_by_run(self, run_id: int) -> TestSummary | None:
         stmt = select(TestSummary).where(TestSummary.run_id == run_id)
         return self._session.scalar(stmt)
 
@@ -33,8 +30,8 @@ class TestSummaryRepository(BaseRepository[TestSummary]):
         p95_response_time: float = 0.0,
         total_duration: float = 0.0,
         failure_reasons: str = "{}",
-        started_at: Optional[str] = None,
-        finished_at: Optional[str] = None,
+        started_at: str | None = None,
+        finished_at: str | None = None,
     ) -> TestSummary:
         """创建或更新测试摘要"""
         existing = self.get_by_run(run_id)

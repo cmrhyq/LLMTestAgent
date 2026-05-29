@@ -7,8 +7,8 @@
 from src.core.database.connection import (
     DatabaseManager,
     get_db_manager,
-    init_database,
     get_session,
+    init_database,
 )
 
 __all__ = [

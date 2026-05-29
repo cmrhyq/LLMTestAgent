@@ -17,6 +17,7 @@ class DataStatus(int, Enum):
     """
     1=启用，2=禁用，3=已删除, 4=已废弃
     """
+
     ENABLE = 1
     DISABLE = 2
     DELETED = 3
@@ -25,6 +26,7 @@ class DataStatus(int, Enum):
 
 class HttpMethod(str, Enum):
     """HTTP请求方法"""
+
     GET = "GET"
     POST = "POST"
     PUT = "PUT"
@@ -36,6 +38,7 @@ class HttpMethod(str, Enum):
 
 class Priority(str, Enum):
     """用例优先级"""
+
     P0 = "P0"  # 冒烟用例
     P1 = "P1"  # 核心用例
     P2 = "P2"  # 全量用例
@@ -43,34 +46,37 @@ class Priority(str, Enum):
 
 class TestStatus(str, Enum):
     """测试状态"""
-    PENDING = "pending"      # 待执行
-    RUNNING = "running"      # 执行中
-    PASSED = "passed"        # 通过
-    FAILED = "failed"        # 失败
-    SKIPPED = "skipped"      # 跳过
-    ERROR = "error"          # 错误
+
+    PENDING = "pending"  # 待执行
+    RUNNING = "running"  # 执行中
+    PASSED = "passed"  # 通过
+    FAILED = "failed"  # 失败
+    SKIPPED = "skipped"  # 跳过
+    ERROR = "error"  # 错误
 
 
 class ScenarioType(str, Enum):
     """场景类型"""
-    NORMAL = "normal"                    # 正常场景
-    PARAM_MISSING = "param_missing"      # 参数缺失
+
+    NORMAL = "normal"  # 正常场景
+    PARAM_MISSING = "param_missing"  # 参数缺失
     PARAM_TYPE_ERROR = "param_type_error"  # 参数类型错误
-    BOUNDARY_VALUE = "boundary_value"    # 边界值
+    BOUNDARY_VALUE = "boundary_value"  # 边界值
     PERMISSION_ERROR = "permission_error"  # 权限异常
-    CUSTOM = "custom"                    # 自定义
+    CUSTOM = "custom"  # 自定义
 
 
 class AssertOperator(str, Enum):
     """断言运算符"""
-    EQ = "=="           # 等于
-    NE = "!="           # 不等于
-    GT = ">"            # 大于
-    LT = "<"            # 小于
-    GE = ">="           # 大于等于
-    LE = "<="           # 小于等于
-    CONTAINS = "contains"        # 包含
+
+    EQ = "=="  # 等于
+    NE = "!="  # 不等于
+    GT = ">"  # 大于
+    LT = "<"  # 小于
+    GE = ">="  # 大于等于
+    LE = "<="  # 小于等于
+    CONTAINS = "contains"  # 包含
     NOT_CONTAINS = "not_contains"  # 不包含
-    MATCHES = "matches"          # 正则匹配
-    EXISTS = "exists"            # 存在
-    NOT_EXISTS = "not_exists"    # 不存在
+    MATCHES = "matches"  # 正则匹配
+    EXISTS = "exists"  # 存在
+    NOT_EXISTS = "not_exists"  # 不存在

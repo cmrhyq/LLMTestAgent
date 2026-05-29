@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 LLM API自动化测试工具 - 主入口
 
@@ -45,13 +44,15 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--api-doc", "-a",
+        "--api-doc",
+        "-a",
         default=None,
         help="OpenAPI 文档文件路径（YAML/JSON）",
     )
 
     parser.add_argument(
-        "--config", "-c",
+        "--config",
+        "-c",
         default=None,
         help="配置文件路径（默认: config/config.yaml）",
     )
@@ -91,7 +92,7 @@ def main():
         logger.info(f"意图识别完成，意图: {user_intent}", intent=user_intent)
 
         if user_intent == "parse_openapi":
-            logger.info(f"OpenAPI文档解析并存储完成")
+            logger.info("OpenAPI文档解析并存储完成")
         elif user_intent == "run_test":
             summary = result.get("test_summary", {})
             report_path = result.get("report_path", "")
@@ -110,7 +111,7 @@ def main():
         else:
             logger.info(f"工作流已完成，意图: {user_intent}", intent=user_intent)
 
-        logger.info(f"全部执行成功")
+        logger.info("全部执行成功")
 
     except ImportError as e:
         logger.error(f"依赖缺失: {e}", error=str(e))

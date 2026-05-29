@@ -1,10 +1,7 @@
-from typing import Optional, List
-
-from sqlalchemy import select, and_, literal
+from sqlalchemy import and_, literal, select
 from sqlalchemy.orm import Session
 
 from src.data.models.endpoint import Endpoint
-
 from src.data.repositories.base import BaseRepository
 
 
@@ -32,9 +29,7 @@ class EndpointRepository(BaseRepository[Endpoint]):
         )
         return self._session.scalar(stmt) is not None
 
-    def bulk_query(
-            self, project_ids: set, paths: set, methods: set
-    ) -> List[Endpoint]:
+    def bulk_query(self, project_ids: set, paths: set, methods: set) -> list[Endpoint]:
         """批量查询：一次 SQL 替代 N 次循环查询"""
         stmt = select(Endpoint).where(
             and_(
@@ -45,14 +40,14 @@ class EndpointRepository(BaseRepository[Endpoint]):
         )
         return list(self._session.scalars(stmt).all())
 
-    def get_by_project(self, project_id: int, active_only: bool = True) -> List[Endpoint]:
+    def get_by_project(self, project_id: int, active_only: bool = True) -> list[Endpoint]:
         conditions = [Endpoint.project_id == project_id]
         if active_only:
             conditions.append(Endpoint.status == 1)
         stmt = select(Endpoint).where(and_(*conditions))
         return list(self._session.scalars(stmt).all())
 
-    def get_by_operation_id(self, project_id: int, operation_id: str, version: int = 1) -> Optional[Endpoint]:
+    def get_by_operation_id(self, project_id: int, operation_id: str, version: int = 1) -> Endpoint | None:
         stmt = select(Endpoint).where(
             and_(
                 Endpoint.project_id == project_id,
@@ -62,7 +57,7 @@ class EndpointRepository(BaseRepository[Endpoint]):
         )
         return self._session.scalar(stmt)
 
-    def get_active_by_ids(self, endpoint_ids: List[int]) -> List[Endpoint]:
+    def get_active_by_ids(self, endpoint_ids: list[int]) -> list[Endpoint]:
         """按 ID 列表查询启用状态的接口"""
         stmt = select(Endpoint).where(
             and_(
@@ -72,8 +67,6 @@ class EndpointRepository(BaseRepository[Endpoint]):
         )
         return list(self._session.scalars(stmt).all())
 
-    def get_by_method(self, project_id: int, method: str) -> List[Endpoint]:
-        stmt = select(Endpoint).where(
-            and_(Endpoint.project_id == project_id, Endpoint.method == method)
-        )
+    def get_by_method(self, project_id: int, method: str) -> list[Endpoint]:
+        stmt = select(Endpoint).where(and_(Endpoint.project_id == project_id, Endpoint.method == method))
         return list(self._session.scalars(stmt).all())

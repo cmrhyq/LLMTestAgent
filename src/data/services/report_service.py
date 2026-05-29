@@ -1,5 +1,3 @@
-from typing import Optional, List
-
 from sqlalchemy.orm import Session
 
 from src.core.logging import get_logger
@@ -17,14 +15,16 @@ class ReportService:
         """创建报告记录"""
         logger.info(
             f"创建报告: run_id={report.run_id}, format={report.format}",
-            action="create_report", run_id=report.run_id, format=report.format,
+            action="create_report",
+            run_id=report.run_id,
+            format=report.format,
         )
         return self.repo.add(report)
 
-    def get_reports_by_run(self, run_id: int) -> List[Report]:
+    def get_reports_by_run(self, run_id: int) -> list[Report]:
         """获取某次执行的所有报告"""
         return self.repo.get_by_run(run_id)
 
-    def get_report_by_format(self, run_id: int, format: str) -> Optional[Report]:
+    def get_report_by_format(self, run_id: int, report_format: str) -> Report | None:
         """获取某次执行指定格式的报告"""
-        return self.repo.get_by_run_and_format(run_id, format)
+        return self.repo.get_by_run_and_format(run_id, report_format)

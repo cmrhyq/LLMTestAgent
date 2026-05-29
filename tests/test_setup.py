@@ -1,7 +1,6 @@
 """Pytest 配置验证 — 确保基本配置和 fixture 正常工作。"""
 
 import pytest
-from pathlib import Path
 
 
 class TestPytestSetup:
@@ -16,6 +15,7 @@ class TestPytestSetup:
 
     def test_env_is_test(self, monkeypatch):
         import os
+
         assert os.environ.get("LLMTESTAGENT_ENV") == "test"
 
 
@@ -25,17 +25,21 @@ class TestImports:
 
     def test_import_config(self):
         from src.core.config import AppConfig
+
         assert AppConfig is not None
 
     def test_import_workflow(self):
         from src.workflow import TestWorkflow, build_graph
+
         assert TestWorkflow is not None
         assert build_graph is not None
 
     def test_import_openapi_parser(self):
         from src.utils.parser import OpenAPIParser
+
         assert OpenAPIParser is not None
 
     def test_import_prompt_loader(self):
         from src.prompts.loader import PromptLoader
+
         assert PromptLoader is not None

@@ -5,7 +5,6 @@
 """
 
 import json
-from typing import List
 
 from langchain_core.tools import tool
 from sqlalchemy import select
@@ -37,7 +36,7 @@ def search_project(name: str) -> str:
     _ensure_db_initialized()
     with get_db_manager().get_session() as session:
         stmt = select(Project).where(Project.name.contains(name))
-        results: List[Project] = list(session.scalars(stmt).all())
+        results: list[Project] = list(session.scalars(stmt).all())
 
         if not results:
             stmt_all = select(Project).where(Project.status == 1)
@@ -65,7 +64,7 @@ def get_project_endpoints(project_id: int) -> str:
             Endpoint.project_id == project_id,
             Endpoint.status == 1,
         )
-        results: List[Endpoint] = list(session.scalars(stmt).all())
+        results: list[Endpoint] = list(session.scalars(stmt).all())
 
         endpoints = [
             {
@@ -105,7 +104,7 @@ def _build_response_summary(responses_json: str) -> str:
         if not content:
             continue
 
-        for media_type, media_data in content.items():
+        for _media_type, media_data in content.items():
             schema = media_data.get("schema", {})
             if not schema:
                 continue

@@ -3,7 +3,7 @@
 提供数据库 Session 和其他公共依赖。
 """
 
-from typing import Generator
+from collections.abc import Generator
 
 from sqlalchemy.orm import Session
 

@@ -13,11 +13,12 @@ import logging
 import sys
 import threading
 import time
+from collections.abc import Callable
 from datetime import datetime
 from functools import wraps
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Callable, Any
+from typing import TYPE_CHECKING, Any
 
 import structlog
 
@@ -65,15 +66,15 @@ class StructLogger:
     """
 
     _loggers: dict = {}
-    _log_file_path: Optional[str] = None
-    _session_start_time: Optional[str] = None
+    _log_file_path: str | None = None
+    _session_start_time: str | None = None
     _setup_lock = threading.Lock()  # 保护日志系统初始化
     _initialized: bool = False
-    _log_level: Optional[int] = None
+    _log_level: int | None = None
     _debug: bool = False
 
     @classmethod
-    def setup_logging(cls, log_level: Optional[str] = None) -> None:
+    def setup_logging(cls, log_level: str | None = None) -> None:
         """
         设置结构化日志系统的全局配置（线程安全）
 
@@ -89,7 +90,7 @@ class StructLogger:
             from src.core.config import get_config
 
             settings = get_config()
-            cls._debug = getattr(settings.logging, 'format', 'console') == 'console'
+            cls._debug = getattr(settings.logging, "format", "console") == "console"
 
             # 获取并验证日志级别
             if log_level is None:
@@ -105,9 +106,7 @@ class StructLogger:
             if cls._session_start_time is None:
                 cls._session_start_time = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-            log_filename = StructLogConfig.LOG_FILE_FORMAT.replace(
-                "{timestamp}", cls._session_start_time
-            )
+            log_filename = StructLogConfig.LOG_FILE_FORMAT.replace("{timestamp}", cls._session_start_time)
             cls._log_file_path = str(log_dir / log_filename)
 
             # 配置标准库 logging
@@ -229,7 +228,7 @@ class StructLogger:
         ]
 
     @classmethod
-    def get_logger(cls, name: Optional[str] = None) -> "FilteringBoundLogger":
+    def get_logger(cls, name: str | None = None) -> "FilteringBoundLogger":
         """
         获取指定名称的结构化日志记录器（线程安全）
 
@@ -254,7 +253,7 @@ class StructLogger:
             return cls._loggers[logger_name]
 
     @classmethod
-    def get_log_file_path(cls) -> Optional[str]:
+    def get_log_file_path(cls) -> str | None:
         """
         获取当前会话的日志文件路径
 
@@ -285,7 +284,7 @@ class StructLogger:
 
 
 # 便捷函数：设置日志系统
-def setup_logging(log_level: Optional[str] = None) -> None:
+def setup_logging(log_level: str | None = None) -> None:
     """
     设置日志系统的便捷函数
 
@@ -296,7 +295,7 @@ def setup_logging(log_level: Optional[str] = None) -> None:
 
 
 # 便捷函数：获取日志记录器
-def get_logger(name: Optional[str] = None) -> "FilteringBoundLogger":
+def get_logger(name: str | None = None) -> "FilteringBoundLogger":
     """
     获取结构化日志记录器的便捷函数
 
@@ -330,7 +329,7 @@ def log_execution_time(name: str = None, level: str = "info", log_args: bool = F
                 log_kwargs = {
                     "function_name": name or func.__name__,
                     "execution_time_seconds": round(execution_time, 4),
-                    "execution_time_ms": round(execution_time * 1000, 2)
+                    "execution_time_ms": round(execution_time * 1000, 2),
                 }
                 # 可选：记录方法入参
                 if log_args:

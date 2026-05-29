@@ -1,6 +1,5 @@
 import json
 from pathlib import Path
-from typing import Optional, List
 
 from src import AppConfig, get_config
 from src.core.database.connection import init_database_from_config
@@ -24,7 +23,7 @@ def _get_session():
 class ApiDocStorage:
     """API文档存储"""
 
-    def __init__(self, config: Optional[AppConfig] = None):
+    def __init__(self, config: AppConfig | None = None):
         self.config = config or get_config()
 
     def openapi_parse_storage(self, file_path: Path) -> None:
@@ -43,7 +42,11 @@ class ApiDocStorage:
         """
         logger.info(f"开始解析OpenAPI文档: {file_path}", path=str(file_path))
         parser = OpenAPIParser(file_path)
-        logger.info(f"OpenAPI文档信息 - 标题: {parser.title}，base_url: {parser.base_url}", title=parser.title, base_url=parser.base_url)
+        logger.info(
+            f"OpenAPI文档信息 - 标题: {parser.title}，base_url: {parser.base_url}",
+            title=parser.title,
+            base_url=parser.base_url,
+        )
 
         project = ProjectCreate(
             name=parser.title,
@@ -58,7 +61,7 @@ class ApiDocStorage:
 
             project_info = project_service.create_project(project)
             if project_info.id is None:
-                logger.error(f"创建项目失败，未获得有效的project_id", action="parse_storage")
+                logger.error("创建项目失败，未获得有效的project_id", action="parse_storage")
                 raise ValueError("创建项目失败，project_id 为空")
 
             env_list = self._build_environments(project_info.id, parser)
@@ -72,9 +75,7 @@ class ApiDocStorage:
         logger.info(f"OpenAPI文档解析存储完成，项目: {parser.title}", project=parser.title)
 
     @staticmethod
-    def _build_environments(
-        project_id: int, parser: OpenAPIParser
-    ) -> List[EnvironmentCreate]:
+    def _build_environments(project_id: int, parser: OpenAPIParser) -> list[EnvironmentCreate]:
         return [
             EnvironmentCreate(
                 project_id=project_id,
@@ -88,15 +89,10 @@ class ApiDocStorage:
         ]
 
     @staticmethod
-    def _build_endpoints(
-        project_id: int, parser: OpenAPIParser
-    ) -> List[EndpointCreate]:
+    def _build_endpoints(project_id: int, parser: OpenAPIParser) -> list[EndpointCreate]:
         result = []
         for ep in parser.endpoints:
-            header_params = [
-                p for p in ep.get("parameters", [])
-                if p.get("in") == "header"
-            ]
+            header_params = [p for p in ep.get("parameters", []) if p.get("in") == "header"]
 
             request_body = ep.get("request_body") or {}
             content_type = "application/json"

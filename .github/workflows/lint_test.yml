@@ -4,11 +4,12 @@
 # 包含三个 Job：lint（代码检查）、test（单元测试）、build（打包验证）
 # ============================================================================
 
-name: CI
+name: lint_test
 
 on:
   push:
-    branches: [main]
+    branches: ['*']
+    tags: ['*']
   pull_request:
     branches: [main]
 

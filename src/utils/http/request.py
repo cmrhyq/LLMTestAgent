@@ -11,21 +11,16 @@ API 测试基础服务类模块
 
 import random
 import time
-from typing import Any, Optional, Dict, Union
+from typing import Any
 from urllib.parse import urljoin
+
 import requests
 from requests import Response
 from requests.auth import HTTPBasicAuth
-from requests.exceptions import (
-    RequestException,
-    ConnectionError,
-    Timeout,
-    HTTPError
-)
+from requests.exceptions import ConnectionError, HTTPError, RequestException, Timeout
 
 from src.core.cache.data_cache import DataCache
 from src.core.logging import get_logger
-
 
 logger = get_logger(__name__)
 
@@ -37,25 +32,31 @@ def get_random_pc_ua():
     # 浏览器名称和对应版本范围
     browsers = {
         "Chrome": {
-            "versions": [f"{random.randint(90, 120)}.0.{random.randint(1000, 9999)}.{random.randint(10, 999)}" for _ in range(5)],
-            "template": "Mozilla/5.0 (Windows NT {windows_ver}; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version} Safari/537.36"
+            "versions": [
+                f"{random.randint(90, 120)}.0.{random.randint(1000, 9999)}.{random.randint(10, 999)}" for _ in range(5)
+            ],
+            "template": "Mozilla/5.0 (Windows NT {windows_ver}; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version} Safari/537.36",
         },
         "Firefox": {
             "versions": [f"{random.randint(90, 110)}.0" for _ in range(5)],
-            "template": "Mozilla/5.0 (Windows NT {windows_ver}; Win64; x64; rv:{version}) Gecko/20100101 Firefox/{version}"
+            "template": "Mozilla/5.0 (Windows NT {windows_ver}; Win64; x64; rv:{version}) Gecko/20100101 Firefox/{version}",
         },
         "Edge": {
-            "versions": [f"{random.randint(90, 120)}.0.{random.randint(100, 999)}.{random.randint(10, 99)}" for _ in range(5)],
-            "template": "Mozilla/5.0 (Windows NT {windows_ver}; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version} Safari/537.36 Edg/{version}"
+            "versions": [
+                f"{random.randint(90, 120)}.0.{random.randint(100, 999)}.{random.randint(10, 99)}" for _ in range(5)
+            ],
+            "template": "Mozilla/5.0 (Windows NT {windows_ver}; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version} Safari/537.36 Edg/{version}",
         },
         "Safari": {
             "versions": [f"{random.randint(10, 16)}.{random.randint(0, 3)}" for _ in range(5)],
-            "template": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_{mac_ver}_{mac_rev}) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/{version} Safari/605.1.15"
+            "template": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_{mac_ver}_{mac_rev}) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/{version} Safari/605.1.15",
         },
         "Opera": {
-            "versions": [f"{random.randint(70, 100)}.0.{random.randint(1000, 9999)}.{random.randint(10, 999)}" for _ in range(5)],
-            "template": "Mozilla/5.0 (Windows NT {windows_ver}; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{chrome_ver} Safari/537.36 OPR/{version}"
-        }
+            "versions": [
+                f"{random.randint(70, 100)}.0.{random.randint(1000, 9999)}.{random.randint(10, 999)}" for _ in range(5)
+            ],
+            "template": "Mozilla/5.0 (Windows NT {windows_ver}; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{chrome_ver} Safari/537.36 OPR/{version}",
+        },
     }
 
     # 随机选择操作系统版本
@@ -106,13 +107,13 @@ class HttpRequest:
     """
 
     def __init__(
-            self,
-            base_url: str,
-            connect_timeout: int = 30,
-            read_timeout: int = 10,
-            verify_ssl: bool = True,
-            auth_type: Optional[str] = None,
-            auth_credentials: Optional[Dict[str, str]] = None
+        self,
+        base_url: str,
+        connect_timeout: int = 30,
+        read_timeout: int = 10,
+        verify_ssl: bool = True,
+        auth_type: str | None = None,
+        auth_credentials: dict[str, str] | None = None,
     ):
         """
         初始化 BaseService 实例
@@ -142,11 +143,7 @@ class HttpRequest:
 
         logger.info(f"HTTP客户端初始化，base_url: {self.base_url}", base_url=self.base_url)
 
-    def _setup_authentication(
-            self,
-            auth_type: Optional[str],
-            auth_credentials: Optional[Dict[str, str]]
-    ) -> None:
+    def _setup_authentication(self, auth_type: str | None, auth_credentials: dict[str, str] | None) -> None:
         """
         设置认证方式
 
@@ -154,23 +151,23 @@ class HttpRequest:
             auth_type: 认证类型
             auth_credentials: 认证凭证
         """
-        if auth_type == 'bearer':
-            token = auth_credentials.get('token')
+        if auth_type == "bearer":
+            token = auth_credentials.get("token")
             if token:
-                self.session.headers.update({'Authorization': f'Bearer {token}'})
-                logger.info(f"Bearer Token认证已配置", auth_type="bearer")
+                self.session.headers.update({"Authorization": f"Bearer {token}"})
+                logger.info("Bearer Token认证已配置", auth_type="bearer")
 
-        elif auth_type == 'basic':
-            username = auth_credentials.get('username')
-            password = auth_credentials.get('password')
+        elif auth_type == "basic":
+            username = auth_credentials.get("username")
+            password = auth_credentials.get("password")
 
             if username and password:
                 self.session.auth = HTTPBasicAuth(username, password)
                 logger.info(f"Basic认证已配置，用户: {username}", auth_type="basic", username=username)
 
-        elif auth_type == 'api_key':
-            api_key = auth_credentials.get('api_key')
-            header_name = auth_credentials.get('header_name')
+        elif auth_type == "api_key":
+            api_key = auth_credentials.get("api_key")
+            header_name = auth_credentials.get("header_name")
 
             if api_key:
                 self.session.headers.update({header_name: api_key})
@@ -186,16 +183,11 @@ class HttpRequest:
         Returns:
             str: 完整的 URL
         """
-        if endpoint.startswith('http://') or endpoint.startswith('https://'):
+        if endpoint.startswith("http://") or endpoint.startswith("https://"):
             return endpoint
-        return urljoin(self.base_url, endpoint.lstrip('/'))
+        return urljoin(self.base_url, endpoint.lstrip("/"))
 
-    def _log_request(
-            self,
-            method: str,
-            url: str,
-            **kwargs
-    ) -> None:
+    def _log_request(self, method: str, url: str, **kwargs) -> None:
         """
         记录请求信息
 
@@ -205,22 +197,22 @@ class HttpRequest:
             **kwargs: 其他请求参数
         """
         log_data = {
-            'method': method,
-            'url': url,
+            "method": method,
+            "url": url,
         }
 
         # 记录请求参数（不记录敏感信息）
-        if 'params' in kwargs:
-            log_data['params'] = kwargs['params']
+        if "params" in kwargs:
+            log_data["params"] = kwargs["params"]
 
-        if 'json' in kwargs:
-            log_data['json_body'] = kwargs['json']
+        if "json" in kwargs:
+            log_data["json_body"] = kwargs["json"]
 
-        if 'data' in kwargs:
-            log_data['data'] = '***' if kwargs['data'] else None
+        if "data" in kwargs:
+            log_data["data"] = "***" if kwargs["data"] else None
 
         if "headers" in kwargs:
-            log_data['headers'] = kwargs['headers']
+            log_data["headers"] = kwargs["headers"]
 
         logger.debug(f"发送请求: {method} {url}", **log_data)
 
@@ -232,28 +224,25 @@ class HttpRequest:
             response: 响应对象
         """
         log_data = {
-            'status_code': response.status_code,
-            'response_time': response.elapsed.total_seconds(),
-            'url': response.url,
+            "status_code": response.status_code,
+            "response_time": response.elapsed.total_seconds(),
+            "url": response.url,
         }
 
         # 尝试记录响应体（如果是 JSON）
         try:
-            if response.headers.get('Content-Type', '').startswith('application/json'):
-                log_data['response_body'] = response.json()
+            if response.headers.get("Content-Type", "").startswith("application/json"):
+                log_data["response_body"] = response.json()
         except Exception:
-            log_data['response_body'] = '(non-JSON or empty)'
+            log_data["response_body"] = "(non-JSON or empty)"
 
-        logger.debug(f"收到响应: {response.status_code} {response.url}，耗时: {response.elapsed.total_seconds():.3f}s", **log_data)
+        logger.debug(
+            f"收到响应: {response.status_code} {response.url}，耗时: {response.elapsed.total_seconds():.3f}s",
+            **log_data,
+        )
 
     def _make_request_with_retry(
-            self,
-            method: str,
-            url: str,
-            enable_retry: bool = True,
-            max_retries: int = 3,
-            retry_interval: int = 1,
-            **kwargs
+        self, method: str, url: str, enable_retry: bool = True, max_retries: int = 3, retry_interval: int = 1, **kwargs
     ) -> Response | None:
         """
         发送 HTTP 请求，支持自动重试
@@ -276,27 +265,21 @@ class HttpRequest:
 
         for attempt in range(max_retries + 1):
             try:
-
                 if "headers" in kwargs:
                     # 合并会话头和请求头
-                    headers = kwargs['headers']
-                    headers['Content-Type'] = 'application/json;charset=utf-8'
-                    headers['User-Agent'] = get_random_pc_ua()
-                    kwargs['headers'] = headers
+                    headers = kwargs["headers"]
+                    headers["Content-Type"] = "application/json;charset=utf-8"
+                    headers["User-Agent"] = get_random_pc_ua()
+                    kwargs["headers"] = headers
                 else:
-                    headers = {'Content-Type': 'application/json;charset=utf-8', 'User-Agent': get_random_pc_ua()}
-                    kwargs['headers'] = headers
+                    headers = {"Content-Type": "application/json;charset=utf-8", "User-Agent": get_random_pc_ua()}
+                    kwargs["headers"] = headers
 
                 # 记录请求信息
                 self._log_request(method, url, **kwargs)
 
                 # 发送请求
-                response = self.session.request(
-                    method=method,
-                    url=url,
-                    timeout=self.timeout,
-                    **kwargs
-                )
+                response = self.session.request(method=method, url=url, timeout=self.timeout, **kwargs)
 
                 # 记录响应信息
                 self._log_response(response)
@@ -309,8 +292,10 @@ class HttpRequest:
             except (ConnectionError, Timeout) as e:
                 last_exception = e
                 logger.warning(
-                    f"[http_request] 网络错误，第{attempt+1}/{max_retries+1}次尝试: {str(e)}",
-                    attempt=attempt + 1, max_attempts=max_retries + 1, error=str(e),
+                    f"[http_request] 网络错误，第{attempt + 1}/{max_retries + 1}次尝试: {str(e)}",
+                    attempt=attempt + 1,
+                    max_attempts=max_retries + 1,
+                    error=str(e),
                 )
 
                 if attempt < max_retries:
@@ -318,12 +303,15 @@ class HttpRequest:
                     retry_delay *= 2  # 指数退避
                 else:
                     logger.error(
-                        f"[http_request] 请求重试耗尽，共{max_retries+1}次尝试: {str(e)}",
-                        attempts=max_retries + 1, error=str(e),
+                        f"[http_request] 请求重试耗尽，共{max_retries + 1}次尝试: {str(e)}",
+                        attempts=max_retries + 1,
+                        error=str(e),
                     )
 
             except HTTPError as e:
-                logger.error(f"HTTP错误: {e.response.status_code} - {str(e)}", status_code=e.response.status_code, error=str(e))
+                logger.error(
+                    f"HTTP错误: {e.response.status_code} - {str(e)}", status_code=e.response.status_code, error=str(e)
+                )
                 # 对于 5xx 错误可以重试，4xx 错误不重试
                 if e.response.status_code >= 500 and attempt < max_retries:
                     last_exception = e
@@ -352,7 +340,7 @@ class HttpRequest:
             requests.Response: 响应对象
         """
         url = self._build_url(endpoint)
-        return self._make_request_with_retry('GET', url, **kwargs)
+        return self._make_request_with_retry("GET", url, **kwargs)
 
     def post(self, endpoint: str, **kwargs) -> requests.Response:
         """
@@ -366,7 +354,7 @@ class HttpRequest:
             requests.Response: 响应对象
         """
         url = self._build_url(endpoint)
-        return self._make_request_with_retry('POST', url, **kwargs)
+        return self._make_request_with_retry("POST", url, **kwargs)
 
     def put(self, endpoint: str, **kwargs) -> requests.Response:
         """
@@ -380,7 +368,7 @@ class HttpRequest:
             requests.Response: 响应对象
         """
         url = self._build_url(endpoint)
-        return self._make_request_with_retry('PUT', url, **kwargs)
+        return self._make_request_with_retry("PUT", url, **kwargs)
 
     def delete(self, endpoint: str, **kwargs) -> requests.Response:
         """
@@ -394,7 +382,7 @@ class HttpRequest:
             requests.Response: 响应对象
         """
         url = self._build_url(endpoint)
-        return self._make_request_with_retry('DELETE', url, **kwargs)
+        return self._make_request_with_retry("DELETE", url, **kwargs)
 
     def patch(self, endpoint: str, **kwargs) -> requests.Response:
         """
@@ -408,14 +396,9 @@ class HttpRequest:
             requests.Response: 响应对象
         """
         url = self._build_url(endpoint)
-        return self._make_request_with_retry('PATCH', url, **kwargs)
+        return self._make_request_with_retry("PATCH", url, **kwargs)
 
-    def extract_and_cache(
-            self,
-            response: requests.Response,
-            cache_key: str,
-            json_path: str = None
-    ) -> Any:
+    def extract_and_cache(self, response: requests.Response, cache_key: str, json_path: str = None) -> Any:
         """
         从响应中提取数据并存储到缓存
 
@@ -435,7 +418,7 @@ class HttpRequest:
             response_data = response.json()
         except Exception as e:
             logger.error(f"响应JSON解析失败: {str(e)}", error=str(e))
-            raise ValueError(f"Response is not valid JSON: {str(e)}")
+            raise ValueError(f"Response is not valid JSON: {str(e)}") from e
 
         # 如果没有指定路径，缓存整个响应
         if json_path is None:
@@ -450,7 +433,9 @@ class HttpRequest:
             self.cache.set(cache_key, extracted_value)
             logger.info(f"提取并缓存数据: {json_path} -> {cache_key}", json_path=json_path, cache_key=cache_key)
         else:
-            logger.warning(f"路径未找到，缓存None: path={json_path}, key={cache_key}", json_path=json_path, cache_key=cache_key)
+            logger.warning(
+                f"路径未找到，缓存None: path={json_path}, key={cache_key}", json_path=json_path, cache_key=cache_key
+            )
             self.cache.set(cache_key, None)
 
         return extracted_value
@@ -469,7 +454,7 @@ class HttpRequest:
         if not path:
             return data
 
-        keys = path.split('.')
+        keys = path.split(".")
         current = data
 
         for key in keys:
@@ -482,7 +467,11 @@ class HttpRequest:
                 elif isinstance(current, dict):
                     current = current[key]
                 else:
-                    logger.warning(f"路径提取类型不匹配: key={key}, 实际类型={type(current).__name__}", key=key, actual_type=type(current).__name__)
+                    logger.warning(
+                        f"路径提取类型不匹配: key={key}, 实际类型={type(current).__name__}",
+                        key=key,
+                        actual_type=type(current).__name__,
+                    )
                     return None
             except (KeyError, IndexError, ValueError, TypeError) as e:
                 logger.warning(f"路径提取失败: {path}, 错误: {str(e)}", path=path, error=str(e))
@@ -505,11 +494,7 @@ class HttpRequest:
         logger.debug(f"获取缓存值: {cache_key}", cache_key=cache_key)
         return value
 
-    def validate_status_code(
-            self,
-            response: requests.Response,
-            expected_status: Union[int, list[int]]
-    ) -> bool:
+    def validate_status_code(self, response: requests.Response, expected_status: int | list[int]) -> bool:
         """
         验证响应状态码
 
@@ -526,9 +511,17 @@ class HttpRequest:
         is_valid = response.status_code in expected_status
 
         if is_valid:
-            logger.info(f"状态码验证通过: {response.status_code} in {expected_status}", actual=response.status_code, expected=expected_status)
+            logger.info(
+                f"状态码验证通过: {response.status_code} in {expected_status}",
+                actual=response.status_code,
+                expected=expected_status,
+            )
         else:
-            logger.error(f"状态码验证失败: {response.status_code} not in {expected_status}", actual=response.status_code, expected=expected_status)
+            logger.error(
+                f"状态码验证失败: {response.status_code} not in {expected_status}",
+                actual=response.status_code,
+                expected=expected_status,
+            )
 
         return is_valid
 
@@ -538,7 +531,7 @@ class HttpRequest:
         """
         if self.session:
             self.session.close()
-            logger.debug(f"HTTP会话已关闭", base_url=self.base_url)
+            logger.debug("HTTP会话已关闭", base_url=self.base_url)
 
     def __enter__(self):
         """

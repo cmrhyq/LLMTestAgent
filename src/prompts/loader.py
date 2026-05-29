@@ -5,7 +5,7 @@ YAML Prompt 加载与渲染模块。
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import yaml
 from jinja2 import Template
@@ -14,12 +14,12 @@ from jinja2 import Template
 class PromptLoader:
     """负责加载与渲染 YAML Prompt 模板。"""
 
-    def __init__(self, templates_dir: Optional[Path] = None) -> None:
+    def __init__(self, templates_dir: Path | None = None) -> None:
         if templates_dir is None:
             templates_dir = Path(__file__).resolve().parent / "templates"
         self.templates_dir = Path(templates_dir)
 
-    def load_yaml(self, template_name: str) -> Dict[str, Any]:
+    def load_yaml(self, template_name: str) -> dict[str, Any]:
         """读取并解析 YAML 文件。"""
         file_path = self.templates_dir / template_name
         with file_path.open("r", encoding="utf-8") as f:
@@ -28,7 +28,7 @@ class PromptLoader:
     def render(
         self,
         template_name: str,
-        context: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
         prompt_key: str = "prompt",
     ) -> str:
         """
@@ -56,4 +56,3 @@ _loader = PromptLoader()
 def get_loader() -> PromptLoader:
     """获取全局单例 PromptLoader。"""
     return _loader
-

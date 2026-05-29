@@ -17,7 +17,7 @@ cache_rules JSON 格式约定:
 
 import copy
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from src.core.cache.data_cache import DataCache
 from src.core.logging import get_logger
@@ -33,11 +33,11 @@ class CacheResolver:
 
     def inject(
         self,
-        headers: Dict[str, str],
-        body: Optional[Dict[str, Any]],
-        params: Optional[Dict[str, Any]],
-        cache_rules: Optional[Dict[str, Any]],
-    ) -> Tuple[Dict[str, str], Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
+        headers: dict[str, str],
+        body: dict[str, Any] | None,
+        params: dict[str, Any] | None,
+        cache_rules: dict[str, Any] | None,
+    ) -> tuple[dict[str, str], dict[str, Any] | None, dict[str, Any] | None]:
         """将缓存中的值注入到请求参数中。
 
         Args:
@@ -83,7 +83,7 @@ class CacheResolver:
     def extract(
         self,
         response_body: Any,
-        cache_rules: Optional[Dict[str, Any]],
+        cache_rules: dict[str, Any] | None,
     ) -> None:
         """从响应体中提取值并存入缓存。
 
@@ -108,11 +108,17 @@ class CacheResolver:
             value = self._extract_by_jsonpath(response_body, source_path)
             if value is not None:
                 self.cache.set(cache_key, value)
-                logger.debug(f"缓存提取成功: {cache_key}={str(value)[:100]}", cache_key=cache_key, value_preview=str(value)[:100])
+                logger.debug(
+                    f"缓存提取成功: {cache_key}={str(value)[:100]}", cache_key=cache_key, value_preview=str(value)[:100]
+                )
             else:
-                logger.warning(f"缓存提取失败，路径无匹配: path={source_path}, key={cache_key}", source_path=source_path, cache_key=cache_key)
+                logger.warning(
+                    f"缓存提取失败，路径无匹配: path={source_path}, key={cache_key}",
+                    source_path=source_path,
+                    cache_key=cache_key,
+                )
 
-    def has_unresolved_dependencies(self, cache_rules: Optional[Dict[str, Any]]) -> bool:
+    def has_unresolved_dependencies(self, cache_rules: dict[str, Any] | None) -> bool:
         """检查是否存在未满足的缓存依赖。
 
         Args:
@@ -133,12 +139,12 @@ class CacheResolver:
 
     def _set_target_value(
         self,
-        headers: Dict[str, str],
-        body: Optional[Dict[str, Any]],
-        params: Optional[Dict[str, Any]],
+        headers: dict[str, str],
+        body: dict[str, Any] | None,
+        params: dict[str, Any] | None,
         target: str,
         value: Any,
-    ) -> Tuple[Dict[str, str], Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
+    ) -> tuple[dict[str, str], dict[str, Any] | None, dict[str, Any] | None]:
         """将值设置到指定的 target 路径中。
 
         target 格式: "headers.Authorization" / "body.data.token" / "params.page"
@@ -164,7 +170,7 @@ class CacheResolver:
         return headers, body, params
 
     @staticmethod
-    def _set_nested_value(data: Dict[str, Any], path: str, value: Any) -> None:
+    def _set_nested_value(data: dict[str, Any], path: str, value: Any) -> None:
         """设置嵌套字典中的值。
 
         path 支持点分隔，如 "data.user.id" 将设置 data["data"]["user"]["id"]
@@ -192,7 +198,7 @@ class CacheResolver:
         if not stripped:
             return data
 
-        tokens: List[str] = []
+        tokens: list[str] = []
         for segment in stripped.split("."):
             if not segment:
                 continue

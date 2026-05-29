@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import (
-    Integer, Text, ForeignKey, Index, CheckConstraint
-)
+from sqlalchemy import CheckConstraint, ForeignKey, Index, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.data.models.base import Base, local_now
@@ -16,6 +14,7 @@ if TYPE_CHECKING:
 
 class Report(Base):
     """报告记录表"""
+
     __tablename__ = "report"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False, default=next_id)

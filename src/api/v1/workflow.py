@@ -6,9 +6,9 @@
 import tempfile
 import threading
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -22,18 +22,20 @@ logger = get_logger(__name__)
 
 router = APIRouter(prefix="/workflows", tags=["工作流"])
 
-_running_tasks: Dict[int, Dict[str, Any]] = {}
+_running_tasks: dict[int, dict[str, Any]] = {}
 _tasks_lock = threading.Lock()
 
 
 class RunTestRequest(BaseModel):
     """触发测试执行请求体。"""
+
     instruction: str = Field(..., min_length=1, description="自然语言测试指令")
-    api_doc_path: Optional[str] = Field(default=None, description="已解析的 OpenAPI 文档路径")
+    api_doc_path: str | None = Field(default=None, description="已解析的 OpenAPI 文档路径")
 
 
 class RunTestResponse(BaseModel):
     """触发测试执行响应体。"""
+
     run_id: int = Field(..., description="测试运行ID")
     status: str = Field(default="pending", description="当前状态")
     message: str = Field(default="", description="提示信息")
@@ -41,7 +43,8 @@ class RunTestResponse(BaseModel):
 
 class ParseOpenAPIRequest(BaseModel):
     """解析 OpenAPI 文档响应体。"""
-    run_id: Optional[int] = None
+
+    run_id: int | None = None
     status: str = "completed"
     message: str = ""
     endpoints_count: int = 0
@@ -49,6 +52,7 @@ class ParseOpenAPIRequest(BaseModel):
 
 class WorkflowStatusResponse(BaseModel):
     """工作流状态查询响应。"""
+
     run_id: int
     status: str = "unknown"
     total_cases: int = 0
@@ -56,11 +60,11 @@ class WorkflowStatusResponse(BaseModel):
     failed_cases: int = 0
     pass_rate: float = 0.0
     error_message: str = ""
-    started_at: Optional[str] = None
-    finished_at: Optional[str] = None
+    started_at: str | None = None
+    finished_at: str | None = None
 
 
-def _execute_workflow_task(run_id: int, instruction: str, api_doc_path: Optional[str]):
+def _execute_workflow_task(run_id: int, instruction: str, api_doc_path: str | None):
     """后台执行工作流任务。"""
     from src.core.database.connection import get_db_manager
     from src.workflow import TestWorkflow
@@ -122,9 +126,7 @@ async def parse_openapi(
         raise HTTPException(status_code=400, detail="仅支持 JSON/YAML 格式文件")
 
     content = await file.read()
-    with tempfile.NamedTemporaryFile(
-        delete=False, suffix=suffix, prefix="openapi_"
-    ) as tmp:
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix, prefix="openapi_") as tmp:
         tmp.write(content)
         tmp_path = Path(tmp.name)
 
@@ -169,9 +171,7 @@ def run_test(
     with _tasks_lock:
         _running_tasks[run_id] = {"status": "pending"}
 
-    background_tasks.add_task(
-        _execute_workflow_task, run_id, body.instruction, body.api_doc_path
-    )
+    background_tasks.add_task(_execute_workflow_task, run_id, body.instruction, body.api_doc_path)
 
     return RunTestResponse(
         run_id=run_id,

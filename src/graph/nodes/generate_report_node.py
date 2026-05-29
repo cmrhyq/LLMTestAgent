@@ -6,7 +6,7 @@
 import html
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from src.core.config import get_config
 from src.core.database.connection import get_db_manager
@@ -35,7 +35,7 @@ def generate_report_node(state: AgentState) -> dict:
     logger.info(f"进入报告生成节点，run_id: {run_id}", node="generate_report", run_id=run_id)
 
     if not run_id:
-        logger.warning(f"run_id为空，跳过报告生成", node="generate_report")
+        logger.warning("run_id为空，跳过报告生成", node="generate_report")
         return {"report_path": ""}
 
     config = get_config()
@@ -51,12 +51,15 @@ def generate_report_node(state: AgentState) -> dict:
                 logger.error(f"TestRun不存在: run_id={run_id}", node="generate_report", run_id=run_id)
                 return {"report_path": "", "error_message": f"TestRun 不存在: {run_id}"}
 
-            results: List[TestResult] = test_result_repo.get_by_run(run_id)
+            results: list[TestResult] = test_result_repo.get_by_run(run_id)
 
             logger.info(
                 f"[generate_report] 报告数据汇总 - 结果数: {len(results)}, 通过: {test_run.passed_cases}, 失败: {test_run.failed_cases}",
-                node="generate_report", run_id=run_id, result_count=len(results),
-                passed=test_run.passed_cases, failed=test_run.failed_cases,
+                node="generate_report",
+                run_id=run_id,
+                result_count=len(results),
+                passed=test_run.passed_cases,
+                failed=test_run.failed_cases,
             )
 
             report_content = _build_html_report(test_run, results)
@@ -68,18 +71,11 @@ def generate_report_node(state: AgentState) -> dict:
 
             report_path = str(report_file)
             logger.info(f"报告生成成功: {report_path}", node="generate_report", path=report_path)
-            return {
-                "current_step": "end",
-                "report_path": report_path
-            }
+            return {"current_step": "end", "report_path": report_path}
 
     except Exception as e:
         logger.error(f"报告生成异常: {str(e)}", node="generate_report", error=str(e))
-        return {
-            "current_step": "error",
-            "report_path": "",
-            "error_message": f"报告生成异常: {str(e)}"
-        }
+        return {"current_step": "error", "report_path": "", "error_message": f"报告生成异常: {str(e)}"}
 
 
 def _esc(text: Any) -> str:
@@ -100,7 +96,7 @@ def _status_badge(status: str) -> str:
     return f'<span class="badge {css_class}">{_esc(status)}</span>'
 
 
-def _build_html_report(test_run: TestRun, results: List[TestResult]) -> str:
+def _build_html_report(test_run: TestRun, results: list[TestResult]) -> str:
     """构建 HTML 格式测试报告。"""
     total = test_run.total_cases or len(results)
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -149,7 +145,7 @@ def _build_html_report(test_run: TestRun, results: List[TestResult]) -> str:
             <td><code>{_esc(r.case_id)}</code></td>
             <td>{_esc(r.case_name)}</td>
             <td>{_status_badge(r.status)}</td>
-            <td>{_esc(r.response_status_code) if r.response_status_code else '—'}</td>
+            <td>{_esc(r.response_status_code) if r.response_status_code else "—"}</td>
             <td class="error-cell">{error_short}</td>
           </tr>""")
         failures_html = f"""
@@ -181,7 +177,7 @@ def _build_html_report(test_run: TestRun, results: List[TestResult]) -> str:
             <td><code>{_esc(r.case_id)}</code></td>
             <td>{_esc(r.case_name)}</td>
             <td>{_status_badge(r.status)}</td>
-            <td>{_esc(r.response_status_code) if r.response_status_code else '—'}</td>
+            <td>{_esc(r.response_status_code) if r.response_status_code else "—"}</td>
             <td>{r.response_time:.2f}</td>
           </tr>""")
     else:

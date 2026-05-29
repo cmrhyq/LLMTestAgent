@@ -152,7 +152,15 @@ select = [
     "A",    # flake8-builtins（内置名称遮蔽）
     "SIM",  # flake8-simplify（代码简化建议）
 ]
-ignore = ["E501"]                    # 行长度由 formatter 控制，lint 不重复检查
+ignore = [
+    "E501",   # 行长度由 formatter 控制，lint 不重复检查
+    "B008",   # FastAPI Depends/File/Query 在默认参数中调用是框架惯用模式
+    "SIM108", # 三元表达式在复杂场景下可读性不如 if-else
+]
+
+[tool.ruff.lint.per-file-ignores]
+"main.py" = ["E402"]                 # sys.path.insert 必须在项目模块导入之前
+"src/utils/http/request.py" = ["A004"]  # requests.ConnectionError 遮蔽内置名不可避免
 
 [tool.ruff.lint.isort]
 known-first-party = ["src"]          # 项目自身模块，排序时归入第一方

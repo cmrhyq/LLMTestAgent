@@ -9,7 +9,6 @@ import os
 import platform
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 from langchain_core.tools import tool
 
@@ -37,11 +36,11 @@ def read_file(file_path: str, encoding: str = "utf-8") -> str:
 
         file_size = path.stat().st_size
         if file_size > _MAX_FILE_SIZE:
-            with open(path, "r", encoding=encoding, errors="replace") as f:
+            with open(path, encoding=encoding, errors="replace") as f:
                 content = f.read(_MAX_FILE_SIZE)
             return f"[文件过大({file_size}字节)，仅显示前{_MAX_FILE_SIZE}字节]\n{content}"
 
-        with open(path, "r", encoding=encoding, errors="replace") as f:
+        with open(path, encoding=encoding, errors="replace") as f:
             content = f.read()
 
         return content
@@ -95,7 +94,7 @@ def list_directory(dir_path: str, show_hidden: bool = False) -> str:
 
 
 @tool
-def run_command(command: str, working_directory: Optional[str] = None, timeout: int = 30) -> str:
+def run_command(command: str, working_directory: str | None = None, timeout: int = 30) -> str:
     """在系统Shell中执行命令并返回输出。Windows下使用cmd/powershell，Linux下使用bash。超时默认30秒。
 
     Args:
@@ -210,4 +209,5 @@ def _format_size(size_bytes: int) -> str:
 def _format_timestamp(ts: float) -> str:
     """格式化时间戳。"""
     from datetime import datetime
+
     return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")

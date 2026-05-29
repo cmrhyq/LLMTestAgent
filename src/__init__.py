@@ -6,7 +6,7 @@
 __version__ = "1.0.0"
 __author__ = "cmrhyq"
 
-from src.core.config import get_config, init_config, AppConfig
+from src.core.config import AppConfig, get_config, init_config
 from src.core.llm.llm_client import (
     LLMClient,
     create_chat_model,

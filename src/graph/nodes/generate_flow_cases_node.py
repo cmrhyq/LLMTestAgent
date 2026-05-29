@@ -7,7 +7,7 @@ import hashlib
 import json
 import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src.core.config import get_config
 from src.core.database.connection import get_db_manager
@@ -36,10 +36,14 @@ def generate_flow_cases_node(state: AgentState) -> dict:
         部分状态更新，包含 run_id 和 test_cases_count
     """
     selected_endpoints = state.get("selected_endpoints", [])
-    logger.info(f"进入流程测试用例生成节点，接口数: {len(selected_endpoints)}", node="generate_flow_cases", endpoint_count=len(selected_endpoints))
+    logger.info(
+        f"进入流程测试用例生成节点，接口数: {len(selected_endpoints)}",
+        node="generate_flow_cases",
+        endpoint_count=len(selected_endpoints),
+    )
 
     if not selected_endpoints:
-        logger.warning(f"无选中的接口，跳过流程用例生成", node="generate_flow_cases")
+        logger.warning("无选中的接口，跳过流程用例生成", node="generate_flow_cases")
         return {"run_id": 0, "test_cases_count": 0, "error_message": "无选中的接口", "current_step": "error"}
 
     config = get_config()
@@ -60,15 +64,25 @@ def generate_flow_cases_node(state: AgentState) -> dict:
         project = project_repo.get_by_id(project_id)
         if not project:
             logger.error(f"项目不存在: project_id={project_id}", node="generate_flow_cases", project_id=project_id)
-            return {"run_id": 0, "test_cases_count": 0, "error_message": f"项目不存在: project_id={project_id}", "current_step": "error"}
+            return {
+                "run_id": 0,
+                "test_cases_count": 0,
+                "error_message": f"项目不存在: project_id={project_id}",
+                "current_step": "error",
+            }
 
         base_url = project.base_url.rstrip("/")
 
-        endpoints: List[Endpoint] = endpoint_repo.get_active_by_ids(endpoint_ids)
+        endpoints: list[Endpoint] = endpoint_repo.get_active_by_ids(endpoint_ids)
 
         if not endpoints:
-            logger.error(f"未查询到有效的接口定义", node="generate_flow_cases", endpoint_ids=endpoint_ids)
-            return {"run_id": 0, "test_cases_count": 0, "error_message": "未查询到有效的接口定义", "current_step": "error"}
+            logger.error("未查询到有效的接口定义", node="generate_flow_cases", endpoint_ids=endpoint_ids)
+            return {
+                "run_id": 0,
+                "test_cases_count": 0,
+                "error_message": "未查询到有效的接口定义",
+                "current_step": "error",
+            }
 
         test_run = TestRun(
             project_id=project_id,
@@ -86,7 +100,11 @@ def generate_flow_cases_node(state: AgentState) -> dict:
 
         messages = prompt_builder.build_messages(endpoints_info)
         response_text = llm_client.chat(messages)
-        logger.debug(f"LLM流程用例响应，长度: {len(response_text)}", node="generate_flow_cases", response_length=len(response_text))
+        logger.debug(
+            f"LLM流程用例响应，长度: {len(response_text)}",
+            node="generate_flow_cases",
+            response_length=len(response_text),
+        )
 
         cases_data = _parse_flow_response(response_text)
         endpoint_map = {ep.id: ep for ep in endpoints}
@@ -96,7 +114,12 @@ def generate_flow_cases_node(state: AgentState) -> dict:
             endpoint_id = case_data.get("endpoint_id")
             endpoint = endpoint_map.get(endpoint_id)
             if not endpoint:
-                logger.warning(f"步骤{idx}引用未知endpoint_id={endpoint_id}，跳过", node="generate_flow_cases", step=idx, endpoint_id=endpoint_id)
+                logger.warning(
+                    f"步骤{idx}引用未知endpoint_id={endpoint_id}，跳过",
+                    node="generate_flow_cases",
+                    step=idx,
+                    endpoint_id=endpoint_id,
+                )
                 continue
 
             full_url = f"{base_url}{endpoint.path}"
@@ -111,16 +134,21 @@ def generate_flow_cases_node(state: AgentState) -> dict:
             total_cases += 1
 
         test_run.total_cases = total_cases
-        logger.info(f"流程用例生成完成 - run_id: {run_id}, 总用例数: {total_cases}", node="generate_flow_cases", run_id=run_id, total_cases=total_cases)
+        logger.info(
+            f"流程用例生成完成 - run_id: {run_id}, 总用例数: {total_cases}",
+            node="generate_flow_cases",
+            run_id=run_id,
+            total_cases=total_cases,
+        )
 
     return {"run_id": run_id, "test_cases_count": total_cases, "current_step": "execute_flow_tests"}
 
 
-def _build_endpoints_info(endpoints: List[Endpoint], base_url: str) -> List[Dict[str, Any]]:
+def _build_endpoints_info(endpoints: list[Endpoint], base_url: str) -> list[dict[str, Any]]:
     """构建传给 LLM 的接口信息列表。"""
     result = []
     for ep in endpoints:
-        info: Dict[str, Any] = {
+        info: dict[str, Any] = {
             "endpoint_id": ep.id,
             "name": ep.name,
             "url": f"{base_url}{ep.path}",
@@ -136,7 +164,7 @@ def _build_endpoints_info(endpoints: List[Endpoint], base_url: str) -> List[Dict
 
 
 def _build_flow_test_case(
-    case_data: Dict[str, Any],
+    case_data: dict[str, Any],
     endpoint: Endpoint,
     full_url: str,
     run_id: int,
@@ -168,10 +196,10 @@ def _build_flow_test_case(
         case_name=case_name,
         url=full_url,
         method=endpoint.method,
-        scenario_type=scenario_type if scenario_type in (
-            "normal", "param_missing", "param_type_error",
-            "boundary_value", "permission_error", "custom"
-        ) else "normal",
+        scenario_type=scenario_type
+        if scenario_type
+        in ("normal", "param_missing", "param_type_error", "boundary_value", "permission_error", "custom")
+        else "normal",
         priority=priority if priority in ("P0", "P1", "P2") else "P0",
         headers=json.dumps(case_headers, ensure_ascii=False),
         body=body_str,
@@ -186,7 +214,7 @@ def _build_flow_test_case(
     )
 
 
-def _parse_flow_response(response: str) -> List[Dict[str, Any]]:
+def _parse_flow_response(response: str) -> list[dict[str, Any]]:
     """从 LLM 响应中解析流程测试用例。
 
     支持 markdown code block 和纯 JSON 两种格式。
@@ -200,7 +228,7 @@ def _parse_flow_response(response: str) -> List[Dict[str, Any]]:
         json_start = response.find("{")
         json_end = response.rfind("}") + 1
         if json_start == -1 or json_end <= 0:
-            logger.warning(f"LLM流程响应中未找到JSON内容", node="generate_flow_cases")
+            logger.warning("LLM流程响应中未找到JSON内容", node="generate_flow_cases")
             return []
         json_str = response[json_start:json_end]
 

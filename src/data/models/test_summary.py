@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-from sqlalchemy import (
-    Integer, Text, Float, ForeignKey, Index
-)
+from sqlalchemy import Float, ForeignKey, Index, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.data.models.base import Base, local_now
@@ -16,10 +14,13 @@ if TYPE_CHECKING:
 
 class TestSummary(Base):
     """测试摘要表"""
+
     __tablename__ = "test_summary"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False, default=next_id)
-    run_id: Mapped[int] = mapped_column(Integer, ForeignKey("test_run.id", ondelete="CASCADE"), nullable=False, unique=True)
+    run_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("test_run.id", ondelete="CASCADE"), nullable=False, unique=True
+    )
     total: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     passed: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     failed: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -32,8 +33,8 @@ class TestSummary(Base):
     p95_response_time: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     total_duration: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     failure_reasons: Mapped[str] = mapped_column(Text, default="{}")
-    started_at: Mapped[Optional[str]] = mapped_column(Text, default=None)
-    finished_at: Mapped[Optional[str]] = mapped_column(Text, default=None)
+    started_at: Mapped[str | None] = mapped_column(Text, default=None)
+    finished_at: Mapped[str | None] = mapped_column(Text, default=None)
     created_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
 
     test_run: Mapped[TestRun] = relationship(back_populates="summary")

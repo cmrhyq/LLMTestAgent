@@ -1,10 +1,7 @@
-from typing import Optional, List
-
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from src.data.models.environment import Environment
-
 from src.data.repositories.base import BaseRepository
 
 
@@ -14,28 +11,20 @@ class EnvironmentRepository(BaseRepository[Environment]):
     def __init__(self, session: Session) -> None:
         super().__init__(Environment, session)
 
-    def get_by_name(self, name: str) -> Optional[Environment]:
+    def get_by_name(self, name: str) -> Environment | None:
         stmt = select(Environment).where(Environment.name == name)
         return self._session.scalar(stmt)
 
-    def get_by_project_and_name(self, project_id: int, name: str) -> Optional[Environment]:
-        stmt = select(Environment).where(
-            Environment.project_id == project_id,
-            Environment.name == name
-        )
+    def get_by_project_and_name(self, project_id: int, name: str) -> Environment | None:
+        stmt = select(Environment).where(Environment.project_id == project_id, Environment.name == name)
         return self._session.scalar(stmt)
 
-    def bulk_query(
-            self, project_ids: set, names: set
-    ) -> List[Environment]:
+    def bulk_query(self, project_ids: set, names: set) -> list[Environment]:
         """批量查询：一次 SQL 替代 N 次循环查询"""
-        stmt = select(Environment).where(
-            Environment.project_id.in_(project_ids),
-            Environment.name.in_(names)
-        )
+        stmt = select(Environment).where(Environment.project_id.in_(project_ids), Environment.name.in_(names))
         return list(self._session.scalars(stmt).all())
 
-    def get_active_environments(self) -> List[Environment]:
+    def get_active_environments(self) -> list[Environment]:
         stmt = select(Environment).where(Environment.status == 1)
         return list(self._session.scalars(stmt).all())
 

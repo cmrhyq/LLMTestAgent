@@ -7,7 +7,7 @@ import hashlib
 import json
 import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src.core.config import get_config
 from src.core.database.connection import get_db_manager
@@ -37,10 +37,14 @@ def generate_single_cases_node(state: AgentState) -> dict:
         部分状态更新，包含 run_id 和 test_cases_count
     """
     selected_endpoints = state.get("selected_endpoints", [])
-    logger.info(f"进入单接口测试用例生成节点，接口数: {len(selected_endpoints)}", node="generate_single_cases", endpoint_count=len(selected_endpoints))
+    logger.info(
+        f"进入单接口测试用例生成节点，接口数: {len(selected_endpoints)}",
+        node="generate_single_cases",
+        endpoint_count=len(selected_endpoints),
+    )
 
     if not selected_endpoints:
-        logger.warning(f"无选中的接口，跳过用例生成", node="generate_single_cases")
+        logger.warning("无选中的接口，跳过用例生成", node="generate_single_cases")
         return {"run_id": 0, "test_cases_count": 0, "error_message": "无选中的接口", "current_step": "error"}
 
     config = get_config()
@@ -61,15 +65,25 @@ def generate_single_cases_node(state: AgentState) -> dict:
         project = project_repo.get_by_id(project_id)
         if not project:
             logger.error(f"项目不存在: project_id={project_id}", node="generate_single_cases", project_id=project_id)
-            return {"run_id": 0, "test_cases_count": 0, "error_message": f"项目不存在: project_id={project_id}", "current_step": "error"}
+            return {
+                "run_id": 0,
+                "test_cases_count": 0,
+                "error_message": f"项目不存在: project_id={project_id}",
+                "current_step": "error",
+            }
 
         base_url = project.base_url.rstrip("/")
 
-        endpoints: List[Endpoint] = endpoint_repo.get_active_by_ids(endpoint_ids)
+        endpoints: list[Endpoint] = endpoint_repo.get_active_by_ids(endpoint_ids)
 
         if not endpoints:
-            logger.error(f"未查询到有效的接口定义", node="generate_single_cases", endpoint_ids=endpoint_ids)
-            return {"run_id": 0, "test_cases_count": 0, "error_message": "未查询到有效的接口定义", "current_step": "error"}
+            logger.error("未查询到有效的接口定义", node="generate_single_cases", endpoint_ids=endpoint_ids)
+            return {
+                "run_id": 0,
+                "test_cases_count": 0,
+                "error_message": "未查询到有效的接口定义",
+                "current_step": "error",
+            }
 
         test_run = TestRun(
             project_id=project_id,
@@ -98,12 +112,27 @@ def generate_single_cases_node(state: AgentState) -> dict:
                     test_case_repo=test_case_repo,
                 )
                 total_cases += len(cases)
-                logger.info(f"接口用例生成完成: {endpoint.name}，生成{len(cases)}个用例", node="generate_single_cases", endpoint=endpoint.name, count=len(cases))
+                logger.info(
+                    f"接口用例生成完成: {endpoint.name}，生成{len(cases)}个用例",
+                    node="generate_single_cases",
+                    endpoint=endpoint.name,
+                    count=len(cases),
+                )
             except Exception as e:
-                logger.error(f"接口用例生成失败: {endpoint.name}，错误: {e}", node="generate_single_cases", endpoint=endpoint.name, error=str(e))
+                logger.error(
+                    f"接口用例生成失败: {endpoint.name}，错误: {e}",
+                    node="generate_single_cases",
+                    endpoint=endpoint.name,
+                    error=str(e),
+                )
 
         test_run.total_cases = total_cases
-        logger.info(f"用例生成完成 - run_id: {run_id}, 总用例数: {total_cases}", node="generate_single_cases", run_id=run_id, total_cases=total_cases)
+        logger.info(
+            f"用例生成完成 - run_id: {run_id}, 总用例数: {total_cases}",
+            node="generate_single_cases",
+            run_id=run_id,
+            total_cases=total_cases,
+        )
 
     return {"run_id": run_id, "test_cases_count": total_cases, "current_step": "execute_single_tests"}
 
@@ -116,7 +145,7 @@ def _generate_cases_for_endpoint(
     prompt_builder: CasePromptBuilder,
     llm_client: Any,
     test_case_repo: TestCaseRepository,
-) -> List[TestCase]:
+) -> list[TestCase]:
     """为单个 Endpoint 生成测试用例。"""
     full_url = f"{base_url}{endpoint.path}"
 
@@ -149,7 +178,7 @@ def _generate_cases_for_endpoint(
     response_text = llm_client.chat(messages)
     cases_data = _parse_llm_cases_response(response_text)
 
-    orm_cases: List[TestCase] = []
+    orm_cases: list[TestCase] = []
     for idx, case_data in enumerate(cases_data, 1):
         case = _build_test_case_orm(
             case_data=case_data,
@@ -166,12 +195,12 @@ def _generate_cases_for_endpoint(
 
 
 def _build_test_case_orm(
-    case_data: Dict[str, Any],
+    case_data: dict[str, Any],
     endpoint: Endpoint,
     full_url: str,
     run_id: int,
     idx: int,
-    default_assert_rules: List[str],
+    default_assert_rules: list[str],
 ) -> TestCase:
     """从 LLM 输出的单条用例数据构造 TestCase ORM 对象。"""
     case_name = case_data.get("case_name", f"{endpoint.name}_case_{idx:03d}")
@@ -198,10 +227,10 @@ def _build_test_case_orm(
         case_name=case_name,
         url=full_url,
         method=endpoint.method,
-        scenario_type=scenario_type if scenario_type in (
-            "normal", "param_missing", "param_type_error",
-            "boundary_value", "permission_error", "custom"
-        ) else "custom",
+        scenario_type=scenario_type
+        if scenario_type
+        in ("normal", "param_missing", "param_type_error", "boundary_value", "permission_error", "custom")
+        else "custom",
         priority=priority if priority in ("P0", "P1", "P2") else "P1",
         headers=json.dumps(case_headers, ensure_ascii=False),
         body=body_str,
@@ -216,7 +245,7 @@ def _build_test_case_orm(
     )
 
 
-def _parse_llm_cases_response(response: str) -> List[Dict[str, Any]]:
+def _parse_llm_cases_response(response: str) -> list[dict[str, Any]]:
     """从 LLM 响应中解析测试用例 JSON 数组。
 
     支持多种格式:
@@ -233,7 +262,7 @@ def _parse_llm_cases_response(response: str) -> List[Dict[str, Any]]:
         json_start = response.find("{")
         json_end = response.rfind("}") + 1
         if json_start == -1 or json_end <= 0:
-            logger.warning(f"LLM响应中未找到JSON内容", node="generate_single_cases")
+            logger.warning("LLM响应中未找到JSON内容", node="generate_single_cases")
             return []
         json_str = response[json_start:json_end]
 
@@ -250,7 +279,7 @@ def _parse_llm_cases_response(response: str) -> List[Dict[str, Any]]:
     return []
 
 
-def _extract_default_asserts(responses_json: Optional[str]) -> List[str]:
+def _extract_default_asserts(responses_json: str | None) -> list[str]:
     """从 Endpoint.responses 字段提取默认断言规则。"""
     default_rules = ["status_code == 200"]
 

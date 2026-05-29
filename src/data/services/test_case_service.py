@@ -1,5 +1,3 @@
-from typing import Optional, List
-
 from sqlalchemy.orm import Session
 
 from src.core.logging import get_logger
@@ -13,15 +11,15 @@ class TestCaseService:
     def __init__(self, session: Session):
         self.repo = TestCaseRepository(session)
 
-    def get_cases_by_run(self, run_id: int) -> List[TestCase]:
+    def get_cases_by_run(self, run_id: int) -> list[TestCase]:
         """获取某次执行的所有用例"""
         return self.repo.get_by_run(run_id)
 
-    def get_case_by_id(self, case_id: int) -> Optional[TestCase]:
+    def get_case_by_id(self, case_id: int) -> TestCase | None:
         """按主键获取用例"""
         return self.repo.get_by_id(case_id)
 
-    def get_active_cases_by_run(self, run_id: int) -> List[TestCase]:
+    def get_active_cases_by_run(self, run_id: int) -> list[TestCase]:
         """获取某次执行中启用状态的用例"""
         return self.repo.get_by_run_and_status(run_id, 1)
 

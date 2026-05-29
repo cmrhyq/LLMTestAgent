@@ -1,10 +1,10 @@
 from src.data.enum.workflow import (
+    AssertOperator,
     DataStatus,
     HttpMethod,
     Priority,
-    TestStatus,
     ScenarioType,
-    AssertOperator,
+    TestStatus,
 )
 
 __all__ = [
