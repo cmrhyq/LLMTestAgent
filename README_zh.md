@@ -421,6 +421,13 @@ docs = vector_store.similarity_search("语义搜索查询")
 
 ## 开发指南
 
+### 配置开发环境
+
+```bash
+uv sync --extra dev
+uv run pre-commit install
+```
+
 ### 运行测试
 
 ```bash

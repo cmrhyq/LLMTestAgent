@@ -421,6 +421,13 @@ docs = vector_store.similarity_search("semantic search query")
 
 ## Development
 
+### Setup Development Environment
+
+```bash
+uv sync --extra dev
+uv run pre-commit install
+```
+
 ### Run Tests
 
 ```bash

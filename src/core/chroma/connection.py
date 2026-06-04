@@ -10,6 +10,7 @@ from typing import Any, Optional
 
 import chromadb
 from chromadb.api.models.Collection import Collection
+from chromadb.api.types import QueryResult
 from chromadb.config import Settings
 from langchain_chroma import Chroma
 from langchain_core.embeddings import Embeddings
@@ -35,7 +36,7 @@ class ChromaManager:
     _lock = threading.Lock()
 
     def __init__(self) -> None:
-        self._client: chromadb.HttpClient | None = None
+        self._client: chromadb.ClientAPI | None = None
         self._config: ChromaConfig | None = None
         self._initialized = False
 
@@ -217,7 +218,7 @@ class ChromaManager:
         n_results: int = 10,
         where: dict[str, Any] | None = None,
         include: list[str] | None = None,
-    ) -> dict[str, Any]:
+    ) -> QueryResult:
         """
         对集合执行相似度查询
 
@@ -229,7 +230,7 @@ class ChromaManager:
             include: 返回字段列表（metadatas, documents, distances, embeddings）
 
         Returns:
-            查询结果字典
+            QueryResult 查询结果对象
         """
         collection = self.get_or_create_collection(collection_name)
         kwargs: dict[str, Any] = {
@@ -316,7 +317,7 @@ class ChromaManager:
     # ─── 生命周期 ─────────────────────────────────────────────────────────────
 
     @property
-    def client(self) -> chromadb.HttpClient:
+    def client(self) -> chromadb.ClientAPI:
         """获取底层 chromadb HttpClient"""
         self._check_initialized()
         return self._client  # type: ignore[return-value]
@@ -331,9 +332,7 @@ class ChromaManager:
     def _check_initialized(self) -> None:
         """检查是否已初始化"""
         if not self._initialized:
-            raise RuntimeError(
-                "ChromaDB 尚未初始化，请先调用 ChromaManager.get_instance().initialize()"
-            )
+            raise RuntimeError("ChromaDB 尚未初始化，请先调用 ChromaManager.get_instance().initialize()")
 
     @classmethod
     def reset_instance(cls) -> None:

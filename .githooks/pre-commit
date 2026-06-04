@@ -1,0 +1,128 @@
+#!/bin/bash
+# =============================================================================
+# IntelligentTrading · Pre-commit Tripwire
+#
+# Scans staged content for credential / personal financial data leaks before
+# they enter git history. Belt-and-suspenders alongside detect-secrets:
+#   - detect-secrets handles entropy / known-token formats
+#   - this script handles project-specific patterns (account tails, RSU
+#     grant IDs, HK/CN/US bank account numbers, OAuth tokens)
+#
+# Whitelist any file that legitimately needs to contain a regex pattern
+# (e.g. this very script, security policy docs).
+# =============================================================================
+
+set -e
+
+# Files that legitimately contain regex patterns; never scan them.
+PLAN_FILE_WHITELIST=(
+    ".githooks/pre-commit"
+)
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+
+FILTERED=""
+for file in $STAGED; do
+    skip=false
+    for wl in "${PLAN_FILE_WHITELIST[@]}"; do
+        if [[ "$file" == *"$wl"* ]]; then
+            skip=true
+            break
+        fi
+    done
+    if [ "$skip" = false ]; then
+        FILTERED="$FILTERED $file"
+    fi
+done
+
+if [ -z "$FILTERED" ]; then
+    echo "✅ Pre-commit tripwire: nothing to scan (whitelist-only diff)"
+    exit 0
+fi
+
+# =============================================================================
+# Credential patterns
+# =============================================================================
+
+CREDENTIAL_PATTERNS=(
+    # AWS
+    "execute-api\.[a-z0-9-]+\.amazonaws\.com"
+    "AKIA[0-9A-Z]{16}"
+
+    # AWS account ID — context-bound to avoid false positives on CUSIP /
+    # UNIX timestamps; require account/accountId/aws_account prefix.
+    "(account|accountId|aws_account)[^a-zA-Z0-9]*[=:][^0-9]*[0-9]{12}"
+
+    # OpenAI / Anthropic / HuggingFace API keys
+    "sk-[a-zA-Z0-9]{32,}"
+    "sk-ant-[a-zA-Z0-9_-]{32,}"
+    "hf_[a-zA-Z0-9]{37}"
+
+    # Generic Bearer token — anchored to Authorization header context.
+    "Authorization: Bearer [A-Za-z0-9_-]{40,}"
+
+    # OAuth refresh / access tokens — anchored to key=value form.
+    "(refresh_token|access_token)[\"']?[[:space:]]*[:=][[:space:]]*[\"'][A-Za-z0-9._-]{20,}[\"']"
+)
+
+# =============================================================================
+# Personal financial data patterns
+# =============================================================================
+
+PERSONAL_PATTERNS=(
+    # Account tail digits (Chinese / English)
+    "(账户号尾|account ending|account[[:space:]]+tail)[^a-zA-Z0-9]*[0-9]{3,}"
+
+    # RSU grant IDs
+    "grant[[:space:]]+RR[0-9]{7,}"
+    "RSU.*RR[0-9]{7,}"
+
+    # Vest date + amount combo
+    'vest.*[0-9]{4}-[0-9]{2}-[0-9]{2}.*\$[0-9]+'
+
+    # Named bank accounts (HK / CN / global)
+    "HSBC[[:space:]]+(CN|HK).*[0-9]{6,}"
+    "CITIC[[:space:]]+HK.*[0-9]{6,}"
+    "BOC[[:space:]]+HK.*[0-9]{6,}"
+    "ZA[[:space:]]+Bank.*[0-9]{6,}"
+    "CIB[[:space:]]+CN.*[0-9]{6,}"
+)
+
+# =============================================================================
+# Scan
+# =============================================================================
+
+BLOCKED=0
+BLOCKED_PATTERNS=""
+
+for pattern in "${CREDENTIAL_PATTERNS[@]}" "${PERSONAL_PATTERNS[@]}"; do
+    for file in $FILTERED; do
+        # Skip binary files
+        if ! git show ":$file" 2>/dev/null | head -c 1 | grep -q . 2>/dev/null; then
+            continue
+        fi
+
+        matches=$(git show ":$file" 2>/dev/null | grep -nE "$pattern" 2>/dev/null || true)
+        if [ -n "$matches" ]; then
+            BLOCKED=1
+            BLOCKED_PATTERNS="$BLOCKED_PATTERNS\n  🔴 $file:\n     pattern: $pattern\n     matches: $(echo "$matches" | head -3)"
+        fi
+    done
+done
+
+if [ $BLOCKED -eq 1 ]; then
+    echo ""
+    echo "🔴🔴🔴 Pre-commit BLOCKED: staged files contain sensitive patterns 🔴🔴🔴"
+    echo -e "$BLOCKED_PATTERNS"
+    echo ""
+    echo "Fix:"
+    echo "  1. Replace sensitive values with <PLACEHOLDER>"
+    echo "  2. Move secrets to .local/ or tokens/ (must be in .gitignore)"
+    echo "  3. False positive: git commit --no-verify (requires reviewer sign-off)"
+    echo "  4. Necessary regex literal: add to PLAN_FILE_WHITELIST"
+    echo ""
+    exit 1
+fi
+
+echo "✅ Pre-commit tripwire: no sensitive patterns detected ($(echo $FILTERED | wc -w) file(s) × $((${#CREDENTIAL_PATTERNS[@]} + ${#PERSONAL_PATTERNS[@]})) pattern(s))"
+exit 0

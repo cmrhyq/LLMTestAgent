@@ -133,7 +133,9 @@ class TestChromaManagerInitialize:
 
             call_kwargs = mock_cls.call_args[1]
             settings = call_kwargs["settings"]
-            assert not hasattr(settings, "chroma_client_auth_credentials") or not settings.chroma_client_auth_credentials
+            assert (
+                not hasattr(settings, "chroma_client_auth_credentials") or not settings.chroma_client_auth_credentials
+            )
 
 
 @pytest.mark.unit
@@ -183,9 +185,7 @@ class TestChromaManagerCollections:
 
         initialized_manager.get_or_create_collection("my_col", metadata=metadata)
 
-        mock_http_client.get_or_create_collection.assert_called_once_with(
-            name="my_col", metadata=metadata
-        )
+        mock_http_client.get_or_create_collection.assert_called_once_with(name="my_col", metadata=metadata)
 
     def test_get_collection(self, initialized_manager, mock_http_client):
         mock_collection = MagicMock()
