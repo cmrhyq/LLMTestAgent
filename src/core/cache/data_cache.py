@@ -58,7 +58,7 @@ class DataCache:
                 # 双重检查：防止多个线程同时创建实例
                 if cls._instance is None:
                     cls._instance = cls.__new__(cls)
-                    cls._instance.__init__()
+                    type(cls._instance).__init__(cls._instance)
 
         return cls._instance
 

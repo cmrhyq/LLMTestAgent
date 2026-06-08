@@ -99,6 +99,7 @@ dev = [
     "ruff>=0.4.0",                   # 代码检查 & 格式化
     "mypy>=1.10.0",                  # 静态类型检查
     "pre-commit>=3.7.0",            # Git 提交前钩子
+    "detect-secrets>=1.5",
 ]
 # 测试工具
 test = [
