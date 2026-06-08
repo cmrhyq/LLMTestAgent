@@ -107,6 +107,25 @@ class DatabaseConfig(BaseModel):
     pool_recycle: int = Field(default=3600, description="连接回收时间（秒）")
 
 
+class ChromaConfig(BaseModel):
+    """ChromaDB 向量数据库配置"""
+
+    host: str = Field(default="localhost", description="ChromaDB 服务地址")
+    port: int = Field(default=8000, description="ChromaDB 服务端口")
+    auth_provider: str = Field(
+        default="chromadb.auth.token_authn.TokenAuthClientProvider",
+        description="认证提供者类路径",
+    )
+    auth_credentials: str = Field(default="", description="认证凭证（Token）")
+    auth_token_transport_header: str = Field(
+        default="Authorization",
+        description="Token 传输 Header（Authorization 或 X-Chroma-Token）",
+    )
+    tenant: str = Field(default="default_tenant", description="租户名称")
+    database: str = Field(default="default_database", description="数据库名称")
+    default_collection: str = Field(default="default", description="默认集合名称")
+
+
 class LoggingConfig(BaseModel):
     """日志配置"""
 
@@ -131,6 +150,7 @@ class AppConfig(BaseModel):
     execution: ExecutionConfig = Field(default_factory=ExecutionConfig)
     output: OutputConfig = Field(default_factory=OutputConfig)
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
+    chroma: ChromaConfig = Field(default_factory=ChromaConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     langsmith: LangSmithConfig = Field(default_factory=LangSmithConfig)
 
