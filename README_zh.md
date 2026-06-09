@@ -8,6 +8,7 @@
 ![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)
 ![LangGraph](https://img.shields.io/badge/LangGraph-0.3+-orange.svg)
 ![SQLite](https://img.shields.io/badge/SQLite-3-lightgrey.svg)
+![ChromaDB](https://img.shields.io/badge/ChromaDB-vector--db-purple.svg)
 
 **基于大模型的 API 自动化测试智能体**
 
@@ -94,6 +95,9 @@ ZHIPU_API_KEY=your-zhipu-api-key
 
 # 通义千问
 DASHSCOPE_API_KEY=your-dashscope-api-key
+
+# ChromaDB
+CHROMA_AUTH_TOKEN=your-chroma-auth-token
 ```
 
 ### 3. 运行
@@ -128,6 +132,7 @@ LLMTestAgent/
 │   ├── api/                         # FastAPI 路由层
 │   ├── core/
 │   │   ├── config.py                # 配置加载
+│   │   ├── chroma/                  # ChromaDB 向量数据库连接管理
 │   │   ├── database/                # 数据库连接管理
 │   │   ├── llm/                     # LLM 统一客户端
 │   │   └── logging.py              # 结构化日志
@@ -181,6 +186,16 @@ database:
   echo: false
   pool_size: 5
   pool_recycle: 3600
+
+chroma:
+  host: "your-chromadb-host"
+  port: 8000
+  auth_provider: "chromadb.auth.token_authn.TokenAuthClientProvider"
+  auth_credentials: ${CHROMA_AUTH_TOKEN}
+  auth_token_transport_header: "Authorization"
+  tenant: "default_tenant"
+  database: "default_database"
+  default_collection: "default"
 
 execution:
   connect_timeout: 5
@@ -332,7 +347,86 @@ rm db/LLMTest.db           # macOS / Linux
 
 ---
 
+## ChromaDB 向量数据库
+
+本项目使用 [ChromaDB](https://www.trychroma.com/) 作为向量数据库，用于文档嵌入存储和语义相似度检索。
+
+### 部署方式
+
+ChromaDB 以独立服务方式部署在 Kubernetes 集群上，部署配置参考：[ContainerBuildTemplate/Kubernetes/chromadb](https://github.com/cmrhyq/ContainerBuildTemplate/tree/main/Kubernetes/chromadb)
+
+### 配置
+
+在 `config/config.yaml` 中配置 ChromaDB 连接信息：
+
+```yaml
+chroma:
+  host: "your-chromadb-host"           # ChromaDB 服务地址
+  port: 8000                           # ChromaDB 服务端口
+  auth_provider: "chromadb.auth.token_authn.TokenAuthClientProvider"
+  auth_credentials: ${CHROMA_AUTH_TOKEN}  # 认证 Token（通过环境变量注入）
+  auth_token_transport_header: "Authorization"
+  tenant: "default_tenant"             # 租户名称
+  database: "default_database"         # 数据库名称
+  default_collection: "default"        # 默认集合名称
+```
+
+在 `.env` 中配置认证 Token：
+
+```dotenv
+CHROMA_AUTH_TOKEN=your-chroma-auth-token
+```
+
+### 使用方式
+
+```python
+from src.core.chroma import init_chroma_from_config, get_chroma_manager
+
+# 应用启动时初始化（只需调用一次）
+manager = init_chroma_from_config()
+
+# 验证连接
+assert manager.check_connection()
+
+# 集合操作
+collections = manager.list_collections()
+manager.get_or_create_collection("my_collection")
+manager.delete_collection("my_collection")
+
+# 文档操作
+manager.add_documents(
+    collection_name="my_collection",
+    documents=["文档内容1", "文档内容2"],
+    metadatas=[{"source": "api"}, {"source": "doc"}],
+    ids=["doc-1", "doc-2"],
+)
+
+results = manager.query(
+    query_texts=["查询文本"],
+    collection_name="my_collection",
+    n_results=5,
+)
+
+# LangChain VectorStore 集成
+from langchain_openai import OpenAIEmbeddings
+
+vector_store = manager.get_vector_store(
+    embedding_function=OpenAIEmbeddings(),
+    collection_name="my_collection",
+)
+docs = vector_store.similarity_search("语义搜索查询")
+```
+
+---
+
 ## 开发指南
+
+### 配置开发环境
+
+```bash
+uv sync --extra dev
+uv run pre-commit install
+```
 
 ### 运行测试
 
@@ -360,6 +454,7 @@ pytest --cov=src --cov-report=html
 |------|------|
 | 工作流引擎 | LangGraph |
 | LLM 框架 | LangChain |
+| 向量数据库 | ChromaDB |
 | 可观测性 | LangSmith（可选） |
 | Web 框架 | FastAPI + Uvicorn |
 | 数据库 ORM | SQLAlchemy 2.0 |

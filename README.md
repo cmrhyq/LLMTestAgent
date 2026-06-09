@@ -8,6 +8,7 @@
 ![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)
 ![LangGraph](https://img.shields.io/badge/LangGraph-0.3+-orange.svg)
 ![SQLite](https://img.shields.io/badge/SQLite-3-lightgrey.svg)
+![ChromaDB](https://img.shields.io/badge/ChromaDB-vector--db-purple.svg)
 
 **LLM-Driven API Automation Testing Agent**
 
@@ -94,6 +95,9 @@ ZHIPU_API_KEY=your-zhipu-api-key
 
 # Tongyi Qwen
 DASHSCOPE_API_KEY=your-dashscope-api-key
+
+# ChromaDB
+CHROMA_AUTH_TOKEN=your-chroma-auth-token
 ```
 
 ### 3. Run
@@ -128,6 +132,7 @@ LLMTestAgent/
 │   ├── api/                         # FastAPI route layer
 │   ├── core/
 │   │   ├── config.py                # Configuration loading
+│   │   ├── chroma/                  # ChromaDB vector database management
 │   │   ├── database/                # Database connection management
 │   │   ├── llm/                     # Unified LLM client
 │   │   └── logging.py              # Structured logging
@@ -181,6 +186,16 @@ database:
   echo: false
   pool_size: 5
   pool_recycle: 3600
+
+chroma:
+  host: "your-chromadb-host"
+  port: 8000
+  auth_provider: "chromadb.auth.token_authn.TokenAuthClientProvider"
+  auth_credentials: ${CHROMA_AUTH_TOKEN}
+  auth_token_transport_header: "Authorization"
+  tenant: "default_tenant"
+  database: "default_database"
+  default_collection: "default"
 
 execution:
   connect_timeout: 5
@@ -332,7 +347,86 @@ See [Database ER Diagram](doc/ER.md) (PlantUML + SVG) and [Database Design Docum
 
 ---
 
+## ChromaDB Vector Database
+
+This project uses [ChromaDB](https://www.trychroma.com/) as the vector database for document embedding storage and semantic similarity retrieval.
+
+### Deployment
+
+ChromaDB is deployed as a standalone service on a Kubernetes cluster. For deployment configuration, refer to: [ContainerBuildTemplate/Kubernetes/chromadb](https://github.com/cmrhyq/ContainerBuildTemplate/tree/main/Kubernetes/chromadb)
+
+### Configuration
+
+Configure ChromaDB connection in `config/config.yaml`:
+
+```yaml
+chroma:
+  host: "your-chromadb-host"           # ChromaDB server address
+  port: 8000                           # ChromaDB server port
+  auth_provider: "chromadb.auth.token_authn.TokenAuthClientProvider"
+  auth_credentials: ${CHROMA_AUTH_TOKEN}  # Auth token (injected via env var)
+  auth_token_transport_header: "Authorization"
+  tenant: "default_tenant"             # Tenant name
+  database: "default_database"         # Database name
+  default_collection: "default"        # Default collection name
+```
+
+Add the auth token to `.env`:
+
+```dotenv
+CHROMA_AUTH_TOKEN=your-chroma-auth-token
+```
+
+### Usage
+
+```python
+from src.core.chroma import init_chroma_from_config, get_chroma_manager
+
+# Initialize at application startup (call once)
+manager = init_chroma_from_config()
+
+# Verify connection
+assert manager.check_connection()
+
+# Collection operations
+collections = manager.list_collections()
+manager.get_or_create_collection("my_collection")
+manager.delete_collection("my_collection")
+
+# Document operations
+manager.add_documents(
+    collection_name="my_collection",
+    documents=["Document content 1", "Document content 2"],
+    metadatas=[{"source": "api"}, {"source": "doc"}],
+    ids=["doc-1", "doc-2"],
+)
+
+results = manager.query(
+    query_texts=["search query"],
+    collection_name="my_collection",
+    n_results=5,
+)
+
+# LangChain VectorStore integration
+from langchain_openai import OpenAIEmbeddings
+
+vector_store = manager.get_vector_store(
+    embedding_function=OpenAIEmbeddings(),
+    collection_name="my_collection",
+)
+docs = vector_store.similarity_search("semantic search query")
+```
+
+---
+
 ## Development
+
+### Setup Development Environment
+
+```bash
+uv sync --extra dev
+uv run pre-commit install
+```
 
 ### Run Tests
 
@@ -360,6 +454,7 @@ Models are defined in `src/data/models/`. After modification, delete the `.db` f
 |-----------|------------|
 | Workflow Engine | LangGraph |
 | LLM Framework | LangChain |
+| Vector Database | ChromaDB |
 | Observability | LangSmith (optional) |
 | Web Framework | FastAPI + Uvicorn |
 | Database ORM | SQLAlchemy 2.0 |

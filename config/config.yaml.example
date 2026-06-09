@@ -59,6 +59,17 @@ database:
   pool_timeout: 30
   pool_recycle: 3600
 
+# ChromaDB 向量数据库配置
+chroma:
+  host: "localhost"
+  port: 8000
+  auth_provider: "chromadb.auth.token_authn.TokenAuthClientProvider"
+  auth_credentials: ${CHROMA_AUTH_TOKEN}
+  auth_token_transport_header: "Authorization"
+  tenant: "default_tenant"
+  database: "default_database"
+  default_collection: "default"
+
 # 日志配置
 logging:
   level: INFO  # DEBUG / INFO / WARNING / ERROR
