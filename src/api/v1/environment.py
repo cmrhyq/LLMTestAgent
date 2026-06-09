@@ -50,7 +50,9 @@ def list_environments(
     total = len(filtered)
     start = (page - 1) * page_size
     items = filtered[start : start + page_size]
-    return EnvironmentListResponse(items=items, total=total, page=page, page_size=page_size)
+    return EnvironmentListResponse(
+        items=[EnvironmentResponse.model_validate(e) for e in items], total=total, page=page, page_size=page_size
+    )
 
 
 @router.get("/{env_id}", response_model=EnvironmentResponse)

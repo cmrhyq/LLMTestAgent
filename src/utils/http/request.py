@@ -15,7 +15,6 @@ from typing import Any
 from urllib.parse import urljoin
 
 import requests
-from requests import Response
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import ConnectionError, HTTPError, RequestException, Timeout
 
@@ -151,6 +150,9 @@ class HttpRequest:
             auth_type: 认证类型
             auth_credentials: 认证凭证
         """
+        if not auth_type or not auth_credentials:
+            return
+
         if auth_type == "bearer":
             token = auth_credentials.get("token")
             if token:
@@ -167,7 +169,7 @@ class HttpRequest:
 
         elif auth_type == "api_key":
             api_key = auth_credentials.get("api_key")
-            header_name = auth_credentials.get("header_name")
+            header_name = auth_credentials.get("header_name", "X-API-Key")
 
             if api_key:
                 self.session.headers.update({header_name: api_key})
@@ -196,7 +198,7 @@ class HttpRequest:
             url: 请求 URL
             **kwargs: 其他请求参数
         """
-        log_data = {
+        log_data: dict[str, Any] = {
             "method": method,
             "url": url,
         }
@@ -243,7 +245,7 @@ class HttpRequest:
 
     def _make_request_with_retry(
         self, method: str, url: str, enable_retry: bool = True, max_retries: int = 3, retry_interval: int = 1, **kwargs
-    ) -> Response | None:
+    ) -> requests.Response:
         """
         发送 HTTP 请求，支持自动重试
 
@@ -261,7 +263,7 @@ class HttpRequest:
         max_retries = max_retries if enable_retry else 0
         retry_delay = retry_interval
 
-        last_exception = None
+        last_exception: Exception | None = None
 
         for attempt in range(max_retries + 1):
             try:
@@ -309,11 +311,9 @@ class HttpRequest:
                     )
 
             except HTTPError as e:
-                logger.error(
-                    f"HTTP错误: {e.response.status_code} - {str(e)}", status_code=e.response.status_code, error=str(e)
-                )
-                # 对于 5xx 错误可以重试，4xx 错误不重试
-                if e.response.status_code >= 500 and attempt < max_retries:
+                status_code = e.response.status_code if e.response is not None else 0
+                logger.error(f"HTTP错误: {status_code} - {str(e)}", status_code=status_code, error=str(e))
+                if status_code >= 500 and attempt < max_retries:
                     last_exception = e
                     time.sleep(retry_delay)
                     retry_delay *= 2
@@ -327,6 +327,7 @@ class HttpRequest:
         # 如果所有重试都失败，抛出最后一个异常
         if last_exception:
             raise last_exception
+        raise RequestException(f"Request failed after {max_retries + 1} attempts")
 
     def get(self, endpoint: str, **kwargs) -> requests.Response:
         """
@@ -398,7 +399,7 @@ class HttpRequest:
         url = self._build_url(endpoint)
         return self._make_request_with_retry("PATCH", url, **kwargs)
 
-    def extract_and_cache(self, response: requests.Response, cache_key: str, json_path: str = None) -> Any:
+    def extract_and_cache(self, response: requests.Response, cache_key: str, json_path: str | None = None) -> Any:
         """
         从响应中提取数据并存储到缓存
 

@@ -51,10 +51,10 @@ def _create_openai_model(config: AppConfig) -> BaseChatModel:
 
     openai_config = config.llm.openai
     return ChatOpenAI(
-        api_key=openai_config.api_key,
+        api_key=openai_config.api_key,  # type: ignore[arg-type]
         model=openai_config.model,
         temperature=openai_config.temperature,
-        max_tokens=openai_config.max_tokens,
+        max_tokens=openai_config.max_tokens,  # type: ignore[call-arg]
     )
 
 
@@ -72,7 +72,7 @@ def _create_bedrock_model(config: AppConfig) -> BaseChatModel:
     )
     return ChatBedrock(
         client=bedrock_client,
-        model_id=bedrock_config.model_id,
+        model=bedrock_config.model_id,
         model_kwargs={"max_tokens": bedrock_config.max_tokens},
     )
 
@@ -92,7 +92,7 @@ def _create_qwen_model(config: AppConfig) -> BaseChatModel:
 
     qwen_config = config.llm.qwen
     return ChatTongyi(
-        dashscope_api_key=qwen_config.api_key,
+        dashscope_api_key=qwen_config.api_key,  # type: ignore[call-arg]
         model=qwen_config.model,
     )
 
@@ -143,13 +143,16 @@ class LLMClient:
         start_time = time.perf_counter()
         langchain_messages = convert_to_langchain_messages(messages)
         response = self._model.invoke(langchain_messages)
+        content = response.content
+        if isinstance(content, list):
+            content = "".join(part if isinstance(part, str) else str(part) for part in content)
         elapsed_ms = round((time.perf_counter() - start_time) * 1000, 2)
         logger.debug(
-            f"LLM调用完成，耗时: {elapsed_ms}ms，响应长度: {len(response.content)}",
+            f"LLM调用完成，耗时: {elapsed_ms}ms，响应长度: {len(content)}",
             elapsed_ms=elapsed_ms,
-            response_length=len(response.content),
+            response_length=len(content),
         )
-        return response.content
+        return content
 
     def invoke_with_tools(
         self,

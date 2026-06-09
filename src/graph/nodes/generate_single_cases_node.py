@@ -52,8 +52,8 @@ def generate_single_cases_node(state: AgentState) -> dict:
 
     ensure_db()
 
-    project_id = selected_endpoints[0].get("project_id")
-    endpoint_ids = [ep.get("endpoint_id") for ep in selected_endpoints if ep.get("endpoint_id")]
+    project_id = int(selected_endpoints[0].get("project_id", 0))
+    endpoint_ids = [int(ep["endpoint_id"]) for ep in selected_endpoints if ep.get("endpoint_id")]
 
     with get_db_manager().get_session() as session:
         project_repo = ProjectRepository(session)

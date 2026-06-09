@@ -71,7 +71,9 @@ def list_endpoints(
     total = len(filtered)
     start = (page - 1) * page_size
     items = filtered[start : start + page_size]
-    return EndpointListResponse(items=items, total=total, page=page, page_size=page_size)
+    return EndpointListResponse(
+        items=[EndpointResponse.model_validate(e) for e in items], total=total, page=page, page_size=page_size
+    )
 
 
 @router.get("/{endpoint_id}", response_model=EndpointResponse)
