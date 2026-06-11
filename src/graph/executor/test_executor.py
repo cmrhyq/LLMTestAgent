@@ -21,7 +21,7 @@ from src.data.models.test_case import TestCase
 from src.data.models.test_result import TestResult
 from src.graph.executor.assertion_engine import AssertionEngine
 from src.graph.executor.cache_resolver import CacheResolver
-from src.utils.http.request import HttpRequest
+from src.utils.http.request import HttpRequest, split_url
 
 logger = get_logger(__name__)
 
@@ -92,8 +92,12 @@ class TestExecutor:
         error_message = ""
 
         try:
+            method = test_case.method.upper()
+            base_url, endpoint = split_url(test_case.url)
+            logger.info(f"拆分出的Base URL: {base_url}，Endpoint: {endpoint}")
+
             http_client = HttpRequest(
-                base_url="",
+                base_url=base_url,
                 connect_timeout=self.config.execution.connect_timeout,
                 read_timeout=self.config.execution.read_timeout,
                 verify_ssl=True,
@@ -111,9 +115,6 @@ class TestExecutor:
             request_kwargs["max_retries"] = self.config.execution.retry.max_retries
             request_kwargs["retry_interval"] = int(self.config.execution.retry.retry_interval)
 
-            method = test_case.method.upper()
-            url = test_case.url
-
             method_map = {
                 "GET": http_client.get,
                 "POST": http_client.post,
@@ -126,7 +127,7 @@ class TestExecutor:
             if not request_func:
                 raise ValueError(f"不支持的 HTTP 方法: {method}")
 
-            response = request_func(url, **request_kwargs)
+            response = request_func(endpoint, **request_kwargs)
 
             if response is not None:
                 response_status_code = response.status_code
