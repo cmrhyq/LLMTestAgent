@@ -17,6 +17,16 @@ from src.core.logging import get_logger
 logger = get_logger(__name__)
 
 
+def safe_json_loads(value: str | None, default: Any) -> Any:
+    """安全解析 JSON 字段，失败时使用 json_repair 修复。"""
+    if not value:
+        return default
+    try:
+        return robust_json_loads(value)
+    except (json.JSONDecodeError, TypeError):
+        return default
+
+
 def robust_json_loads(text: str) -> Any:
     """先尝试标准 json.loads，失败后使用 json_repair 修复再解析。
 
@@ -40,45 +50,6 @@ def robust_json_loads(text: str) -> Any:
         except Exception as e:
             logger.error("JSON修复也失败", error=str(e))
             raise json.JSONDecodeError(f"repair also failed: {e}", text or "", 0) from e
-
-
-def ensure_db() -> None:
-    """确保数据库已初始化。"""
-    manager = get_db_manager()
-    if not manager._initialized:
-        config = get_config()
-        manager.initialize(
-            db_url=config.database.url,
-            echo=config.database.echo,
-            pool_size=config.database.pool_size,
-            max_overflow=config.database.max_overflow,
-            pool_timeout=config.database.pool_timeout,
-            pool_recycle=config.database.pool_recycle,
-        )
-
-
-def safe_json_loads(value: str | None, default: Any) -> Any:
-    """安全解析 JSON 字段，失败时使用 json_repair 修复。"""
-    if not value:
-        return default
-    try:
-        return robust_json_loads(value)
-    except (json.JSONDecodeError, TypeError):
-        return default
-
-
-def get_model_name(config) -> str:
-    """获取当前使用的模型名称。"""
-    provider = config.llm.provider.lower()
-    if provider == "openai":
-        return config.llm.openai.model
-    if provider == "bedrock":
-        return config.llm.bedrock.model_id
-    if provider == "zhipu":
-        return config.llm.zhipu.model
-    if provider == "qwen":
-        return config.llm.qwen.model
-    return provider
 
 
 def parse_llm_json_response(
@@ -127,3 +98,32 @@ def parse_llm_json_response(
         cases.sort(key=lambda c: c.get(sort_key, 0))
 
     return cases
+
+
+def ensure_db() -> None:
+    """确保数据库已初始化。"""
+    manager = get_db_manager()
+    if not manager._initialized:
+        config = get_config()
+        manager.initialize(
+            db_url=config.database.url,
+            echo=config.database.echo,
+            pool_size=config.database.pool_size,
+            max_overflow=config.database.max_overflow,
+            pool_timeout=config.database.pool_timeout,
+            pool_recycle=config.database.pool_recycle,
+        )
+
+
+def get_model_name(config) -> str:
+    """获取当前使用的模型名称。"""
+    provider = config.llm.provider.lower()
+    if provider == "openai":
+        return config.llm.openai.model
+    if provider == "bedrock":
+        return config.llm.bedrock.model_id
+    if provider == "zhipu":
+        return config.llm.zhipu.model
+    if provider == "qwen":
+        return config.llm.qwen.model
+    return provider
