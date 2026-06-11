@@ -5,7 +5,6 @@
 
 import hashlib
 import json
-import re
 from datetime import datetime
 from typing import Any
 
@@ -17,7 +16,7 @@ from src.data.models.endpoint import Endpoint
 from src.data.models.test_case import TestCase
 from src.data.models.test_run import TestRun
 from src.data.repositories import EndpointRepository, ProjectRepository, TestCaseRepository, TestRunRepository
-from src.graph.nodes.utils import ensure_db, get_model_name, safe_json_loads
+from src.graph.nodes.utils import ensure_db, get_model_name, parse_llm_json_response, safe_json_loads
 from src.graph.state import AgentState
 from src.prompts.builders.flow_case_builder import FlowCasePromptBuilder
 
@@ -106,7 +105,7 @@ def generate_flow_cases_node(state: AgentState) -> dict:
             response_length=len(response_text),
         )
 
-        cases_data = _parse_flow_response(response_text)
+        cases_data = parse_llm_json_response(response_text, sort_key="step_order")
         endpoint_map = {ep.id: ep for ep in endpoints}
 
         total_cases = 0
@@ -212,41 +211,3 @@ def _build_flow_test_case(
         unique_hash=unique_hash,
         generated_by="llm",
     )
-
-
-def _parse_flow_response(response: str) -> list[dict[str, Any]]:
-    """从 LLM 响应中解析流程测试用例。
-
-    支持 markdown code block 和纯 JSON 两种格式。
-    """
-    response = response.strip()
-
-    code_block_match = re.search(r"```(?:json)?\s*([\s\S]*?)```", response)
-    if code_block_match:
-        json_str = code_block_match.group(1).strip()
-    else:
-        json_start = response.find("{")
-        json_end = response.rfind("}") + 1
-        if json_start == -1 or json_end <= 0:
-            logger.warning("LLM流程响应中未找到JSON内容", node="generate_flow_cases")
-            return []
-        json_str = response[json_start:json_end]
-
-    try:
-        data = json.loads(json_str)
-    except json.JSONDecodeError as e:
-        logger.error(f"解析LLM流程JSON响应失败: {e}", node="generate_flow_cases", error=str(e))
-        return []
-
-    if isinstance(data, dict):
-        cases = data.get("test_cases", [])
-        if isinstance(cases, list):
-            cases.sort(key=lambda c: c.get("step_order", 0))
-            return cases
-        return []
-
-    if isinstance(data, list):
-        data.sort(key=lambda c: c.get("step_order", 0))
-        return data
-
-    return []

@@ -7,7 +7,7 @@ LLM API自动化测试工具 - 主入口
 
 示例:
     python main.py "解析这份API文档" --api-doc docs/openapi.yaml
-    python main.py "对用户模块执行测试" --api-doc docs/openapi.json
+    python main.py "对'某某'项目的用户模块执行测试"
     python main.py "解析API文档并存储" --api-doc docs/petstore.yaml --config config/config.yaml
 """
 
@@ -34,7 +34,7 @@ def parse_args():
         epilog="""
 示例:
     python main.py "解析这份API文档" --api-doc docs/openapi.yaml
-    python main.py "对用户模块执行测试" --api-doc docs/openapi.json
+    python main.py "对'某某'项目的用户模块执行测试"
         """,
     )
 

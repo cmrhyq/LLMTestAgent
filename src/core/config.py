@@ -143,6 +143,15 @@ class LangSmithConfig(BaseModel):
     endpoint: str = Field(default="https://api.smith.langchain.com", description="LangSmith 服务端点")
 
 
+class CaseGenerationConfig(BaseModel):
+    """用例生成配置"""
+
+    scenarios: list[str] = Field(
+        default=["positive", "negative", "boundary", "exception"],
+        description="要生成的测试场景类型",
+    )
+
+
 class AppConfig(BaseModel):
     """应用配置"""
 
@@ -153,6 +162,7 @@ class AppConfig(BaseModel):
     chroma: ChromaConfig = Field(default_factory=ChromaConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     langsmith: LangSmithConfig = Field(default_factory=LangSmithConfig)
+    case_generation: CaseGenerationConfig = Field(default_factory=CaseGenerationConfig)
 
 
 def _resolve_env_vars(value: Any) -> Any:
@@ -179,7 +189,7 @@ def _resolve_env_vars(value: Any) -> Any:
     return value
 
 
-def load_config(config_path: str | None = None) -> AppConfig:
+def load_config(config_path: str | Path | None = None) -> AppConfig:
     """
     加载应用配置
 
@@ -190,25 +200,23 @@ def load_config(config_path: str | None = None) -> AppConfig:
         AppConfig: 应用配置对象
     """
     if config_path is None:
-        # 默认配置文件路径
         project_root = Path(__file__).parent.parent.parent
-        config_path = project_root / "config" / "config.yaml"
+        resolved_path = project_root / "config" / "config.yaml"
     else:
-        config_path = Path(config_path)
+        resolved_path = Path(config_path)
 
-    config_data = {}
+    config_data: dict[str, Any] = {}
 
-    if config_path.exists():
+    if resolved_path.exists():
         try:
-            with open(config_path, encoding="utf-8") as f:
+            with open(resolved_path, encoding="utf-8") as f:
                 config_data = yaml.safe_load(f) or {}
-            # 解析环境变量
             config_data = _resolve_env_vars(config_data)
-            logger.info("配置文件加载成功: %s", config_path)
+            logger.info("配置文件加载成功: %s", resolved_path)
         except Exception as e:
             logger.warning(f"配置文件加载失败，使用默认配置, error: {e}", exc_info=e)
     else:
-        logger.warning("配置文件不存在: %s，使用默认配置", config_path)
+        logger.warning("配置文件不存在: %s，使用默认配置", resolved_path)
 
     return AppConfig(**config_data)
 

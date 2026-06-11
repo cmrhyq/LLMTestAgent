@@ -5,7 +5,6 @@
 
 import hashlib
 import json
-import re
 from datetime import datetime
 from typing import Any
 
@@ -17,7 +16,7 @@ from src.data.models.endpoint import Endpoint
 from src.data.models.test_case import TestCase
 from src.data.models.test_run import TestRun
 from src.data.repositories import EndpointRepository, ProjectRepository, TestCaseRepository, TestRunRepository
-from src.graph.nodes.utils import ensure_db, get_model_name, safe_json_loads
+from src.graph.nodes.utils import ensure_db, get_model_name, parse_llm_json_response, safe_json_loads
 from src.graph.state import AgentState
 from src.prompts.builders.case_builder import CasePromptBuilder
 from src.prompts.formatters.case_formatter import format_scenario_types
@@ -53,8 +52,8 @@ def generate_single_cases_node(state: AgentState) -> dict:
 
     ensure_db()
 
-    project_id = selected_endpoints[0].get("project_id")
-    endpoint_ids = [ep.get("endpoint_id") for ep in selected_endpoints if ep.get("endpoint_id")]
+    project_id = int(selected_endpoints[0].get("project_id", 0))
+    endpoint_ids = [int(ep["endpoint_id"]) for ep in selected_endpoints if ep.get("endpoint_id")]
 
     with get_db_manager().get_session() as session:
         project_repo = ProjectRepository(session)
@@ -176,7 +175,7 @@ def _generate_cases_for_endpoint(
     ]
 
     response_text = llm_client.chat(messages)
-    cases_data = _parse_llm_cases_response(response_text)
+    cases_data = parse_llm_json_response(response_text)
 
     orm_cases: list[TestCase] = []
     for idx, case_data in enumerate(cases_data, 1):
@@ -243,40 +242,6 @@ def _build_test_case_orm(
         unique_hash=unique_hash,
         generated_by="llm",
     )
-
-
-def _parse_llm_cases_response(response: str) -> list[dict[str, Any]]:
-    """从 LLM 响应中解析测试用例 JSON 数组。
-
-    支持多种格式:
-    - markdown code block 包裹
-    - 纯 JSON 文本
-    - 首尾带多余说明文本
-    """
-    response = response.strip()
-
-    code_block_match = re.search(r"```(?:json)?\s*([\s\S]*?)```", response)
-    if code_block_match:
-        json_str = code_block_match.group(1).strip()
-    else:
-        json_start = response.find("{")
-        json_end = response.rfind("}") + 1
-        if json_start == -1 or json_end <= 0:
-            logger.warning("LLM响应中未找到JSON内容", node="generate_single_cases")
-            return []
-        json_str = response[json_start:json_end]
-
-    try:
-        data = json.loads(json_str)
-    except json.JSONDecodeError as e:
-        logger.error(f"解析LLM JSON响应失败: {e}", node="generate_single_cases", error=str(e))
-        return []
-
-    if isinstance(data, dict):
-        return data.get("test_cases", [])
-    if isinstance(data, list):
-        return data
-    return []
 
 
 def _extract_default_asserts(responses_json: str | None) -> list[str]:

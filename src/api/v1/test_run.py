@@ -104,7 +104,9 @@ def list_test_runs(
     total = len(all_runs)
     start = (page - 1) * page_size
     items = all_runs[start : start + page_size]
-    return TestRunListResponse(items=items, total=total, page=page, page_size=page_size)
+    return TestRunListResponse(
+        items=[TestRunResponse.model_validate(r) for r in items], total=total, page=page, page_size=page_size
+    )
 
 
 @router.get("/{run_id}", response_model=TestRunDetail)
