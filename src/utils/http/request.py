@@ -12,7 +12,7 @@ API 测试基础服务类模块
 import random
 import time
 from typing import Any
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 import requests
 from requests.auth import HTTPBasicAuth
@@ -22,6 +22,21 @@ from src.core.cache.data_cache import DataCache
 from src.core.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+def split_url(url: str) -> tuple[str, str]:
+    """返回 (base_url, endpoint)"""
+    p = urlparse(url.strip())
+    if not p.scheme or not p.netloc:
+        raise ValueError(f"无效的 URL: {url}")
+
+    base_url = f"{p.scheme}://{p.netloc}"
+    endpoint = p.path or "/"
+    if p.query:
+        endpoint += f"?{p.query}"
+    if p.fragment:
+        endpoint += f"#{p.fragment}"
+    return base_url, endpoint
 
 
 def get_random_pc_ua():
