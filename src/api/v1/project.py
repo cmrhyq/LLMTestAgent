@@ -53,7 +53,9 @@ def list_projects(
     total = len(filtered)
     start = (page - 1) * page_size
     items = filtered[start : start + page_size]
-    return ProjectListResponse(items=items, total=total, page=page, page_size=page_size)
+    return ProjectListResponse(
+        items=[ProjectResponse.model_validate(p) for p in items], total=total, page=page, page_size=page_size
+    )
 
 
 @router.get("/{project_id}", response_model=ProjectResponse)

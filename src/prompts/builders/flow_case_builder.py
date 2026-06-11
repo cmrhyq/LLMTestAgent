@@ -19,7 +19,7 @@ class FlowCasePromptBuilder(BasePromptBuilder):
         template = self.render(self.USER_TEMPLATE)
         return template.format(endpoints_info=formatted)
 
-    def build_messages(self, endpoints_info: list[dict[str, Any]]) -> list[dict[str, str]]:
+    def build_messages(self, endpoints_info: list[dict[str, Any]]) -> list[dict[str, str]]:  # type: ignore[override]
         return [
             {"role": "system", "content": self.build_system_prompt()},
             {"role": "user", "content": self.build_user_prompt(endpoints_info)},

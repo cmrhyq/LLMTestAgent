@@ -8,7 +8,7 @@ import json
 import re
 from typing import Any
 
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 
 from src.core.llm.llm_client import get_chat_model
 from src.core.logging import get_logger
@@ -41,7 +41,7 @@ def select_endpoints_agent_node(state: AgentState) -> dict:
     if not state.get("messages"):
         builder = SelectEndpointsBuilder()
         messages_dicts = builder.build_messages(state["raw_input"])
-        messages = [
+        messages: list[BaseMessage] = [
             SystemMessage(content=messages_dicts[0]["content"]),
             HumanMessage(content=messages_dicts[1]["content"]),
         ]
@@ -49,11 +49,13 @@ def select_endpoints_agent_node(state: AgentState) -> dict:
         response = model_with_tools.invoke(messages)
         return {"messages": messages + [response]}
     else:
-        messages = state["messages"]
+        existing_messages: list[BaseMessage] = list(state["messages"])
         logger.debug(
-            f"继续对话循环，消息数: {len(messages)}", node="select_endpoints_agent", message_count=len(messages)
+            f"继续对话循环，消息数: {len(existing_messages)}",
+            node="select_endpoints_agent",
+            message_count=len(existing_messages),
         )
-        response = model_with_tools.invoke(messages)
+        response = model_with_tools.invoke(existing_messages)
         return {"messages": [response]}
 
 
@@ -79,6 +81,9 @@ def parse_endpoints_result_node(state: AgentState) -> dict:
     if not final_content:
         logger.warning("最终消息内容为空", node="parse_result")
         return {"selected_endpoints": []}
+
+    if isinstance(final_content, list):
+        final_content = "".join(part if isinstance(part, str) else str(part) for part in final_content)
 
     logger.debug(f"LLM最终输出: {final_content[:200]}", node="parse_result", content_length=len(final_content))
     selected = _parse_selected_endpoints(final_content)

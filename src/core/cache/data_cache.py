@@ -30,7 +30,7 @@ class DataCache:
     _lock = threading.Lock()
     _initialized = False
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         私有构造函数，防止直接实例化
         使用 get_instance() 方法获取单例实例

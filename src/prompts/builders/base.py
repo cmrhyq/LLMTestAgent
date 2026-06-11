@@ -28,12 +28,12 @@ class BasePromptBuilder:
         """构建系统提示词（从 SYSTEM_TEMPLATE 加载）。"""
         return self.render(self.SYSTEM_TEMPLATE)
 
-    def build_messages(self, user_content: str) -> list[dict[str, str]]:
+    def build_messages(self, user_content: Any) -> list[dict[str, str]]:
         """构建标准的 system + user 消息列表。
 
         子类可覆写此方法自定义 user_content 的组装逻辑。
         """
         return [
             {"role": "system", "content": self.build_system_prompt()},
-            {"role": "user", "content": user_content},
+            {"role": "user", "content": str(user_content)},
         ]
