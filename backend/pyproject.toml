@@ -19,7 +19,6 @@ build-backend = "hatchling.build"
 name = "llmtestagent"
 dynamic = ["version"]                # 版本号从 src/__init__.py 动态读取
 description = "LLM-driven API automation testing agent — natural language to parse, generate, execute, and report."
-readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
 authors = [
@@ -112,12 +111,6 @@ test = [
 ]
 
 # ----------------------------------------------------------------------------
-# CLI 入口点（pip install 后可直接使用 llmtestagent 命令）
-# ----------------------------------------------------------------------------
-[project.scripts]
-llmtestagent = "main:main"
-
-# ----------------------------------------------------------------------------
 # 项目链接（显示在 PyPI 页面）
 # ----------------------------------------------------------------------------
 [project.urls]
@@ -161,7 +154,6 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"main.py" = ["E402"]                 # sys.path.insert 必须在项目模块导入之前
 "src/utils/http/request.py" = ["A004"]  # requests.ConnectionError 遮蔽内置名不可避免
 
 [tool.ruff.lint.isort]

@@ -5,6 +5,8 @@
 </p>
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
+![React](https://img.shields.io/badge/React-19-61DAFB.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-6.x-3178C6.svg)
 ![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)
 ![LangGraph](https://img.shields.io/badge/LangGraph-0.3+-orange.svg)
 ![SQLite](https://img.shields.io/badge/SQLite-3-lightgrey.svg)
@@ -19,6 +21,27 @@
 中文 | [English](README.md)
 
 </div>
+
+---
+
+## 项目结构（Monorepo）
+
+```
+LLMTestAgent/
+├── backend/          # Python 后端（FastAPI + LangGraph）
+│   ├── src/          # 源代码
+│   ├── tests/        # 单元测试
+│   ├── pyproject.toml
+│   └── ...
+├── frontend/         # React 前端（Vite + Tailwind + shadcn/ui）
+│   ├── src/
+│   ├── package.json
+│   └── ...
+├── doc/              # 项目文档
+└── .github/          # CI 工作流（backend.yml + frontend.yml）
+```
+
+详细说明请参阅 [backend/](backend/) 和 [frontend/](frontend/) 各自的 README。
 
 ---
 
@@ -64,22 +87,24 @@ graph TD
 git clone https://github.com/cmrhyq/LLMTestAgent.git
 cd LLMTestAgent
 
-python -m venv .venv
-# Windows
-.venv\Scripts\activate
-# macOS / Linux
-source .venv/bin/activate
+# 后端
+cd backend
+uv sync --extra dev
+cd ..
 
-pip install -e .
+# 前端
+cd frontend
+npm install
+cd ..
 ```
 
 ### 2. 配置环境变量
 
 ```bash
-cp .env.example .env
+cp backend/.env.example backend/.env
 ```
 
-编辑 `.env`，填入对应 LLM 提供商的密钥：
+编辑 `backend/.env`，填入对应 LLM 提供商的密钥：
 
 ```dotenv
 # AWS Bedrock（推荐）
@@ -100,17 +125,25 @@ DASHSCOPE_API_KEY=your-dashscope-api-key
 CHROMA_AUTH_TOKEN=your-chroma-auth-token
 ```
 
-### 3. 运行
+### 3. 启动服务
 
 ```bash
-# 解析 OpenAPI 文档并存储到数据库
-python main.py "解析这份API文档并存储" --api-doc input/httpbin_service.json
+# 启动后端 API 服务
+cd backend
+uv run python app.py
+# 或
+uv run uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 
-# 对已存储的接口执行测试
-python main.py "对所有接口执行单接口测试" --api-doc input/httpbin_service.json
+# 启动前端开发服务器（另开终端）
+cd frontend
+npm run dev
 ```
 
-> 首次运行时，数据库（`db/LLMTest.db`）和所有表结构会自动创建，无需手动初始化。
+启动后：
+- 后端 API 文档：http://localhost:8000/docs
+- 前端界面：http://localhost:5173
+
+> 首次运行时，数据库（`backend/db/LLMTest.db`）和所有表结构会自动创建，无需手动初始化。
 
 ---
 
@@ -118,48 +151,54 @@ python main.py "对所有接口执行单接口测试" --api-doc input/httpbin_se
 
 ```text
 LLMTestAgent/
-├── main.py                          # CLI 主入口
-├── app.py                           # FastAPI Web 服务入口
-├── config/
-│   └── config.yaml                  # 应用配置文件
-├── db/
-│   └── LLMTest.db                   # SQLite 数据库（自动创建）
-├── input/                           # OpenAPI 文档输入目录
-├── output/                          # 测试报告输出目录
-│   └── <timestamp>/reports/         # HTML 测试报告
-├── src/
-│   ├── workflow.py                  # LangGraph 工作流编排
-│   ├── api/                         # FastAPI 路由层
-│   ├── core/
-│   │   ├── config.py                # 配置加载
-│   │   ├── chroma/                  # ChromaDB 向量数据库连接管理
-│   │   ├── database/                # 数据库连接管理
-│   │   ├── llm/                     # LLM 统一客户端
-│   │   └── logging.py              # 结构化日志
-│   ├── data/
-│   │   ├── models/                  # SQLAlchemy ORM 模型
-│   │   ├── repositories/            # 数据仓储层
-│   │   ├── schemas/                 # Pydantic 数据校验
-│   │   ├── services/                # 业务逻辑服务层
-│   │   └── migration/               # 数据库迁移
-│   ├── graph/
-│   │   ├── state.py                 # 工作流状态定义
-│   │   ├── route.py                 # 条件路由函数
-│   │   ├── nodes/                   # 工作流节点实现
-│   │   ├── executor/                # 测试执行引擎
-│   │   └── tools/                   # LangGraph Agent 工具
-│   ├── prompts/                     # 提示词模板（YAML）
-│   └── utils/                       # 工具模块（HTTP、解析器、ID生成）
-├── pyproject.toml                   # 项目元数据与工具配置
-├── .env.example                     # 环境变量模板
-└── conftest.py                      # Pytest 全局 fixtures
+├── backend/                             # Python 后端
+│   ├── app.py                           # FastAPI Web 服务入口
+│   ├── config/
+│   │   └── config.yaml                  # 应用配置文件
+│   ├── db/
+│   │   └── LLMTest.db                   # SQLite 数据库（自动创建）
+│   ├── input/                           # OpenAPI 文档输入目录
+│   ├── src/
+│   │   ├── workflow.py                  # LangGraph 工作流编排
+│   │   ├── api/                         # FastAPI 路由层
+│   │   ├── core/
+│   │   │   ├── config.py                # 配置加载
+│   │   │   ├── chroma/                  # ChromaDB 向量数据库连接管理
+│   │   │   ├── database/                # 数据库连接管理
+│   │   │   ├── llm/                     # LLM 统一客户端
+│   │   │   └── logging.py              # 结构化日志
+│   │   ├── data/
+│   │   │   ├── models/                  # SQLAlchemy ORM 模型
+│   │   │   ├── repositories/            # 数据仓储层
+│   │   │   ├── schemas/                 # Pydantic 数据校验
+│   │   │   ├── services/                # 业务逻辑服务层
+│   │   │   └── migration/               # 数据库迁移
+│   │   ├── graph/
+│   │   │   ├── state.py                 # 工作流状态定义
+│   │   │   ├── route.py                 # 条件路由函数
+│   │   │   ├── nodes/                   # 工作流节点实现
+│   │   │   ├── executor/                # 测试执行引擎
+│   │   │   └── tools/                   # LangGraph Agent 工具
+│   │   ├── prompts/                     # 提示词模板（YAML）
+│   │   └── utils/                       # 工具模块（HTTP、解析器、ID生成）
+│   ├── tests/                           # 单元测试
+│   ├── pyproject.toml                   # 项目元数据与工具配置
+│   ├── .env.example                     # 环境变量模板
+│   └── conftest.py                      # Pytest 全局 fixtures
+├── frontend/                            # React 前端
+│   ├── src/                             # 前端源代码
+│   ├── package.json
+│   └── ...
+├── doc/                                 # 项目文档
+├── .pre-commit-config.yaml              # 统一 Git 提交前检查
+└── .github/workflows/                   # CI 工作流
 ```
 
 ---
 
 ## 配置说明
 
-配置文件：`config/config.yaml`，支持 `${ENV_VAR}` 语法引用环境变量。
+配置文件：`backend/config/config.yaml`，支持 `${ENV_VAR}` 语法引用环境变量。
 
 ### 完整配置示例
 
@@ -225,38 +264,18 @@ langsmith:
 
 ## 使用示例
 
-### CLI 模式
+### 启动服务
 
 ```bash
-python main.py "<自然语言指令>" [--api-doc <路径>] [--config <路径>]
-```
-
-| 参数 | 简写 | 说明 | 必填 |
-|------|------|------|------|
-| `instruction` | - | 自然语言指令 | 是 |
-| `--api-doc` | `-a` | OpenAPI 文档路径 | 否 |
-| `--config` | `-c` | 配置文件路径 | 否 |
-
-```bash
-# 解析文档
-python main.py "解析这份API文档并存储" --api-doc input/httpbin_service.json
-
-# 单接口测试
-python main.py "对所有接口执行单接口测试" --api-doc input/httpbin_service.json
-
-# 流程测试（接口间有依赖关系）
-python main.py "执行流程测试" --api-doc input/panji.yaml
-```
-
-### Web API 模式（FastAPI）
-
-```bash
-python app.py
+cd backend
+uv run python app.py
 # 或
-uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+uv run uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-启动后访问 http://localhost:8000/docs 查看 Swagger 文档。
+启动后访问 http://localhost:8000/docs 查看 Swagger 交互式文档。
+
+### API 模块
 
 | 模块 | 路径前缀 | 功能 |
 |------|---------|------|
@@ -266,22 +285,29 @@ uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 | 测试运行 | `/api/v1/test-runs` | 执行记录查询 |
 | 工作流 | `/api/v1/workflows` | 解析文档、触发测试 |
 
+### 示例请求
+
 ```bash
 # 上传解析 OpenAPI 文档
 curl -X POST http://localhost:8000/api/v1/workflows/parse-openapi \
   -F "file=@input/httpbin_service.json"
 
-# 触发测试
+# 触发单接口测试
 curl -X POST http://localhost:8000/api/v1/workflows/run-test \
   -H "Content-Type: application/json" \
   -d '{"instruction": "对所有接口执行单接口测试"}'
+
+# 触发流程测试
+curl -X POST http://localhost:8000/api/v1/workflows/run-test \
+  -H "Content-Type: application/json" \
+  -d '{"instruction": "执行流程测试"}'
 ```
 
 ---
 
 ## 测试报告
 
-执行完成后，HTML 报告输出在 `output/<timestamp>/reports/` 目录。
+执行完成后，HTML 报告输出在 `backend/output/<timestamp>/reports/` 目录。
 
 报告采用双层折叠结构：
 - **第 1 层**：按接口分组折叠
@@ -337,8 +363,8 @@ curl -X POST http://localhost:8000/api/v1/workflows/run-test \
 
 ```bash
 # 删除后重新运行即可重建
-del db\LLMTest.db          # Windows
-rm db/LLMTest.db           # macOS / Linux
+del backend\db\LLMTest.db          # Windows
+rm backend/db/LLMTest.db           # macOS / Linux
 ```
 
 ### ER 图
@@ -357,7 +383,7 @@ ChromaDB 以独立服务方式部署在 Kubernetes 集群上，部署配置参�
 
 ### 配置
 
-在 `config/config.yaml` 中配置 ChromaDB 连接信息：
+在 `backend/config/config.yaml` 中配置 ChromaDB 连接信息：
 
 ```yaml
 chroma:
@@ -371,7 +397,7 @@ chroma:
   default_collection: "default"        # 默认集合名称
 ```
 
-在 `.env` 中配置认证 Token：
+在 `backend/.env` 中配置认证 Token：
 
 ```dotenv
 CHROMA_AUTH_TOKEN=your-chroma-auth-token
@@ -424,27 +450,30 @@ docs = vector_store.similarity_search("语义搜索查询")
 ### 配置开发环境
 
 ```bash
+cd backend
 uv sync --extra dev
+cd ..
 uv run pre-commit install
 ```
 
 ### 运行测试
 
 ```bash
-pytest
+cd backend
+uv run pytest
 # 或带覆盖率
-pytest --cov=src --cov-report=html
+uv run pytest --cov=src --cov-report=html
 ```
 
 ### 添加工作流节点
 
-1. 在 `src/graph/nodes/` 下创建节点函数
-2. 在 `src/workflow.py` 中注册节点和边
-3. 如需路由逻辑，在 `src/graph/route.py` 中添加
+1. 在 `backend/src/graph/nodes/` 下创建节点函数
+2. 在 `backend/src/workflow.py` 中注册节点和边
+3. 如需路由逻辑，在 `backend/src/graph/route.py` 中添加
 
 ### 数据库变更
 
-模型定义在 `src/data/models/`，修改后删除 `.db` 文件重新运行即可重建（开发环境）。生产环境可使用 Alembic 迁移。
+模型定义在 `backend/src/data/models/`，修改后删除 `.db` 文件重新运行即可重建（开发环境）。生产环境可使用 Alembic 迁移。
 
 ---
 
@@ -472,13 +501,13 @@ pytest --cov=src --cov-report=html
 
 ### 启用步骤
 
-1. 在 `.env` 中填写 API 密钥：
+1. 在 `backend/.env` 中填写 API 密钥：
 
 ```dotenv
 LANGSMITH_API_KEY=your-langsmith-api-key
 ```
 
-2. 在 `config/config.yaml` 中启用：
+2. 在 `backend/config/config.yaml` 中启用：
 
 ```yaml
 langsmith:
@@ -496,15 +525,15 @@ langsmith:
 
 ## 常见问题
 
-**数据库文件在哪里？** 默认 `db/LLMTest.db`，首次运行自动创建。修改路径编辑 `config/config.yaml` 中的 `database.url`。
+**数据库文件在哪里？** 默认 `backend/db/LLMTest.db`，首次运行自动创建。修改路径编辑 `backend/config/config.yaml` 中的 `database.url`。
 
 **Bedrock 报错 `security token is invalid`？** 检查 AK/SK 是否正确，使用临时凭证时确保设置了 `AWS_SESSION_TOKEN`，确认凭证未过期。
 
-**如何切换 LLM 提供商？** 修改 `config/config.yaml` 中 `llm.provider` 字段为 `openai` / `bedrock` / `zhipu` / `qwen`，并确保对应密钥已配置。
+**如何切换 LLM 提供商？** 修改 `backend/config/config.yaml` 中 `llm.provider` 字段为 `openai` / `bedrock` / `zhipu` / `qwen`，并确保对应密钥已配置。
 
-**运行后没有生成报告？** 确认 OpenAPI 文档格式正确（3.0.x / 3.1.x）、LLM 凭证可用、数据库中已有接口数据（先执行"解析文档"指令）。
+**运行后没有生成报告？** 确认 OpenAPI 文档格式正确（3.0.x / 3.1.x）、LLM 凭证可用、数据库中已有接口数据（先通过 API 上传解析文档）。
 
-**如何启用 LangSmith 追踪？** 在 `config/config.yaml` 中设置 `langsmith.enabled: true`，并在 `.env` 中填写 `LANGSMITH_API_KEY`。启用后无需修改任何业务代码，LangChain SDK 会自动上报追踪数据。
+**如何启用 LangSmith 追踪？** 在 `backend/config/config.yaml` 中设置 `langsmith.enabled: true`，并在 `backend/.env` 中填写 `LANGSMITH_API_KEY`。启用后无需修改任何业务代码，LangChain SDK 会自动上报追踪数据。
 
 ---
 

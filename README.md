@@ -5,6 +5,8 @@
 </p>
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
+![React](https://img.shields.io/badge/React-19-61DAFB.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-6.x-3178C6.svg)
 ![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)
 ![LangGraph](https://img.shields.io/badge/LangGraph-0.3+-orange.svg)
 ![SQLite](https://img.shields.io/badge/SQLite-3-lightgrey.svg)
@@ -19,6 +21,27 @@ Natural language powered, orchestrating the full pipeline: Parse → Generate �
 [中文](README_zh.md) | English
 
 </div>
+
+---
+
+## Project Structure (Monorepo)
+
+```
+LLMTestAgent/
+├── backend/          # Python backend (FastAPI + LangGraph)
+│   ├── src/          # Source code
+│   ├── tests/        # Unit tests
+│   ├── pyproject.toml
+│   └── ...
+├── frontend/         # React frontend (Vite + Tailwind + shadcn/ui)
+│   ├── src/
+│   ├── package.json
+│   └── ...
+├── doc/              # Project documentation
+└── .github/          # CI workflows (backend.yml + frontend.yml)
+```
+
+See [backend/](backend/) and [frontend/](frontend/) for detailed setup instructions.
 
 ---
 
@@ -64,22 +87,24 @@ graph TD
 git clone https://github.com/cmrhyq/LLMTestAgent.git
 cd LLMTestAgent
 
-python -m venv .venv
-# Windows
-.venv\Scripts\activate
-# macOS / Linux
-source .venv/bin/activate
+# Backend
+cd backend
+uv sync --extra dev
+cd ..
 
-pip install -e .
+# Frontend
+cd frontend
+npm install
+cd ..
 ```
 
 ### 2. Configure Environment Variables
 
 ```bash
-cp .env.example .env
+cp backend/.env.example backend/.env
 ```
 
-Edit `.env` and fill in the API keys for your LLM provider:
+Edit `backend/.env` and fill in the API keys for your LLM provider:
 
 ```dotenv
 # AWS Bedrock (recommended)
@@ -100,17 +125,25 @@ DASHSCOPE_API_KEY=your-dashscope-api-key
 CHROMA_AUTH_TOKEN=your-chroma-auth-token
 ```
 
-### 3. Run
+### 3. Start Services
 
 ```bash
-# Parse an OpenAPI document and store it in the database
-python main.py "Parse this API document and store it" --api-doc input/httpbin_service.json
+# Start backend API server
+cd backend
+uv run python app.py
+# or
+uv run uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 
-# Execute tests on stored endpoints
-python main.py "Run single-endpoint tests on all endpoints" --api-doc input/httpbin_service.json
+# Start frontend dev server (in another terminal)
+cd frontend
+npm run dev
 ```
 
-> On first run, the database (`db/LLMTest.db`) and all table schemas are created automatically — no manual initialization required.
+After startup:
+- Backend API docs: http://localhost:8000/docs
+- Frontend UI: http://localhost:5173
+
+> On first run, the database (`backend/db/LLMTest.db`) and all table schemas are created automatically — no manual initialization required.
 
 ---
 
@@ -118,48 +151,54 @@ python main.py "Run single-endpoint tests on all endpoints" --api-doc input/http
 
 ```text
 LLMTestAgent/
-├── main.py                          # CLI entry point
-├── app.py                           # FastAPI web service entry
-├── config/
-│   └── config.yaml                  # Application config
-├── db/
-│   └── LLMTest.db                   # SQLite database (auto-created)
-├── input/                           # OpenAPI document input directory
-├── output/                          # Test report output directory
-│   └── <timestamp>/reports/         # HTML test reports
-├── src/
-│   ├── workflow.py                  # LangGraph workflow orchestration
-│   ├── api/                         # FastAPI route layer
-│   ├── core/
-│   │   ├── config.py                # Configuration loading
-│   │   ├── chroma/                  # ChromaDB vector database management
-│   │   ├── database/                # Database connection management
-│   │   ├── llm/                     # Unified LLM client
-│   │   └── logging.py              # Structured logging
-│   ├── data/
-│   │   ├── models/                  # SQLAlchemy ORM models
-│   │   ├── repositories/            # Data repository layer
-│   │   ├── schemas/                 # Pydantic data validation
-│   │   ├── services/                # Business logic services
-│   │   └── migration/               # Database migrations
-│   ├── graph/
-│   │   ├── state.py                 # Workflow state definition
-│   │   ├── route.py                 # Conditional routing functions
-│   │   ├── nodes/                   # Workflow node implementations
-│   │   ├── executor/                # Test execution engine
-│   │   └── tools/                   # LangGraph Agent tools
-│   ├── prompts/                     # Prompt templates (YAML)
-│   └── utils/                       # Utilities (HTTP, parser, ID generation)
-├── pyproject.toml                   # Project metadata and tool config
-├── .env.example                     # Environment variable template
-└── conftest.py                      # Pytest global fixtures
+├── backend/                             # Python backend
+│   ├── app.py                           # FastAPI web service entry
+│   ├── config/
+│   │   └── config.yaml                  # Application config
+│   ├── db/
+│   │   └── LLMTest.db                   # SQLite database (auto-created)
+│   ├── input/                           # OpenAPI document input directory
+│   ├── src/
+│   │   ├── workflow.py                  # LangGraph workflow orchestration
+│   │   ├── api/                         # FastAPI route layer
+│   │   ├── core/
+│   │   │   ├── config.py                # Configuration loading
+│   │   │   ├── chroma/                  # ChromaDB vector database management
+│   │   │   ├── database/                # Database connection management
+│   │   │   ├── llm/                     # Unified LLM client
+│   │   │   └── logging.py              # Structured logging
+│   │   ├── data/
+│   │   │   ├── models/                  # SQLAlchemy ORM models
+│   │   │   ├── repositories/            # Data repository layer
+│   │   │   ├── schemas/                 # Pydantic data validation
+│   │   │   ├── services/                # Business logic services
+│   │   │   └── migration/               # Database migrations
+│   │   ├── graph/
+│   │   │   ├── state.py                 # Workflow state definition
+│   │   │   ├── route.py                 # Conditional routing functions
+│   │   │   ├── nodes/                   # Workflow node implementations
+│   │   │   ├── executor/                # Test execution engine
+│   │   │   └── tools/                   # LangGraph Agent tools
+│   │   ├── prompts/                     # Prompt templates (YAML)
+│   │   └── utils/                       # Utilities (HTTP, parser, ID generation)
+│   ├── tests/                           # Unit tests
+│   ├── pyproject.toml                   # Project metadata and tool config
+│   ├── .env.example                     # Environment variable template
+│   └── conftest.py                      # Pytest global fixtures
+├── frontend/                            # React frontend
+│   ├── src/                             # Frontend source code
+│   ├── package.json
+│   └── ...
+├── doc/                                 # Project documentation
+├── .pre-commit-config.yaml              # Unified pre-commit hooks
+└── .github/workflows/                   # CI workflows
 ```
 
 ---
 
 ## Configuration
 
-Config file: `config/config.yaml`, supports `${ENV_VAR}` syntax for referencing environment variables.
+Config file: `backend/config/config.yaml`, supports `${ENV_VAR}` syntax for referencing environment variables.
 
 ### Full Configuration Example
 
@@ -225,38 +264,18 @@ langsmith:
 
 ## Usage
 
-### CLI Mode
+### Start the Server
 
 ```bash
-python main.py "<natural language instruction>" [--api-doc <path>] [--config <path>]
-```
-
-| Argument | Short | Description | Required |
-|----------|-------|-------------|----------|
-| `instruction` | - | Natural language instruction | Yes |
-| `--api-doc` | `-a` | OpenAPI document path | No |
-| `--config` | `-c` | Config file path | No |
-
-```bash
-# Parse document
-python main.py "Parse this API document and store it" --api-doc input/httpbin_service.json
-
-# Single-endpoint testing
-python main.py "Run single-endpoint tests on all endpoints" --api-doc input/httpbin_service.json
-
-# Flow testing (with inter-endpoint dependencies)
-python main.py "Run flow tests" --api-doc input/panji.yaml
-```
-
-### Web API Mode (FastAPI)
-
-```bash
-python app.py
+cd backend
+uv run python app.py
 # or
-uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+uv run uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Visit http://localhost:8000/docs for the Swagger documentation after startup.
+Visit http://localhost:8000/docs for the Swagger interactive documentation after startup.
+
+### API Modules
 
 | Module | Path Prefix | Function |
 |--------|-------------|----------|
@@ -266,22 +285,29 @@ Visit http://localhost:8000/docs for the Swagger documentation after startup.
 | Test Runs | `/api/v1/test-runs` | Execution history query |
 | Workflows | `/api/v1/workflows` | Parse docs, trigger tests |
 
+### Example Requests
+
 ```bash
 # Upload and parse an OpenAPI document
 curl -X POST http://localhost:8000/api/v1/workflows/parse-openapi \
   -F "file=@input/httpbin_service.json"
 
-# Trigger test execution
+# Trigger single-endpoint tests
 curl -X POST http://localhost:8000/api/v1/workflows/run-test \
   -H "Content-Type: application/json" \
   -d '{"instruction": "Run single-endpoint tests on all endpoints"}'
+
+# Trigger flow tests
+curl -X POST http://localhost:8000/api/v1/workflows/run-test \
+  -H "Content-Type: application/json" \
+  -d '{"instruction": "Run flow tests"}'
 ```
 
 ---
 
 ## Test Reports
 
-After execution, HTML reports are output to `output/<timestamp>/reports/`.
+After execution, HTML reports are output to `backend/output/<timestamp>/reports/`.
 
 Reports use a two-level collapsible structure:
 - **Level 1**: Grouped by endpoint (collapsible)
@@ -337,8 +363,8 @@ Uses SQLite + SQLAlchemy ORM. Database and tables are created automatically on f
 
 ```bash
 # Delete and re-run to rebuild
-del db\LLMTest.db          # Windows
-rm db/LLMTest.db           # macOS / Linux
+del backend\db\LLMTest.db          # Windows
+rm backend/db/LLMTest.db           # macOS / Linux
 ```
 
 ### ER Diagram
@@ -357,7 +383,7 @@ ChromaDB is deployed as a standalone service on a Kubernetes cluster. For deploy
 
 ### Configuration
 
-Configure ChromaDB connection in `config/config.yaml`:
+Configure ChromaDB connection in `backend/config/config.yaml`:
 
 ```yaml
 chroma:
@@ -371,7 +397,7 @@ chroma:
   default_collection: "default"        # Default collection name
 ```
 
-Add the auth token to `.env`:
+Add the auth token to `backend/.env`:
 
 ```dotenv
 CHROMA_AUTH_TOKEN=your-chroma-auth-token
@@ -424,27 +450,30 @@ docs = vector_store.similarity_search("semantic search query")
 ### Setup Development Environment
 
 ```bash
+cd backend
 uv sync --extra dev
+cd ..
 uv run pre-commit install
 ```
 
 ### Run Tests
 
 ```bash
-pytest
+cd backend
+uv run pytest
 # or with coverage
-pytest --cov=src --cov-report=html
+uv run pytest --cov=src --cov-report=html
 ```
 
 ### Add a Workflow Node
 
-1. Create a node function in `src/graph/nodes/`
-2. Register the node and edges in `src/workflow.py`
-3. If routing logic is needed, add it to `src/graph/route.py`
+1. Create a node function in `backend/src/graph/nodes/`
+2. Register the node and edges in `backend/src/workflow.py`
+3. If routing logic is needed, add it to `backend/src/graph/route.py`
 
 ### Database Changes
 
-Models are defined in `src/data/models/`. After modification, delete the `.db` file and re-run to rebuild (development). For production, use Alembic migrations.
+Models are defined in `backend/src/data/models/`. After modification, delete the `.db` file and re-run to rebuild (development). For production, use Alembic migrations.
 
 ---
 
@@ -472,13 +501,13 @@ The project supports [LangSmith](https://smith.langchain.com/) tracing. When ena
 
 ### Enable
 
-1. Fill in the API key in `.env`:
+1. Fill in the API key in `backend/.env`:
 
 ```dotenv
 LANGSMITH_API_KEY=your-langsmith-api-key
 ```
 
-2. Enable in `config/config.yaml`:
+2. Enable in `backend/config/config.yaml`:
 
 ```yaml
 langsmith:
@@ -496,15 +525,15 @@ Set `langsmith.enabled` to `false` (default) — no network requests or performa
 
 ## FAQ
 
-**Where is the database file?** Default `db/LLMTest.db`, created automatically on first run. Modify the path in `config/config.yaml` under `database.url`.
+**Where is the database file?** Default `backend/db/LLMTest.db`, created automatically on first run. Modify the path in `backend/config/config.yaml` under `database.url`.
 
 **Bedrock error `security token is invalid`?** Verify your AK/SK are correct; when using temporary credentials ensure `AWS_SESSION_TOKEN` is set; confirm credentials haven't expired.
 
-**How to switch LLM provider?** Change `llm.provider` in `config/config.yaml` to `openai` / `bedrock` / `zhipu` / `qwen`, and ensure the corresponding API keys are configured.
+**How to switch LLM provider?** Change `llm.provider` in `backend/config/config.yaml` to `openai` / `bedrock` / `zhipu` / `qwen`, and ensure the corresponding API keys are configured.
 
-**No report generated after running?** Verify the OpenAPI document format is correct (3.0.x / 3.1.x), LLM credentials are valid, and the database contains endpoint data (run the "parse document" instruction first).
+**No report generated after running?** Verify the OpenAPI document format is correct (3.0.x / 3.1.x), LLM credentials are valid, and the database contains endpoint data (upload and parse a document via the API first).
 
-**How to enable LangSmith tracing?** Set `langsmith.enabled: true` in `config/config.yaml` and fill in `LANGSMITH_API_KEY` in `.env`. Once enabled, no business code changes are needed — the LangChain SDK automatically reports tracing data.
+**How to enable LangSmith tracing?** Set `langsmith.enabled: true` in `backend/config/config.yaml` and fill in `LANGSMITH_API_KEY` in `backend/.env`. Once enabled, no business code changes are needed — the LangChain SDK automatically reports tracing data.
 
 ---
 
