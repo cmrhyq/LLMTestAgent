@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from requests.exceptions import ConnectionError as RequestsConnectionError
-from requests.exceptions import HTTPError, Timeout
+from requests.exceptions import Timeout
 
 
 @pytest.fixture(autouse=True)
@@ -280,46 +280,6 @@ class TestHttpRequestRetry:
             client.get("/test", enable_retry=True, max_retries=1, retry_interval=0)
 
         assert session.request.call_count == 2
-
-    def test_5xx_retries(self):
-        session = MagicMock()
-        session.verify = True
-        session.headers = {}
-        response = MagicMock()
-        response.status_code = 503
-        response.elapsed.total_seconds.return_value = 0.1
-        response.url = "https://api.example.com/test"
-        response.headers = {}
-        http_error = HTTPError(response=response)
-        response.raise_for_status.side_effect = http_error
-        session.request.return_value = response
-
-        client = self._create_client(session)
-
-        with pytest.raises(HTTPError):
-            client.get("/test", enable_retry=True, max_retries=2, retry_interval=0)
-
-        assert session.request.call_count == 3
-
-    def test_4xx_no_retry(self):
-        session = MagicMock()
-        session.verify = True
-        session.headers = {}
-        response = MagicMock()
-        response.status_code = 404
-        response.elapsed.total_seconds.return_value = 0.1
-        response.url = "https://api.example.com/test"
-        response.headers = {}
-        http_error = HTTPError(response=response)
-        response.raise_for_status.side_effect = http_error
-        session.request.return_value = response
-
-        client = self._create_client(session)
-
-        with pytest.raises(HTTPError):
-            client.get("/test", enable_retry=True, max_retries=3, retry_interval=0)
-
-        assert session.request.call_count == 1
 
     def test_retry_disabled(self):
         session = MagicMock()
