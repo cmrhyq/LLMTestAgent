@@ -285,11 +285,12 @@ class HttpRequest:
                 if "headers" in kwargs:
                     # 合并会话头和请求头
                     headers = kwargs["headers"]
-                    headers["Content-Type"] = "application/json;charset=utf-8"
+                    # headers["Content-Type"] = "application/json;charset=utf-8"
                     headers["User-Agent"] = get_random_pc_ua()
                     kwargs["headers"] = headers
                 else:
-                    headers = {"Content-Type": "application/json;charset=utf-8", "User-Agent": get_random_pc_ua()}
+                    # headers = {"Content-Type": "application/json;charset=utf-8", "User-Agent": get_random_pc_ua()}
+                    headers = {"User-Agent": get_random_pc_ua()}
                     kwargs["headers"] = headers
 
                 # 记录请求信息
@@ -302,7 +303,7 @@ class HttpRequest:
                 self._log_response(response)
 
                 # 检查 HTTP 错误
-                response.raise_for_status()
+                # response.raise_for_status()
 
                 return response
 
