@@ -1,0 +1,178 @@
+import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, Loader2 } from "lucide-react";
+
+import { useTestRunDetail } from "@/hooks/use-test-runs";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatusBadge } from "@/components/shared/status-badge";
+import { HttpMethodBadge } from "@/components/shared/http-method-badge";
+import { PassRateBar } from "@/components/shared/pass-rate-bar";
+import { DataTable } from "@/components/shared/data-table";
+import type { Column } from "@/components/shared/data-table";
+import type { TestCaseBrief, TestResultBrief } from "@/lib/types";
+
+interface CaseRow {
+  case_name: string;
+  method: string;
+  url: string;
+  status: string;
+  duration: number;
+  assertion_passed: number;
+  assertion_total: number;
+}
+
+function buildCaseRows(cases: TestCaseBrief[], results: TestResultBrief[]): CaseRow[] {
+  const resultMap = new Map<string | number, TestResultBrief>();
+  for (const r of results) {
+    if (r.test_case_id !== null) {
+      resultMap.set(r.test_case_id, r);
+    }
+  }
+
+  return cases.map((tc) => {
+    const result = resultMap.get(tc.id);
+    return {
+      case_name: tc.case_name,
+      method: tc.method,
+      url: tc.url,
+      status: result?.status ?? tc.status,
+      duration: result?.duration ?? 0,
+      assertion_passed: result?.assertion_passed ?? 0,
+      assertion_total: result ? result.assertion_passed + result.assertion_failed : 0,
+    };
+  });
+}
+
+const columns: Column<CaseRow & Record<string, unknown>>[] = [
+  { key: "case_name", header: "Case Name" },
+  {
+    key: "method",
+    header: "Method",
+    render: (_, row) => <HttpMethodBadge method={row.method as string} />,
+  },
+  { key: "url", header: "URL", className: "font-mono text-xs" },
+  {
+    key: "status",
+    header: "Status",
+    render: (_, row) => <StatusBadge status={row.status as string} />,
+  },
+  {
+    key: "duration",
+    header: "Duration",
+    render: (val) => {
+      const seconds = ((val as number) / 1000).toFixed(1);
+      return <span className="tabular-nums">{seconds}s</span>;
+    },
+  },
+  {
+    key: "assertion_passed",
+    header: "Assertions",
+    render: (_, row) => (
+      <span className="tabular-nums">
+        {row.assertion_passed as number}/{row.assertion_total as number}
+      </span>
+    ),
+  },
+];
+
+export default function RunDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const runId = id || "";
+
+  const { data, isLoading, isError } = useTestRunDetail(runId);
+
+  const isActive = data?.status === "running" || data?.status === "pending";
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-xl" />
+          ))}
+        </div>
+        <Skeleton className="h-64 rounded-xl" />
+      </div>
+    );
+  }
+
+  if (isError || !data) {
+    return (
+      <div className="space-y-4">
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+        <p className="text-destructive">Failed to load run details.</p>
+      </div>
+    );
+  }
+
+  const rows = buildCaseRows(data.test_cases, data.test_results);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="flex flex-1 items-center gap-3">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{data.name}</h1>
+          <StatusBadge status={data.status} />
+          <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+            {data.trigger_type}
+          </span>
+          {isActive && <Loader2 className="h-4 w-4 animate-spin text-info" />}
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Cases</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{data.total_cases}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-emerald-400">Passed</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-emerald-400">{data.passed_cases}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-destructive">Failed</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-destructive">{data.failed_cases}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Pass Rate</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PassRateBar passed={data.passed_cases} total={data.total_cases} />
+          </CardContent>
+        </Card>
+      </div>
+
+      <DataTable
+        columns={columns}
+        data={rows as (CaseRow & Record<string, unknown>)[]}
+        loading={isActive}
+        emptyText="No test cases yet"
+      />
+    </div>
+  );
+}
