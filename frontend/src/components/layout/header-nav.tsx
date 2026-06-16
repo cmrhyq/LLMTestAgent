@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { FlaskConical, PanelLeft } from "lucide-react";
+import { PanelLeft } from "lucide-react";
 
 interface HeaderNavProps {
   onToggleSidebar: () => void;
@@ -18,7 +18,7 @@ export function HeaderNav({ onToggleSidebar }: HeaderNavProps) {
         </button>
 
         <Link to="/dashboard" className="flex items-center gap-2 no-underline">
-          <FlaskConical className="h-5 w-5 text-foreground" />
+          <img src="/favicon.svg" alt="Logo" className="h-6 w-6" />
           <span className="text-sm font-semibold text-foreground">LLMTestAgent</span>
         </Link>
       </div>
