@@ -72,7 +72,7 @@ repos:
     hooks:
       - id: ruff
         name: ruff (lint, --fix)
-        entry: uv run --directory backend ruff check --fix --force-exclude
+        entry: bash -c 'cd backend && uv run ruff check --fix --force-exclude "${@/#backend\//}"' --
         language: system
         types_or: [python, pyi]
         files: ^backend/
@@ -80,7 +80,7 @@ repos:
 
       - id: ruff-format
         name: ruff-format
-        entry: uv run --directory backend ruff format --force-exclude
+        entry: bash -c 'cd backend && uv run ruff format --force-exclude "${@/#backend\//}"' --
         language: system
         types_or: [python, pyi]
         files: ^backend/

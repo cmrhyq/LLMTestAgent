@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from src.api.deps import get_db
 from src.data.repositories import TestRunRepository
 
-router = APIRouter(prefix="/test-runs", tags=["测试运行"])
+router = APIRouter(prefix="/test/runs", tags=["测试运行"])
 
 
 class TestRunResponse(BaseModel):
@@ -50,11 +50,11 @@ class TestCaseBrief(BaseModel):
     """测试用例摘要。"""
 
     id: int
-    name: str = ""
+    case_name: str = ""
     method: str = ""
-    path: str = ""
+    url: str = ""
     priority: str = ""
-    status: str = ""
+    status: int | str = ""
     created_at: str = ""
 
     model_config = {"from_attributes": True}
