@@ -85,8 +85,8 @@ def update_project(project_id: int, body: ProjectUpdate, db: Session = Depends(g
 
 @router.delete("/{project_id}", status_code=204)
 def delete_project(project_id: int, db: Session = Depends(get_db)):
-    """删除项目。"""
+    """删除项目及其关联的环境、端点、测试运行等数据。"""
     repo = ProjectRepository(db)
-    success = repo.delete_by_id(project_id)
+    success = repo.delete_cascade(project_id)
     if not success:
         raise HTTPException(status_code=404, detail="项目不存在")

@@ -4,7 +4,8 @@ info:
   version: 1.0.0
   contact: {}
 servers:
-  - url: '{{openapiurl}}'
+  - description: "sit5"
+    url: '{{openapiurl}}'
 paths:
   /apisix/plugin/jwt/sign:
     post:

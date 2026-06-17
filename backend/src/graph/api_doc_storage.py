@@ -1,4 +1,5 @@
 import json
+from dataclasses import dataclass
 from pathlib import Path
 
 from src import AppConfig, get_config
@@ -15,6 +16,16 @@ from src.utils.parser import OpenAPIParser
 logger = get_logger(__name__)
 
 
+@dataclass(frozen=True)
+class ParseStorageResult:
+    """OpenAPI 文档解析存储的结果摘要。"""
+
+    project_id: int
+    project_name: str
+    environment_count: int
+    endpoint_count: int
+
+
 def _get_session():
     """获取数据库会话，自动确保数据库已初始化。"""
     return init_database_from_config().get_session()
@@ -26,7 +37,7 @@ class ApiDocStorage:
     def __init__(self, config: AppConfig | None = None):
         self.config = config or get_config()
 
-    def openapi_parse_storage(self, file_path: Path) -> None:
+    def openapi_parse_storage(self, file_path: Path) -> ParseStorageResult:
         """
         解析 OpenAPI 文档并将结果存储到数据库。
 
@@ -35,6 +46,9 @@ class ApiDocStorage:
 
         Args:
             file_path: OpenAPI 文档文件路径
+
+        Returns:
+            ParseStorageResult: 包含 project_id、项目名称、环境数量和端点数量。
 
         Raises:
             FileNotFoundError: 文件不存在
@@ -72,14 +86,28 @@ class ApiDocStorage:
             if endpoint_list:
                 endpoint_service.create_endpoint(endpoint_list)
 
-        logger.info(f"OpenAPI文档解析存储完成，项目: {parser.title}", project=parser.title)
+        result = ParseStorageResult(
+            project_id=project_info.id,
+            project_name=parser.title,
+            environment_count=len(env_list),
+            endpoint_count=len(endpoint_list),
+        )
+        logger.info(
+            f"OpenAPI文档解析存储完成，项目: {result.project_name}，"
+            f"环境: {result.environment_count}，端点: {result.endpoint_count}",
+            project=result.project_name,
+            project_id=result.project_id,
+            env_count=result.environment_count,
+            endpoint_count=result.endpoint_count,
+        )
+        return result
 
     @staticmethod
     def _build_environments(project_id: int, parser: OpenAPIParser) -> list[EnvironmentCreate]:
         return [
             EnvironmentCreate(
                 project_id=project_id,
-                name=server.get("description", ""),
+                name=server.get("description") or f"默认环境名称_{server.get('url', '')}",
                 base_url=server.get("url", ""),
                 description=server.get("description", ""),
                 variables=str(server.get("variables", "")),

@@ -110,7 +110,7 @@ def _execute_workflow_task(run_id: int, instruction: str, api_doc_path: str | No
             _running_tasks.pop(run_id, None)
 
 
-@router.post("/parse-openapi", response_model=ParseOpenAPIRequest)
+@router.post("/parse/openapi", response_model=ParseOpenAPIRequest)
 async def parse_openapi(
     file: UploadFile = File(..., description="OpenAPI 文档文件（JSON/YAML）"),
     db: Session = Depends(get_db),
@@ -145,13 +145,13 @@ async def parse_openapi(
         return ParseOpenAPIRequest(
             status="completed",
             message=f"文档 {file.filename} 解析成功",
-            endpoints_count=len(result.get("selected_endpoints", [])),
+            endpoints_count=result.get("selected_endpoints", 0),
         )
     finally:
         tmp_path.unlink(missing_ok=True)
 
 
-@router.post("/run-test", response_model=RunTestResponse)
+@router.post("/run/test", response_model=RunTestResponse)
 def run_test(
     body: RunTestRequest,
     background_tasks: BackgroundTasks,

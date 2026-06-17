@@ -23,7 +23,7 @@ class TestRun(Base):
     __tablename__ = "test_run"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False, default=next_id)
-    project_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("project.id", ondelete="SET NULL"))
+    project_id: Mapped[int] = mapped_column(Integer, ForeignKey("project.id", ondelete="CASCADE"), nullable=False)
     environment_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("environment.id", ondelete="SET NULL"))
     name: Mapped[str] = mapped_column(Text, default="")
     status: Mapped[str] = mapped_column(Text, nullable=False, default="pending")
@@ -46,7 +46,7 @@ class TestRun(Base):
     created_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
     updated_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
 
-    project: Mapped[Project | None] = relationship(back_populates="test_runs")
+    project: Mapped[Project] = relationship(back_populates="test_runs")
     environment: Mapped[Environment | None] = relationship(back_populates="test_runs")
     test_cases: Mapped[list[TestCase]] = relationship(back_populates="test_run", cascade="all, delete-orphan")
     test_results: Mapped[list[TestResult]] = relationship(back_populates="test_run", cascade="all, delete-orphan")

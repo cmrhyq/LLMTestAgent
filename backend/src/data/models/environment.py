@@ -9,6 +9,7 @@ from src.data.models.base import Base, local_now
 from src.utils.id import next_id
 
 if TYPE_CHECKING:
+    from src.data.models.project import Project
     from src.data.models.test_run import TestRun
 
 
@@ -28,6 +29,7 @@ class Environment(Base):
     created_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
     updated_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
 
+    project: Mapped[Project] = relationship(back_populates="environments")
     test_runs: Mapped[list[TestRun]] = relationship(back_populates="environment")
 
     __table_args__ = (Index("idx_env_project", "project_id"),)

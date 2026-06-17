@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from src.data.models.project import Project
 from src.data.repositories.base import BaseRepository
@@ -25,3 +25,21 @@ class ProjectRepository(BaseRepository[Project]):
             return existing
         project = Project(name=name, base_url=base_url, description=description)
         return self.add(project)
+
+    def delete_cascade(self, project_id: int) -> bool:
+        """级联删除项目及其关联的 environments、endpoints、test_runs 等数据。"""
+        stmt = (
+            select(Project)
+            .where(Project.id == project_id)
+            .options(
+                selectinload(Project.endpoints),
+                selectinload(Project.environments),
+                selectinload(Project.test_runs),
+            )
+        )
+        project = self._session.scalar(stmt)
+        if project is None:
+            return False
+        self._session.delete(project)
+        self._session.flush()
+        return True

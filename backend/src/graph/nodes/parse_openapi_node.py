@@ -36,9 +36,15 @@ def parse_openapi_node(state: AgentState) -> dict:
         logger.info(f"开始解析并存储API文档: {file_path}", node="parse_openapi", path=str(file_path))
         config = get_config()
         storage = ApiDocStorage(config)
-        storage.openapi_parse_storage(file_path)
-        logger.info("OpenAPI文档解析存储完成", node="parse_openapi")
+        result = storage.openapi_parse_storage(file_path)
+        logger.info(
+            "OpenAPI文档解析存储完成",
+            node="parse_openapi",
+            project_id=result.project_id,
+            endpoint_count=result.endpoint_count,
+        )
         return {
+            "selected_endpoints": result.endpoint_count,
             "current_step": "end",
         }
 
