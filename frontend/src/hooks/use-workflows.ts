@@ -12,7 +12,7 @@ export function useParseOpenAPI() {
 
   return useMutation<ParseOpenAPIResponse, Error, FormData>({
     mutationFn: async (formData) => {
-      const { data } = await api.post<ParseOpenAPIResponse>("/workflows/parse-openapi", formData, {
+      const { data } = await api.post<ParseOpenAPIResponse>("/workflows/parse/openapi", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       return data;
@@ -29,7 +29,7 @@ export function useRunTest() {
 
   return useMutation<RunTestResponse, Error, RunTestRequest>({
     mutationFn: async (payload) => {
-      const { data } = await api.post<RunTestResponse>("/workflows/run-test", payload);
+      const { data } = await api.post<RunTestResponse>("/workflows/run/test", payload);
       return data;
     },
     onSuccess: () => {

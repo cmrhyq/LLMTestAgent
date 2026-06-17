@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Folder, Globe, CheckCircle, MoreHorizontal, FileText, Play } from "lucide-react";
 
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/shared/data-table";
 import { CreateProjectDialog } from "@/components/project/create-project-dialog";
+import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +30,8 @@ export default function DashboardPage() {
   const { data: testRunsData } = useTestRuns();
   const { data: endpointsData } = useEndpoints();
   const deleteProject = useDeleteProject();
+
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
 
   const stats = useMemo(() => {
     const projects = projectsData?.items ?? [];
@@ -95,10 +98,7 @@ export default function DashboardPage() {
             <DropdownMenuItem asChild>
               <Link to={`/projects/${row.id}`}>Edit</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => deleteProject.mutate(row.id)}
-            >
+            <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(row)}>
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -180,6 +180,29 @@ export default function DashboardPage() {
           emptyText="No projects yet. Create one to get started."
         />
       </div>
+
+      <ConfirmDeleteDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteProject.mutate(deleteTarget.id);
+            setDeleteTarget(null);
+          }
+        }}
+        title="Delete Project"
+        description={
+          <span>
+            Are you sure you want to delete project <strong>{deleteTarget?.name}</strong>? This will
+            permanently delete all associated data including environments, endpoints, test runs,
+            test cases, and reports.{" "}
+            <span className="font-semibold text-destructive">This action cannot be undone.</span>
+          </span>
+        }
+        confirmText="Delete Project"
+      />
     </div>
   );
 }
