@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, FileUp, Play, Settings } from "lucide-react";
+import { LayoutDashboard, FileUp, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NavItemProps {
@@ -54,10 +54,6 @@ export function Sidebar({ collapsed }: SidebarProps) {
           label="Parse Document"
         />
         <NavItem to="/workflows/run" icon={<Play className="h-4 w-4" />} label="Run Test" />
-
-        <div className="my-3 border-t border-border" />
-
-        <NavItem to="/settings" icon={<Settings className="h-4 w-4" />} label="Settings" />
       </nav>
     </aside>
   );

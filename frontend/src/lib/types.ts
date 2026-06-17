@@ -29,6 +29,7 @@ export interface Endpoint {
   headers: string;
   body: string;
   responses: string;
+  security: string;
   content_type: string;
   deprecated: number;
   status: number;

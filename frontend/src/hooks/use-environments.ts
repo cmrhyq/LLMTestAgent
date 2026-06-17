@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import api from "@/lib/api";
 import type { Environment, EnvironmentListResponse } from "@/lib/types";
 
@@ -29,6 +30,10 @@ export function useCreateEnvironment() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["environments"] });
+      toast.success("Environment created successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to create environment");
     },
   });
 }
@@ -42,6 +47,29 @@ export function useDeleteEnvironment() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["environments"] });
+      toast.success("Environment deleted successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete environment");
+    },
+  });
+}
+
+export function useUpdateEnvironment() {
+  const queryClient = useQueryClient();
+
+  return useMutation<Environment, Error, { id: string | number; payload: Partial<Environment> }>({
+    mutationFn: async ({ id, payload }) => {
+      const { data } = await api.put<Environment>(`/environments/${id}`, payload);
+      return data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["environments"] });
+      queryClient.invalidateQueries({ queryKey: ["environments", variables.id] });
+      toast.success("Environment updated successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update environment");
     },
   });
 }

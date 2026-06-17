@@ -26,7 +26,13 @@ const STATUS_MAP: Record<number, string> = {
 };
 
 export default function DashboardPage() {
-  const { data: projectsData, isLoading: projectsLoading } = useProjects();
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  const { data: projectsData, isLoading: projectsLoading } = useProjects({
+    page,
+    page_size: pageSize,
+  });
   const { data: testRunsData } = useTestRuns();
   const { data: endpointsData } = useEndpoints();
   const deleteProject = useDeleteProject();
@@ -178,6 +184,12 @@ export default function DashboardPage() {
           data={projectsData?.items ?? []}
           loading={projectsLoading}
           emptyText="No projects yet. Create one to get started."
+          pagination={{
+            page,
+            pageSize,
+            total: projectsData?.total ?? 0,
+            onChange: setPage,
+          }}
         />
       </div>
 

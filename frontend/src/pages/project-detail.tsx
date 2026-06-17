@@ -1,23 +1,32 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Search, Globe, Plus } from "lucide-react";
+import { Search, Globe, Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import { useProject } from "@/hooks/use-projects";
-import { useEndpoints } from "@/hooks/use-endpoints";
-import { useEnvironments } from "@/hooks/use-environments";
+import { useEndpoints, useDeleteEndpoint } from "@/hooks/use-endpoints";
+import { useEnvironments, useDeleteEnvironment } from "@/hooks/use-environments";
 import { useTestRuns } from "@/hooks/use-test-runs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { DataTable } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { HttpMethodBadge } from "@/components/shared/http-method-badge";
 import { PassRateBar } from "@/components/shared/pass-rate-bar";
 import { EmptyState } from "@/components/shared/empty-state";
+import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
+import { EndpointFormDialog } from "@/components/endpoint/endpoint-form-dialog";
+import { EnvironmentFormDialog } from "@/components/environment/environment-form-dialog";
 import type { Column } from "@/components/shared/data-table";
-import type { Endpoint, TestRun } from "@/lib/types";
+import type { Endpoint, Environment, TestRun } from "@/lib/types";
 
 const PROJECT_STATUS_MAP: Record<number, string> = {
   0: "Inactive",
@@ -30,17 +39,36 @@ export default function ProjectDetailPage() {
   const projectId = id || "";
 
   const { data: project, isLoading: projectLoading } = useProject(projectId);
+
+  const [endpointPage, setEndpointPage] = useState(1);
+  const [testRunPage, setTestRunPage] = useState(1);
+  const pageSize = 10;
+
   const { data: endpointsData, isLoading: endpointsLoading } = useEndpoints({
     project_id: projectId,
+    page: endpointPage,
+    page_size: pageSize,
   });
   const { data: environmentsData, isLoading: environmentsLoading } = useEnvironments({
     project_id: projectId,
   });
   const { data: testRunsData, isLoading: testRunsLoading } = useTestRuns({
     project_id: projectId,
+    page: testRunPage,
+    page_size: pageSize,
   });
 
+  const deleteEndpoint = useDeleteEndpoint();
+  const deleteEnvironment = useDeleteEnvironment();
+
   const [endpointSearch, setEndpointSearch] = useState("");
+  const [endpointDialogOpen, setEndpointDialogOpen] = useState(false);
+  const [editingEndpoint, setEditingEndpoint] = useState<Endpoint | null>(null);
+  const [deleteEndpointTarget, setDeleteEndpointTarget] = useState<Endpoint | null>(null);
+
+  const [envDialogOpen, setEnvDialogOpen] = useState(false);
+  const [editingEnv, setEditingEnv] = useState<Environment | null>(null);
+  const [deleteEnvTarget, setDeleteEnvTarget] = useState<Environment | null>(null);
 
   const filteredEndpoints = useMemo(() => {
     const items = endpointsData?.items ?? [];
@@ -77,6 +105,38 @@ export default function ProjectDetailPage() {
       key: "status",
       header: "Status",
       render: (_, row) => <StatusBadge status={row.status === 1 ? "active" : "inactive"} />,
+    },
+    {
+      key: "actions",
+      header: "",
+      className: "w-10",
+      render: (_, row) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => {
+                setEditingEndpoint(row);
+                setEndpointDialogOpen(true);
+              }}
+            >
+              <Pencil className="mr-2 h-3.5 w-3.5" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-destructive"
+              onClick={() => setDeleteEndpointTarget(row)}
+            >
+              <Trash2 className="mr-2 h-3.5 w-3.5" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
     },
   ];
 
@@ -180,12 +240,28 @@ export default function ProjectDetailPage() {
                 className="pl-9"
               />
             </div>
+            <Button
+              size="sm"
+              onClick={() => {
+                setEditingEndpoint(null);
+                setEndpointDialogOpen(true);
+              }}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Endpoint
+            </Button>
           </div>
           <DataTable
             columns={endpointColumns}
             data={filteredEndpoints}
             loading={endpointsLoading}
             emptyText="No endpoints found for this project."
+            pagination={{
+              page: endpointPage,
+              pageSize,
+              total: endpointsData?.total ?? 0,
+              onChange: setEndpointPage,
+            }}
           />
         </TabsContent>
 
@@ -194,7 +270,13 @@ export default function ProjectDetailPage() {
             <p className="text-sm text-muted-foreground">
               Manage environments for different deployment targets.
             </p>
-            <Button size="sm">
+            <Button
+              size="sm"
+              onClick={() => {
+                setEditingEnv(null);
+                setEnvDialogOpen(true);
+              }}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Add Environment
             </Button>
@@ -222,11 +304,38 @@ export default function ProjectDetailPage() {
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-base">{env.name}</CardTitle>
-                      {env.is_default === 1 && (
-                        <Badge variant="outline" className="text-xs">
-                          Default
-                        </Badge>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {env.is_default === 1 && (
+                          <Badge variant="outline" className="text-xs">
+                            Default
+                          </Badge>
+                        )}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                              <MoreHorizontal className="h-3.5 w-3.5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setEditingEnv(env);
+                                setEnvDialogOpen(true);
+                              }}
+                            >
+                              <Pencil className="mr-2 h-3.5 w-3.5" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => setDeleteEnvTarget(env)}
+                            >
+                              <Trash2 className="mr-2 h-3.5 w-3.5" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -247,9 +356,69 @@ export default function ProjectDetailPage() {
             data={testRunsData?.items ?? []}
             loading={testRunsLoading}
             emptyText="No test runs found for this project."
+            pagination={{
+              page: testRunPage,
+              pageSize,
+              total: testRunsData?.total ?? 0,
+              onChange: setTestRunPage,
+            }}
           />
         </TabsContent>
       </Tabs>
+
+      <EndpointFormDialog
+        open={endpointDialogOpen}
+        onOpenChange={setEndpointDialogOpen}
+        projectId={projectId}
+        endpoint={editingEndpoint}
+      />
+
+      <ConfirmDeleteDialog
+        open={!!deleteEndpointTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteEndpointTarget(null);
+        }}
+        onConfirm={() => {
+          if (deleteEndpointTarget) {
+            deleteEndpoint.mutate(deleteEndpointTarget.id);
+            setDeleteEndpointTarget(null);
+          }
+        }}
+        title="Delete Endpoint"
+        description={
+          <>
+            Are you sure you want to delete endpoint <strong>{deleteEndpointTarget?.name}</strong>?
+            This action cannot be undone.
+          </>
+        }
+      />
+
+      <EnvironmentFormDialog
+        open={envDialogOpen}
+        onOpenChange={setEnvDialogOpen}
+        projectId={projectId}
+        environment={editingEnv}
+      />
+
+      <ConfirmDeleteDialog
+        open={!!deleteEnvTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteEnvTarget(null);
+        }}
+        onConfirm={() => {
+          if (deleteEnvTarget) {
+            deleteEnvironment.mutate(deleteEnvTarget.id);
+            setDeleteEnvTarget(null);
+          }
+        }}
+        title="Delete Environment"
+        description={
+          <>
+            Are you sure you want to delete environment <strong>{deleteEnvTarget?.name}</strong>?
+            This action cannot be undone.
+          </>
+        }
+      />
     </div>
   );
 }

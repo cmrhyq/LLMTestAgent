@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import api from "@/lib/api";
 import type {
   ParseOpenAPIResponse,
@@ -17,9 +18,13 @@ export function useParseOpenAPI() {
       });
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["endpoints"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success(data.message || "Document parsed successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to parse document");
     },
   });
 }
@@ -32,8 +37,12 @@ export function useRunTest() {
       const { data } = await api.post<RunTestResponse>("/workflows/run/test", payload);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["test-runs"] });
+      toast.success(data.message || "Test submitted successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to run test");
     },
   });
 }
