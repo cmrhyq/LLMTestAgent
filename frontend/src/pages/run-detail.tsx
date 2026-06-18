@@ -1,7 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, FileText } from "lucide-react";
 
 import { useTestRunDetail } from "@/hooks/use-test-runs";
+import { useReports } from "@/hooks/use-reports";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -82,8 +83,11 @@ export default function RunDetailPage() {
   const runId = id || "";
 
   const { data, isLoading, isError } = useTestRunDetail(runId);
+  const { data: reportsData } = useReports({ run_id: runId });
 
   const isActive = data?.status === "running" || data?.status === "pending";
+  const isCompleted = data?.status === "completed" || data?.status === "failed";
+  const firstReport = reportsData?.items?.[0];
 
   if (isLoading) {
     return (
@@ -127,6 +131,16 @@ export default function RunDetailPage() {
           </span>
           {isActive && <Loader2 className="h-4 w-4 animate-spin text-info" />}
         </div>
+        {isCompleted && firstReport && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/reports/${firstReport.id}`)}
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            View Report
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

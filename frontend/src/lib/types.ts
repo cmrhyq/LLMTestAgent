@@ -151,3 +151,49 @@ export interface WorkflowStatus {
   started_at: string | null;
   finished_at: string | null;
 }
+
+export interface Report {
+  id: string | number;
+  run_id: string | number;
+  format: string;
+  file_size: number;
+  generated_at: string;
+  test_run_name: string;
+}
+
+export interface ReportListResponse {
+  items: Report[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface TestResultDetail {
+  id: string | number;
+  case_id: string;
+  case_name: string;
+  status: string;
+  request_url: string;
+  request_method: string;
+  request_headers: string;
+  request_body: string | null;
+  query_params: string | null;
+  response_status_code: number | null;
+  response_headers: string;
+  response_body: string | null;
+  response_time: number;
+  error_message: string;
+  retry_count: number;
+  started_at: string | null;
+  finished_at: string | null;
+}
+
+export interface ReportDetail {
+  id: string | number;
+  run_id: string | number;
+  format: string;
+  file_size: number;
+  generated_at: string;
+  test_run: TestRun;
+  test_results: TestResultDetail[];
+}

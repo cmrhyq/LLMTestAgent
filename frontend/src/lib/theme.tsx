@@ -14,7 +14,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (stored === "light" || stored === "dark" || stored === "system") {
       return stored;
     }
-    return "dark";
+    return "light";
   });
 
   const resolvedTheme = theme === "system" ? getSystemTheme() : theme;
