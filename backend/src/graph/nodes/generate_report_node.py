@@ -11,9 +11,10 @@ from typing import Any
 from src.core.config import get_config
 from src.core.database.connection import get_db_manager
 from src.core.logging import get_logger
+from src.data.models.report import Report
 from src.data.models.test_result import TestResult
 from src.data.models.test_run import TestRun
-from src.data.repositories import TestResultRepository, TestRunRepository
+from src.data.repositories import ReportRepository, TestResultRepository, TestRunRepository
 from src.graph.nodes.utils import ensure_db
 from src.graph.state import AgentState
 
@@ -70,6 +71,17 @@ def generate_report_node(state: AgentState) -> dict:
             report_file.write_text(report_content, encoding="utf-8")
 
             report_path = str(report_file)
+            file_size = report_file.stat().st_size
+
+            report_repo = ReportRepository(session=session)
+            report_record = Report(
+                run_id=run_id,
+                format="html",
+                file_path=report_path,
+                file_size=file_size,
+            )
+            report_repo.add(report_record)
+
             logger.info(f"报告生成成功: {report_path}", node="generate_report", path=report_path)
             return {"current_step": "end", "report_path": report_path}
 

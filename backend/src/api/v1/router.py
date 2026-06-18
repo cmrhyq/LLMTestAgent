@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from src.api.v1.endpoint import router as endpoint_router
 from src.api.v1.environment import router as environment_router
 from src.api.v1.project import router as project_router
+from src.api.v1.report import router as report_router
 from src.api.v1.test_run import router as test_run_router
 from src.api.v1.workflow import router as workflow_router
 
@@ -15,3 +16,4 @@ api_router.include_router(endpoint_router)
 api_router.include_router(environment_router)
 api_router.include_router(test_run_router)
 api_router.include_router(workflow_router)
+api_router.include_router(report_router)
