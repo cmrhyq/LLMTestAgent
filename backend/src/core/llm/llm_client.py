@@ -50,12 +50,28 @@ def _create_openai_model(config: AppConfig) -> BaseChatModel:
     from langchain_openai import ChatOpenAI
 
     openai_config = config.llm.openai
-    return ChatOpenAI(
-        api_key=openai_config.api_key,  # type: ignore[arg-type]
-        model=openai_config.model,
-        temperature=openai_config.temperature,
-        max_tokens=openai_config.max_tokens,  # type: ignore[call-arg]
-    )
+
+    # 构建基础参数
+    kwargs: dict = {
+        "api_key": openai_config.api_key,
+        "model": openai_config.model,
+        "temperature": openai_config.temperature,
+        "max_tokens": openai_config.max_tokens,
+    }
+
+    # 如果配置了代理地址（如 Bedrock Access Gateway），则使用代理的 base_url
+    # 否则不传 base_url，ChatOpenAI 会使用默认的 OpenAI 官方地址
+    if openai_config.base_url:
+        kwargs["base_url"] = openai_config.base_url
+        logger.info(
+            "使用代理地址连接",
+            base_url=openai_config.base_url,
+            model=openai_config.model,
+        )
+    else:
+        logger.info("使用OpenAI官方地址连接", model=openai_config.model)
+
+    return ChatOpenAI(**kwargs)  # type: ignore[arg-type]
 
 
 def _create_bedrock_model(config: AppConfig) -> BaseChatModel:

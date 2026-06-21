@@ -21,6 +21,10 @@ timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 class OpenAIConfig(BaseModel):
     """OpenAI配置"""
 
+    base_url: str = Field(
+        default="",
+        description="OpenAI Base URL，留空则使用默认地址；填写代理网关地址（如 Bedrock Access Gateway）则走代理",
+    )
     api_key: str = Field(default="", description="OpenAI API密钥")
     model: str = Field(default="gpt-4", description="模型名称")
     temperature: float = Field(default=0.7, description="温度参数")
