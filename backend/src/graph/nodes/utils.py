@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 def ensure_db() -> None:
     """确保数据库已初始化。"""
     manager = get_db_manager()
-    if not manager._initialized:
+    if not manager.is_initialized:
         config = get_config()
         manager.initialize(
             db_url=config.database.url,

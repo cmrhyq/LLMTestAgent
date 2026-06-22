@@ -66,7 +66,7 @@ def generate_report_node(state: AgentState) -> dict:
 
             report_content = _build_html_report(test_run, results)
 
-            output_dir = Path(config.output.reports_dir)
+            output_dir = Path(config.output.get_reports_dir())
             output_dir.mkdir(parents=True, exist_ok=True)
             report_file = output_dir / f"test_report_{run_id}.html"
             report_file.write_text(report_content, encoding="utf-8")

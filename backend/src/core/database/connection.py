@@ -237,6 +237,11 @@ class DatabaseManager:
         self._session_factory = None
         self._initialized = False
 
+    @property
+    def is_initialized(self) -> bool:
+        """数据库是否已初始化"""
+        return self._initialized
+
     def _check_initialized(self) -> None:
         """检查数据库是否已初始化"""
         if not self._initialized:

@@ -15,7 +15,6 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
-timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
 
 class OpenAIConfig(BaseModel):
@@ -96,8 +95,22 @@ class OutputConfig(BaseModel):
     """输出配置"""
 
     base_dir: str = Field(default="output", description="输出根目录")
-    test_cases_dir: str = Field(default=f"output/{timestamp}/test_cases", description="用例目录")
-    reports_dir: str = Field(default=f"output/{timestamp}/reports", description="报告目录")
+    test_cases_dir: str = Field(default="", description="用例目录（留空则动态生成时间戳子目录）")
+    reports_dir: str = Field(default="", description="报告目录（留空则动态生成时间戳子目录）")
+
+    def get_test_cases_dir(self) -> str:
+        """获取用例目录（动态生成时间戳）"""
+        if self.test_cases_dir:
+            return self.test_cases_dir
+        ts = datetime.now().strftime("%Y%m%d%H%M%S")
+        return f"{self.base_dir}/{ts}/test_cases"
+
+    def get_reports_dir(self) -> str:
+        """获取报告目录（动态生成时间戳）"""
+        if self.reports_dir:
+            return self.reports_dir
+        ts = datetime.now().strftime("%Y%m%d%H%M%S")
+        return f"{self.base_dir}/{ts}/reports"
 
 
 class DatabaseConfig(BaseModel):
@@ -173,19 +186,25 @@ def _resolve_env_vars(value: Any) -> Any:
     """
     递归解析配置值中的环境变量
 
+    支持两种格式：
+    - 完整匹配: "${VAR_NAME}" -> 环境变量值
+    - 嵌入模式: "Bearer ${TOKEN}" -> "Bearer actual_value"
+
     Args:
         value: 配置值
 
     Returns:
         解析后的值
     """
-    load_dotenv()
+    import re
+
     if isinstance(value, str):
-        # 解析 ${VAR_NAME} 格式的环境变量
-        if value.startswith("${") and value.endswith("}"):
-            env_var = value[2:-1]
+
+        def _replace_env(match):
+            env_var = match.group(1)
             return os.getenv(env_var, "")
-        return value
+
+        return re.sub(r"\$\{([^}]+)\}", _replace_env, value)
     elif isinstance(value, dict):
         return {k: _resolve_env_vars(v) for k, v in value.items()}
     elif isinstance(value, list):
@@ -203,6 +222,8 @@ def load_config(config_path: str | Path | None = None) -> AppConfig:
     Returns:
         AppConfig: 应用配置对象
     """
+    load_dotenv()
+
     if config_path is None:
         project_root = Path(__file__).parent.parent.parent
         resolved_path = project_root / "config" / "config.yaml"
@@ -234,8 +255,8 @@ def ensure_output_dirs(config: AppConfig) -> None:
     """
     dirs = [
         config.output.base_dir,
-        config.output.test_cases_dir,
-        config.output.reports_dir,
+        config.output.get_test_cases_dir(),
+        config.output.get_reports_dir(),
     ]
 
     for dir_path in dirs:

@@ -8,6 +8,7 @@ import json
 from datetime import datetime
 from typing import Any
 
+from src.core.cache.data_cache import DataCache
 from src.core.config import get_config
 from src.core.database import get_db_manager
 from src.core.logging import get_logger
@@ -41,7 +42,8 @@ def execute_flow_tests_node(state: AgentState) -> dict:
         return {"test_results_summary": {}, "current_step": "error", "error_message": "run_id 为空"}
 
     config = get_config()
-    executor = TestExecutor(config)
+    scoped_cache = DataCache.create_scoped(f"run_{run_id}")
+    executor = TestExecutor(config, cache=scoped_cache)
 
     ensure_db()
 

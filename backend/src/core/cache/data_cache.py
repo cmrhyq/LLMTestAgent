@@ -11,37 +11,45 @@ from typing import Any, Optional
 
 class DataCache:
     """
-    线程安全的单例数据缓存类
+    线程安全的数据缓存类
 
     提供以下功能：
     - 单例模式：确保全局只有一个缓存实例
     - 线程安全：使用锁机制保护并发访问
     - 基本操作：set, get, clear, has 方法
-    - 数据隔离：支持会话级别的数据清理
+    - 命名空间隔离：支持 run_id 级别的数据隔离，防止并发 workflow 互污染
 
     使用示例：
         cache = DataCache.get_instance()
         cache.set("user_id", 12345)
         user_id = cache.get("user_id")
         cache.clear()
+
+        # 按 run_id 隔离数据
+        scoped = DataCache.create_scoped("run_123")
+        scoped.set("token", "abc")
+        scoped.clear()  # 只清除该命名空间
     """
 
     _instance: Optional["DataCache"] = None
     _lock = threading.Lock()
     _initialized = False
 
-    def __init__(self) -> None:
+    def __init__(self, namespace: str = "") -> None:
         """
-        私有构造函数，防止直接实例化
-        使用 get_instance() 方法获取单例实例
+        构造函数
+
+        Args:
+            namespace: 命名空间前缀，用于隔离不同 run 的缓存数据
         """
-        # 只在第一次初始化时设置属性
-        if not DataCache._initialized:
-            # 数据存储字典
+        if not DataCache._initialized and namespace == "":
             self._data: dict[str, Any] = {}
-            # 实例级别的锁，用于保护数据访问
             self._data_lock = threading.Lock()
             DataCache._initialized = True
+        elif namespace != "":
+            self._data = {}
+            self._data_lock = threading.Lock()
+        self._namespace = namespace
 
     @classmethod
     def get_instance(cls) -> "DataCache":
@@ -55,12 +63,30 @@ class DataCache:
         """
         if cls._instance is None:
             with cls._lock:
-                # 双重检查：防止多个线程同时创建实例
                 if cls._instance is None:
                     cls._instance = cls.__new__(cls)
                     type(cls._instance).__init__(cls._instance)
 
         return cls._instance
+
+    @classmethod
+    def create_scoped(cls, namespace: str) -> "DataCache":
+        """
+        创建一个带命名空间的独立缓存实例，用于隔离并发 workflow 数据。
+
+        每个 namespace 对应一个独立的缓存空间，互不影响。
+
+        Args:
+            namespace: 命名空间标识（建议使用 run_id）
+
+        Returns:
+            DataCache: 带命名空间的缓存实例
+        """
+        instance = cls.__new__(cls)
+        instance._data = {}
+        instance._data_lock = threading.Lock()
+        instance._namespace = namespace
+        return instance
 
     def set(self, key: str, value: Any) -> None:
         """

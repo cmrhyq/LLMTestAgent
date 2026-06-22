@@ -28,8 +28,8 @@ logger = get_logger(__name__)
 class CacheResolver:
     """缓存参数注入与提取处理器。"""
 
-    def __init__(self) -> None:
-        self.cache = DataCache.get_instance()
+    def __init__(self, cache: DataCache | None = None) -> None:
+        self.cache = cache or DataCache.get_instance()
 
     def inject(
         self,

@@ -18,7 +18,7 @@ from src.data.models.project import Project
 def _ensure_db_initialized() -> None:
     """确保数据库已初始化，未初始化时从配置自动完成。"""
     manager = get_db_manager()
-    if not manager._initialized:
+    if not manager.is_initialized:
         config = get_config()
         manager.initialize(
             db_url=config.database.url,
