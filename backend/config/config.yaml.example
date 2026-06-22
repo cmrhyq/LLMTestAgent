@@ -1,12 +1,14 @@
 # LLM配置
 llm:
   # 提供商: openai / bedrock / zhipu / qwen
-  provider: bedrock
+  provider: openai
 
   # OpenAI配置
   openai:
+    # OpenAI服务的Base URL留空""则使用官方地址
+    base_url: ""
     api_key: ${OPENAI_API_KEY}
-    model: gpt-4
+    model: us.anthropic.claude-opus-4-6-v1
     temperature: 0.7
     max_tokens: 4096
 
