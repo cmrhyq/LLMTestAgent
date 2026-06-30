@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, FileUp, Play, FileText } from "lucide-react";
+import { LayoutDashboard, Play, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NavItemProps {
@@ -48,12 +48,12 @@ export function Sidebar({ collapsed }: SidebarProps) {
           </span>
         </div>
 
-        <NavItem
-          to="/workflows/parse"
-          icon={<FileUp className="h-4 w-4" />}
-          label="Parse Document"
-        />
-        <NavItem to="/workflows/run" icon={<Play className="h-4 w-4" />} label="Run Test" />
+        {/*<NavItem*/}
+        {/*  to="/workflows/parse"*/}
+        {/*  icon={<FileUp className="h-4 w-4" />}*/}
+        {/*  label="Parse Document"*/}
+        {/*/>*/}
+        <NavItem to="/workflows/run" icon={<Play className="h-4 w-4" />} label="New Test" />
 
         <div className="mt-4 mb-2 px-3">
           <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">

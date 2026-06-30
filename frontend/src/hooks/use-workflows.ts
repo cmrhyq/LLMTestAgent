@@ -5,6 +5,7 @@ import type {
   ParseOpenAPIResponse,
   RunTestRequest,
   RunTestResponse,
+  UploadOpenAPIResponse,
   WorkflowStatus,
 } from "@/lib/types";
 
@@ -25,6 +26,24 @@ export function useParseOpenAPI() {
     },
     onError: (error) => {
       toast.error(error.message || "Failed to parse document");
+    },
+  });
+}
+
+export function useUploadOpenAPI() {
+  return useMutation<UploadOpenAPIResponse, Error, FormData>({
+    mutationFn: async (formData) => {
+      const { data } = await api.post<UploadOpenAPIResponse>(
+        "/workflows/upload/openapi",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+      return data;
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to upload document");
     },
   });
 }

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Send, X, FileText, Loader2, CheckCircle2 } from "lucide-react";
 
-import { useRunTest } from "@/hooks/use-workflows";
+import { useRunTest, useUploadOpenAPI } from "@/hooks/use-workflows";
 
 const REDIRECT_DELAY_MS = 2000;
 
@@ -10,9 +10,11 @@ export default function WorkflowRunPage() {
   const navigate = useNavigate();
   const [instruction, setInstruction] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [uploadedPath, setUploadedPath] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { mutate, isPending, isSuccess, data } = useRunTest();
+  const { mutate: uploadFile, isPending: isUploading } = useUploadOpenAPI();
 
   useEffect(() => {
     if (isSuccess && data?.run_id) {
@@ -24,10 +26,10 @@ export default function WorkflowRunPage() {
   }, [isSuccess, data, navigate]);
 
   const handleSubmit = () => {
-    if (!instruction.trim() || isPending) return;
+    if (!instruction.trim() || isPending || isUploading) return;
     mutate({
       instruction: instruction.trim(),
-      api_doc_path: file ? file.name : null,
+      api_doc_path: uploadedPath,
     });
   };
 
@@ -42,8 +44,25 @@ export default function WorkflowRunPage() {
     const selected = e.target.files?.[0];
     if (selected) {
       setFile(selected);
+      setUploadedPath(null);
+      const formData = new FormData();
+      formData.append("file", selected);
+      uploadFile(formData, {
+        onSuccess: (res) => {
+          setUploadedPath(res.path);
+        },
+        onError: () => {
+          setFile(null);
+          setUploadedPath(null);
+        },
+      });
     }
     e.target.value = "";
+  };
+
+  const handleRemoveFile = () => {
+    setFile(null);
+    setUploadedPath(null);
   };
 
   return (
@@ -78,12 +97,20 @@ export default function WorkflowRunPage() {
       <div className="shrink-0 px-4 pb-6">
         {file && (
           <div className="mb-2 flex items-center gap-2 rounded-lg bg-secondary px-3 py-1.5 w-fit">
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            {isUploading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            ) : uploadedPath ? (
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+            ) : (
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            )}
             <span className="text-sm text-foreground">{file.name}</span>
+            {isUploading && <span className="text-xs text-muted-foreground">Uploading...</span>}
             <button
               type="button"
-              onClick={() => setFile(null)}
-              className="ml-1 rounded p-0.5 text-muted-foreground hover:bg-border hover:text-foreground"
+              onClick={handleRemoveFile}
+              disabled={isUploading}
+              className="ml-1 rounded p-0.5 text-muted-foreground hover:bg-border hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -94,9 +121,14 @@ export default function WorkflowRunPage() {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-border hover:text-foreground"
+            disabled={isUploading || isPending}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-border hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <Plus className="h-5 w-5" />
+            {isUploading ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Plus className="h-5 w-5" />
+            )}
           </button>
 
           <input
@@ -120,7 +152,7 @@ export default function WorkflowRunPage() {
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={!instruction.trim() || isPending}
+            disabled={!instruction.trim() || isPending || isUploading}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/80 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Send className="h-4 w-4" />

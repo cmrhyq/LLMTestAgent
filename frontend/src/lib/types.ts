@@ -140,6 +140,13 @@ export interface ParseOpenAPIResponse {
   endpoints_count: number;
 }
 
+export interface UploadOpenAPIResponse {
+  filename: string;
+  path: string;
+  status: string;
+  message: string;
+}
+
 export interface WorkflowStatus {
   run_id: string | number;
   status: string;
