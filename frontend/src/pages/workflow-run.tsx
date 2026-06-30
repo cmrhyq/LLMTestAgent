@@ -115,7 +115,7 @@ export default function WorkflowRunPage() {
               value={instruction}
               onChange={handleInstructionChange}
               onKeyDown={handleKeyDown}
-              placeholder="例如：对所有接口运行单接口测试"
+              placeholder="例如：对“XXX”项目的所有接口运行单接口测试"
               rows={1}
               disabled={isPending}
               className="max-h-40 w-full resize-none bg-transparent px-1 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
