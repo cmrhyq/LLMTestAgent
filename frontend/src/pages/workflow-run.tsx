@@ -151,7 +151,6 @@ export default function WorkflowRunPage() {
                     className="flex items-center gap-1.5 rounded-md border border-border bg-transparent px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    附加文档
                   </button>
                 )}
               </div>
