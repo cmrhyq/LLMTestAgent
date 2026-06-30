@@ -44,10 +44,10 @@ export function useCreateEndpoint() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["endpoints"] });
-      toast.success("Endpoint created successfully");
+      toast.success("接口创建成功");
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create endpoint");
+      toast.error(error.message || "接口创建失败");
     },
   });
 }
@@ -63,10 +63,10 @@ export function useUpdateEndpoint() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["endpoints"] });
       queryClient.invalidateQueries({ queryKey: ["endpoints", variables.id] });
-      toast.success("Endpoint updated successfully");
+      toast.success("接口更新成功");
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update endpoint");
+      toast.error(error.message || "接口更新失败");
     },
   });
 }
@@ -80,10 +80,10 @@ export function useDeleteEndpoint() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["endpoints"] });
-      toast.success("Endpoint deleted successfully");
+      toast.success("接口删除成功");
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to delete endpoint");
+      toast.error(error.message || "接口删除失败");
     },
   });
 }

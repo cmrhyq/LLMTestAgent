@@ -9,9 +9,9 @@ interface SettingsDialogProps {
 }
 
 const THEME_OPTIONS = [
-  { value: "light" as const, label: "Light", icon: Sun },
-  { value: "dark" as const, label: "Dark", icon: Moon },
-  { value: "system" as const, label: "System", icon: Monitor },
+  { value: "light" as const, label: "浅色", icon: Sun },
+  { value: "dark" as const, label: "深色", icon: Moon },
+  { value: "system" as const, label: "跟随系统", icon: Monitor },
 ];
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
@@ -21,11 +21,11 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Settings</DialogTitle>
+          <DialogTitle>设置</DialogTitle>
         </DialogHeader>
         <div className="space-y-6">
           <div className="space-y-3">
-            <label className="text-sm font-medium">Appearance</label>
+            <label className="text-sm font-medium">外观</label>
             <div className="grid grid-cols-3 gap-2">
               {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
                 <Button

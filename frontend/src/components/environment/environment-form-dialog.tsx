@@ -64,11 +64,11 @@ function EnvironmentFormContent({ projectId, environment, onClose }: Environment
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <label htmlFor="env-name" className="text-sm font-medium">
-          Name
+          名称
         </label>
         <Input
           id="env-name"
-          placeholder="Production"
+          placeholder="生产环境"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
@@ -77,7 +77,7 @@ function EnvironmentFormContent({ projectId, environment, onClose }: Environment
 
       <div className="space-y-2">
         <label htmlFor="env-base-url" className="text-sm font-medium">
-          Base URL
+          基础 URL
         </label>
         <Input
           id="env-base-url"
@@ -90,11 +90,11 @@ function EnvironmentFormContent({ projectId, environment, onClose }: Environment
 
       <div className="space-y-2">
         <label htmlFor="env-description" className="text-sm font-medium">
-          Description
+          描述
         </label>
         <Input
           id="env-description"
-          placeholder="Optional description"
+          placeholder="可选描述"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
@@ -102,7 +102,7 @@ function EnvironmentFormContent({ projectId, environment, onClose }: Environment
 
       <div className="space-y-2">
         <label htmlFor="env-variables" className="text-sm font-medium">
-          Variables (JSON)
+          变量（JSON）
         </label>
         <Textarea
           id="env-variables"
@@ -123,16 +123,16 @@ function EnvironmentFormContent({ projectId, environment, onClose }: Environment
           className="h-4 w-4 rounded border-border"
         />
         <label htmlFor="env-default" className="text-sm font-medium">
-          Set as default environment
+          设为默认环境
         </label>
       </div>
 
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onClose}>
-          Cancel
+          取消
         </Button>
         <Button type="submit" disabled={isPending}>
-          {isPending ? "Saving..." : isEdit ? "Update" : "Create"}
+          {isPending ? "保存中…" : isEdit ? "更新" : "创建"}
         </Button>
       </DialogFooter>
     </form>
@@ -151,11 +151,9 @@ export function EnvironmentFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Environment" : "Add Environment"}</DialogTitle>
+          <DialogTitle>{isEdit ? "编辑环境" : "添加环境"}</DialogTitle>
           <DialogDescription>
-            {isEdit
-              ? "Update the environment configuration."
-              : "Add a new environment for this project."}
+            {isEdit ? "更新环境配置。" : "为该项目添加一个新环境。"}
           </DialogDescription>
         </DialogHeader>
         {open && (

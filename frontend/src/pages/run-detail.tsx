@@ -46,21 +46,21 @@ function buildCaseRows(cases: TestCaseBrief[], results: TestResultBrief[]): Case
 }
 
 const columns: Column<CaseRow & Record<string, unknown>>[] = [
-  { key: "case_name", header: "Case Name" },
+  { key: "case_name", header: "用例名称" },
   {
     key: "method",
-    header: "Method",
+    header: "方法",
     render: (_, row) => <HttpMethodBadge method={row.method as string} />,
   },
   { key: "url", header: "URL", className: "font-mono text-xs" },
   {
     key: "status",
-    header: "Status",
+    header: "状态",
     render: (_, row) => <StatusBadge status={row.status as string} />,
   },
   {
     key: "duration",
-    header: "Duration",
+    header: "耗时",
     render: (val) => {
       const seconds = ((val as number) / 1000).toFixed(1);
       return <span className="tabular-nums">{seconds}s</span>;
@@ -68,7 +68,7 @@ const columns: Column<CaseRow & Record<string, unknown>>[] = [
   },
   {
     key: "assertion_passed",
-    header: "Assertions",
+    header: "断言",
     render: (_, row) => (
       <span className="tabular-nums">
         {row.assertion_passed as number}/{row.assertion_total as number}
@@ -108,9 +108,9 @@ export default function RunDetailPage() {
       <div className="space-y-4">
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
+          返回
         </Button>
-        <p className="text-destructive">Failed to load run details.</p>
+        <p className="text-destructive">加载运行详情失败。</p>
       </div>
     );
   }
@@ -138,7 +138,7 @@ export default function RunDetailPage() {
             onClick={() => navigate(`/reports/${firstReport.id}`)}
           >
             <FileText className="mr-2 h-4 w-4" />
-            View Report
+            查看报告
           </Button>
         )}
       </div>
@@ -146,7 +146,7 @@ export default function RunDetailPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Cases</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">用例总数</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{data.total_cases}</p>
@@ -155,7 +155,7 @@ export default function RunDetailPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-emerald-400">Passed</CardTitle>
+            <CardTitle className="text-sm font-medium text-emerald-400">已通过</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-emerald-400">{data.passed_cases}</p>
@@ -164,7 +164,7 @@ export default function RunDetailPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-destructive">Failed</CardTitle>
+            <CardTitle className="text-sm font-medium text-destructive">已失败</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-destructive">{data.failed_cases}</p>
@@ -173,7 +173,7 @@ export default function RunDetailPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pass Rate</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">通过率</CardTitle>
           </CardHeader>
           <CardContent>
             <PassRateBar passed={data.passed_cases} total={data.total_cases} />
@@ -185,7 +185,7 @@ export default function RunDetailPage() {
         columns={columns}
         data={rows as (CaseRow & Record<string, unknown>)[]}
         loading={isActive}
-        emptyText="No test cases yet"
+        emptyText="暂无测试用例"
       />
     </div>
   );

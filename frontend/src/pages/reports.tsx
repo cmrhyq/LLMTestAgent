@@ -18,12 +18,12 @@ function formatFileSize(bytes: number): string {
 const columns: Column<ReportRow>[] = [
   {
     key: "test_run_name",
-    header: "Test Run",
+    header: "测试运行",
     render: (val) => <span className="font-medium">{(val as string) || "—"}</span>,
   },
   {
     key: "format",
-    header: "Format",
+    header: "格式",
     render: (val) => (
       <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-medium uppercase">
         {val as string}
@@ -32,14 +32,14 @@ const columns: Column<ReportRow>[] = [
   },
   {
     key: "file_size",
-    header: "Size",
+    header: "大小",
     render: (val) => (
       <span className="tabular-nums text-muted-foreground">{formatFileSize(val as number)}</span>
     ),
   },
   {
     key: "generated_at",
-    header: "Generated At",
+    header: "生成时间",
     render: (val) => <span className="text-muted-foreground">{val as string}</span>,
   },
 ];
@@ -55,7 +55,7 @@ export default function ReportsPage() {
 
   const actionsColumn: Column<ReportRow> = {
     key: "_actions",
-    header: "Actions",
+    header: "操作",
     render: (_, row) => (
       <div className="flex items-center gap-1">
         <button
@@ -64,7 +64,7 @@ export default function ReportsPage() {
           className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
         >
           <Eye className="h-3.5 w-3.5" />
-          View
+          查看
         </button>
         <button
           type="button"
@@ -72,7 +72,7 @@ export default function ReportsPage() {
           className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
         >
           <Download className="h-3.5 w-3.5" />
-          Download
+          下载
         </button>
       </div>
     ),
@@ -82,14 +82,14 @@ export default function ReportsPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <FileText className="h-6 w-6 text-muted-foreground" />
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Test Reports</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">测试报告</h1>
       </div>
 
       <DataTable
         columns={[...columns, actionsColumn]}
         data={rows}
         loading={isLoading}
-        emptyText="No reports generated yet"
+        emptyText="暂无生成的报告"
         pagination={
           data
             ? {

@@ -73,11 +73,11 @@ function EndpointFormContent({ projectId, endpoint, onClose }: EndpointFormConte
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <label htmlFor="ep-name" className="text-sm font-medium">
-          Name
+          名称
         </label>
         <Input
           id="ep-name"
-          placeholder="Get Users"
+          placeholder="获取用户列表"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
@@ -87,7 +87,7 @@ function EndpointFormContent({ projectId, endpoint, onClose }: EndpointFormConte
       <div className="grid grid-cols-[120px_1fr] gap-3">
         <div className="space-y-2">
           <label htmlFor="ep-method" className="text-sm font-medium">
-            Method
+            方法
           </label>
           <select
             id="ep-method"
@@ -104,7 +104,7 @@ function EndpointFormContent({ projectId, endpoint, onClose }: EndpointFormConte
         </div>
         <div className="space-y-2">
           <label htmlFor="ep-path" className="text-sm font-medium">
-            Path
+            路径
           </label>
           <Input
             id="ep-path"
@@ -118,11 +118,11 @@ function EndpointFormContent({ projectId, endpoint, onClose }: EndpointFormConte
 
       <div className="space-y-2">
         <label htmlFor="ep-summary" className="text-sm font-medium">
-          Summary
+          摘要
         </label>
         <Input
           id="ep-summary"
-          placeholder="Brief description of this endpoint"
+          placeholder="该接口的简要描述"
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
         />
@@ -130,7 +130,7 @@ function EndpointFormContent({ projectId, endpoint, onClose }: EndpointFormConte
 
       <div className="space-y-2">
         <label htmlFor="ep-content-type" className="text-sm font-medium">
-          Content Type
+          内容类型
         </label>
         <Input
           id="ep-content-type"
@@ -142,7 +142,7 @@ function EndpointFormContent({ projectId, endpoint, onClose }: EndpointFormConte
 
       <div className="space-y-2">
         <label htmlFor="ep-params" className="text-sm font-medium">
-          Parameters (JSON)
+          参数（JSON）
         </label>
         <Textarea
           id="ep-params"
@@ -156,7 +156,7 @@ function EndpointFormContent({ projectId, endpoint, onClose }: EndpointFormConte
 
       <div className="space-y-2">
         <label htmlFor="ep-headers" className="text-sm font-medium">
-          Headers (JSON)
+          请求头（JSON）
         </label>
         <Textarea
           id="ep-headers"
@@ -170,7 +170,7 @@ function EndpointFormContent({ projectId, endpoint, onClose }: EndpointFormConte
 
       <div className="space-y-2">
         <label htmlFor="ep-body" className="text-sm font-medium">
-          Request Body (JSON)
+          请求体（JSON）
         </label>
         <Textarea
           id="ep-body"
@@ -184,10 +184,10 @@ function EndpointFormContent({ projectId, endpoint, onClose }: EndpointFormConte
 
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onClose}>
-          Cancel
+          取消
         </Button>
         <Button type="submit" disabled={isPending}>
-          {isPending ? "Saving..." : isEdit ? "Update" : "Create"}
+          {isPending ? "保存中…" : isEdit ? "更新" : "创建"}
         </Button>
       </DialogFooter>
     </form>
@@ -206,9 +206,9 @@ export function EndpointFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Endpoint" : "Add Endpoint"}</DialogTitle>
+          <DialogTitle>{isEdit ? "编辑接口" : "添加接口"}</DialogTitle>
           <DialogDescription>
-            {isEdit ? "Update the endpoint details." : "Add a new API endpoint to this project."}
+            {isEdit ? "更新接口详情。" : "为该项目添加一个新的 API 接口。"}
           </DialogDescription>
         </DialogHeader>
         {open && (

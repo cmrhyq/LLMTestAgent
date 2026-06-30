@@ -43,10 +43,10 @@ export function useCreateProject() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
-      toast.success("Project created successfully");
+      toast.success("项目创建成功");
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create project");
+      toast.error(error.message || "项目创建失败");
     },
   });
 }
@@ -64,10 +64,10 @@ export function useUpdateProject() {
       queryClient.invalidateQueries({
         queryKey: ["projects", variables.id],
       });
-      toast.success("Project updated successfully");
+      toast.success("项目更新成功");
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update project");
+      toast.error(error.message || "项目更新失败");
     },
   });
 }
@@ -81,10 +81,10 @@ export function useDeleteProject() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
-      toast.success("Project deleted successfully");
+      toast.success("项目删除成功");
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to delete project");
+      toast.error(error.message || "项目删除失败");
     },
   });
 }

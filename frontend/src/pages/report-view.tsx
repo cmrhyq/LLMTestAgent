@@ -34,9 +34,9 @@ function ResponseTimeStats({ results }: { results: TestResultDetail[] }) {
   const p95 = sorted[p95Idx];
 
   const stats = [
-    { label: "Avg", value: avg },
-    { label: "Min", value: min },
-    { label: "Max", value: max },
+    { label: "平均", value: avg },
+    { label: "最小", value: min },
+    { label: "最大", value: max },
     { label: "P95", value: p95 },
   ];
 
@@ -46,7 +46,7 @@ function ResponseTimeStats({ results }: { results: TestResultDetail[] }) {
         <Card key={s.label}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              {s.label} Response
+              {s.label}响应
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -94,17 +94,17 @@ function ExpandableRow({ result }: { result: TestResultDetail }) {
           <td colSpan={6} className="px-4 py-4">
             <div className="grid gap-4 lg:grid-cols-2">
               <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-foreground">Request</h4>
+                <h4 className="text-sm font-semibold text-foreground">请求</h4>
                 <div className="space-y-2 text-sm">
                   <div>
-                    <span className="font-medium text-muted-foreground">URL: </span>
+                    <span className="font-medium text-muted-foreground">URL： </span>
                     <code className="break-all rounded bg-muted px-1 py-0.5 text-xs">
                       {result.request_url}
                     </code>
                   </div>
                   {result.request_headers && result.request_headers !== "{}" && (
                     <div>
-                      <span className="font-medium text-muted-foreground">Headers:</span>
+                      <span className="font-medium text-muted-foreground">请求头：</span>
                       <pre className="mt-1 max-h-40 overflow-auto rounded-md border bg-card p-2 text-xs">
                         {formatJson(result.request_headers)}
                       </pre>
@@ -112,7 +112,7 @@ function ExpandableRow({ result }: { result: TestResultDetail }) {
                   )}
                   {result.query_params && (
                     <div>
-                      <span className="font-medium text-muted-foreground">Query Params:</span>
+                      <span className="font-medium text-muted-foreground">查询参数：</span>
                       <pre className="mt-1 max-h-40 overflow-auto rounded-md border bg-card p-2 text-xs">
                         {formatJson(result.query_params)}
                       </pre>
@@ -120,7 +120,7 @@ function ExpandableRow({ result }: { result: TestResultDetail }) {
                   )}
                   {result.request_body && (
                     <div>
-                      <span className="font-medium text-muted-foreground">Body:</span>
+                      <span className="font-medium text-muted-foreground">请求体：</span>
                       <pre className="mt-1 max-h-60 overflow-auto rounded-md border bg-card p-2 text-xs">
                         {formatJson(result.request_body)}
                       </pre>
@@ -130,10 +130,10 @@ function ExpandableRow({ result }: { result: TestResultDetail }) {
               </div>
 
               <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-foreground">Response</h4>
+                <h4 className="text-sm font-semibold text-foreground">响应</h4>
                 <div className="space-y-2 text-sm">
                   <div>
-                    <span className="font-medium text-muted-foreground">Status Code: </span>
+                    <span className="font-medium text-muted-foreground">状态码： </span>
                     <span
                       className={cn(
                         "font-mono font-semibold",
@@ -147,7 +147,7 @@ function ExpandableRow({ result }: { result: TestResultDetail }) {
                   </div>
                   {result.response_headers && result.response_headers !== "{}" && (
                     <div>
-                      <span className="font-medium text-muted-foreground">Headers:</span>
+                      <span className="font-medium text-muted-foreground">响应头：</span>
                       <pre className="mt-1 max-h-40 overflow-auto rounded-md border bg-card p-2 text-xs">
                         {formatJson(result.response_headers)}
                       </pre>
@@ -155,7 +155,7 @@ function ExpandableRow({ result }: { result: TestResultDetail }) {
                   )}
                   {result.response_body && (
                     <div>
-                      <span className="font-medium text-muted-foreground">Body:</span>
+                      <span className="font-medium text-muted-foreground">响应体：</span>
                       <pre className="mt-1 max-h-60 overflow-auto rounded-md border bg-card p-2 text-xs">
                         {formatJson(result.response_body)}
                       </pre>
@@ -163,7 +163,7 @@ function ExpandableRow({ result }: { result: TestResultDetail }) {
                   )}
                   {result.error_message && (
                     <div>
-                      <span className="font-medium text-destructive">Error:</span>
+                      <span className="font-medium text-destructive">错误：</span>
                       <pre className="mt-1 max-h-40 overflow-auto rounded-md border border-destructive/20 bg-destructive/5 p-2 text-xs text-destructive">
                         {result.error_message}
                       </pre>
@@ -171,13 +171,13 @@ function ExpandableRow({ result }: { result: TestResultDetail }) {
                   )}
                   {result.retry_count > 0 && (
                     <div>
-                      <span className="font-medium text-muted-foreground">Retries: </span>
+                      <span className="font-medium text-muted-foreground">重试次数： </span>
                       <span>{result.retry_count}</span>
                     </div>
                   )}
                   {result.started_at && result.finished_at && (
                     <div>
-                      <span className="font-medium text-muted-foreground">Time: </span>
+                      <span className="font-medium text-muted-foreground">时间： </span>
                       <span className="text-xs text-muted-foreground">
                         {result.started_at} ~ {result.finished_at}
                       </span>
@@ -219,9 +219,9 @@ export default function ReportViewPage() {
       <div className="space-y-4">
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
+          返回
         </Button>
-        <p className="text-destructive">Failed to load report details.</p>
+        <p className="text-destructive">加载报告详情失败。</p>
       </div>
     );
   }
@@ -239,13 +239,13 @@ export default function ReportViewPage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">{test_run.name}</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              {test_run.llm_provider} / {test_run.llm_model} &middot; Generated {data.generated_at}
+              {test_run.llm_provider} / {test_run.llm_model} &middot; 生成于 {data.generated_at}
             </p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={() => downloadReport(data.id)}>
           <Download className="mr-2 h-4 w-4" />
-          Download HTML
+          下载 HTML
         </Button>
       </div>
 
@@ -253,7 +253,7 @@ export default function ReportViewPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">总数</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{test_run.total_cases}</p>
@@ -261,7 +261,7 @@ export default function ReportViewPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-emerald-400">Passed</CardTitle>
+            <CardTitle className="text-sm font-medium text-emerald-400">已通过</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-emerald-400">{test_run.passed_cases}</p>
@@ -269,7 +269,7 @@ export default function ReportViewPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-destructive">Failed</CardTitle>
+            <CardTitle className="text-sm font-medium text-destructive">已失败</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-destructive">{test_run.failed_cases}</p>
@@ -277,7 +277,7 @@ export default function ReportViewPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Skipped</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">已跳过</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{test_run.skipped_cases}</p>
@@ -285,7 +285,7 @@ export default function ReportViewPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-orange-400">Error</CardTitle>
+            <CardTitle className="text-sm font-medium text-orange-400">错误</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-orange-400">{test_run.error_cases}</p>
@@ -293,7 +293,7 @@ export default function ReportViewPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pass Rate</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">通过率</CardTitle>
           </CardHeader>
           <CardContent>
             <PassRateBar passed={test_run.passed_cases} total={test_run.total_cases} />
@@ -301,7 +301,7 @@ export default function ReportViewPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Duration</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">耗时</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold tabular-nums">
@@ -319,7 +319,7 @@ export default function ReportViewPage() {
       {failedResults.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-lg font-semibold text-destructive">
-            Failed / Error Cases ({failedResults.length})
+            失败 / 错误用例（{failedResults.length}）
           </h2>
           <div className="w-full overflow-hidden rounded-md border border-destructive/20">
             <div className="overflow-x-auto">
@@ -328,16 +328,14 @@ export default function ReportViewPage() {
                   <tr>
                     <th className="w-10 px-4 py-3" />
                     <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                      Case Name
+                      用例名称
                     </th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">方法</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">状态</th>
                     <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                      Method
+                      状态码
                     </th>
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                      Status
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">Code</th>
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">Time</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">耗时</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -354,7 +352,7 @@ export default function ReportViewPage() {
       {/* All test results */}
       <div className="space-y-3">
         <h2 className="text-lg font-semibold text-foreground">
-          All Test Results ({test_results.length})
+          全部测试结果（{test_results.length}）
         </h2>
         <div className="w-full overflow-hidden rounded-md border border-border">
           <div className="overflow-x-auto">
@@ -363,12 +361,12 @@ export default function ReportViewPage() {
                 <tr>
                   <th className="w-10 px-4 py-3" />
                   <th className="px-4 py-3 text-left font-medium text-muted-foreground">
-                    Case Name
+                    用例名称
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Method</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Code</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Time</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">方法</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">状态</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">状态码</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">耗时</th>
                 </tr>
               </thead>
               <tbody>
@@ -378,7 +376,7 @@ export default function ReportViewPage() {
                 {test_results.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
-                      No test results available
+                      暂无测试结果
                     </td>
                   </tr>
                 )}

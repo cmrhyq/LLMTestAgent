@@ -37,9 +37,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             <AlertCircle className="h-6 w-6 text-destructive" />
           </div>
           <div className="text-center">
-            <h2 className="text-lg font-semibold text-foreground">Something went wrong</h2>
+            <h2 className="text-lg font-semibold text-foreground">出错了</h2>
             <p className="mt-1 max-w-md text-sm text-muted-foreground">
-              {this.state.error?.message || "An unexpected error occurred."}
+              {this.state.error?.message || "发生了未知错误。"}
             </p>
           </div>
           <button
@@ -48,7 +48,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
           >
             <RefreshCw className="h-4 w-4" />
-            Try Again
+            重试
           </button>
         </div>
       );

@@ -22,10 +22,10 @@ export function useParseOpenAPI() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["endpoints"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
-      toast.success(data.message || "Document parsed successfully");
+      toast.success(data.message || "文档解析成功");
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to parse document");
+      toast.error(error.message || "文档解析失败");
     },
   });
 }
@@ -43,7 +43,7 @@ export function useUploadOpenAPI() {
       return data;
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to upload document");
+      toast.error(error.message || "文档上传失败");
     },
   });
 }
@@ -58,10 +58,10 @@ export function useRunTest() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["test-runs"] });
-      toast.success(data.message || "Test submitted successfully");
+      toast.success(data.message || "测试提交成功");
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to run test");
+      toast.error(error.message || "测试运行失败");
     },
   });
 }

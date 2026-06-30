@@ -38,7 +38,7 @@ export function DataTable<T extends object>({
   columns,
   data,
   loading = false,
-  emptyText = "No data available",
+  emptyText = "暂无数据",
   pagination,
 }: DataTableProps<T>) {
   const totalPages = pagination
@@ -112,7 +112,7 @@ export function DataTable<T extends object>({
       {pagination && totalPages > 1 && (
         <div className="flex items-center justify-between border-t px-4 py-3">
           <span className="text-sm text-muted-foreground">
-            Page {pagination.page} of {totalPages}
+            第 {pagination.page} / {totalPages} 页
           </span>
           <div className="flex gap-2">
             <button
@@ -124,7 +124,7 @@ export function DataTable<T extends object>({
                 pagination.page <= 1 ? "cursor-not-allowed opacity-50" : "hover:bg-muted"
               )}
             >
-              Previous
+              上一页
             </button>
             <button
               type="button"
@@ -135,7 +135,7 @@ export function DataTable<T extends object>({
                 pagination.page >= totalPages ? "cursor-not-allowed opacity-50" : "hover:bg-muted"
               )}
             >
-              Next
+              下一页
             </button>
           </div>
         </div>

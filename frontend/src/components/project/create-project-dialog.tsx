@@ -45,22 +45,22 @@ export function CreateProjectDialog() {
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
-          Create Project
+          创建项目
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Project</DialogTitle>
-          <DialogDescription>Add a new API project to start testing.</DialogDescription>
+          <DialogTitle>创建项目</DialogTitle>
+          <DialogDescription>添加一个新的 API 项目以开始测试。</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="project-name" className="text-sm font-medium">
-              Name
+              名称
             </label>
             <Input
               id="project-name"
-              placeholder="My API Project"
+              placeholder="我的 API 项目"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -68,7 +68,7 @@ export function CreateProjectDialog() {
           </div>
           <div className="space-y-2">
             <label htmlFor="project-base-url" className="text-sm font-medium">
-              Base URL
+              基础 URL
             </label>
             <Input
               id="project-base-url"
@@ -80,11 +80,11 @@ export function CreateProjectDialog() {
           </div>
           <div className="space-y-2">
             <label htmlFor="project-description" className="text-sm font-medium">
-              Description
+              描述
             </label>
             <Input
               id="project-description"
-              placeholder="Optional description"
+              placeholder="可选描述"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
@@ -94,10 +94,10 @@ export function CreateProjectDialog() {
           )}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              取消
             </Button>
             <Button type="submit" disabled={createProject.isPending}>
-              {createProject.isPending ? "Creating..." : "Create"}
+              {createProject.isPending ? "创建中…" : "创建"}
             </Button>
           </DialogFooter>
         </form>

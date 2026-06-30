@@ -29,8 +29,8 @@ import type { Column } from "@/components/shared/data-table";
 import type { Endpoint, Environment, TestRun } from "@/lib/types";
 
 const PROJECT_STATUS_MAP: Record<number, string> = {
-  0: "Inactive",
-  1: "Active",
+  0: "未启用",
+  1: "已启用",
 };
 
 export default function ProjectDetailPage() {
@@ -85,25 +85,25 @@ export default function ProjectDetailPage() {
   const endpointColumns: Column<Endpoint>[] = [
     {
       key: "method",
-      header: "Method",
+      header: "方法",
       className: "w-20",
       render: (_, row) => <HttpMethodBadge method={row.method} />,
     },
     {
       key: "path",
-      header: "Path",
+      header: "路径",
       render: (_, row) => (
         <span className="font-mono text-xs text-muted-foreground">{row.path}</span>
       ),
     },
     {
       key: "name",
-      header: "Name",
+      header: "名称",
       render: (_, row) => <span className="font-medium text-foreground">{row.name}</span>,
     },
     {
       key: "status",
-      header: "Status",
+      header: "状态",
       render: (_, row) => <StatusBadge status={row.status === 1 ? "active" : "inactive"} />,
     },
     {
@@ -125,14 +125,14 @@ export default function ProjectDetailPage() {
               }}
             >
               <Pencil className="mr-2 h-3.5 w-3.5" />
-              Edit
+              编辑
             </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive"
               onClick={() => setDeleteEndpointTarget(row)}
             >
               <Trash2 className="mr-2 h-3.5 w-3.5" />
-              Delete
+              删除
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -143,7 +143,7 @@ export default function ProjectDetailPage() {
   const testRunColumns: Column<TestRun>[] = [
     {
       key: "name",
-      header: "Name",
+      header: "名称",
       render: (_, row) => (
         <Link to={`/runs/${row.id}`} className="font-medium text-accent hover:text-accent/80">
           {row.name}
@@ -152,17 +152,17 @@ export default function ProjectDetailPage() {
     },
     {
       key: "status",
-      header: "Status",
+      header: "状态",
       render: (_, row) => <StatusBadge status={row.status} />,
     },
     {
       key: "pass_rate",
-      header: "Pass Rate",
+      header: "通过率",
       render: (_, row) => <PassRateBar passed={row.passed_cases} total={row.total_cases} />,
     },
     {
       key: "total_duration",
-      header: "Duration",
+      header: "耗时",
       render: (_, row) => (
         <span className="text-sm text-muted-foreground">
           {row.total_duration > 0 ? `${(row.total_duration / 1000).toFixed(1)}s` : "--"}
@@ -171,7 +171,7 @@ export default function ProjectDetailPage() {
     },
     {
       key: "created_at",
-      header: "Created At",
+      header: "创建时间",
       render: (_, row) => (
         <span className="text-sm text-muted-foreground">
           {new Date(row.created_at).toLocaleDateString()}
@@ -191,11 +191,11 @@ export default function ProjectDetailPage() {
   if (!project) {
     return (
       <EmptyState
-        title="Project not found"
-        description="The project you are looking for does not exist or has been deleted."
+        title="未找到项目"
+        description="你查找的项目不存在或已被删除。"
         action={
           <Button variant="outline" onClick={() => navigate("/")}>
-            Back to Dashboard
+            返回仪表盘
           </Button>
         }
       />
@@ -213,7 +213,7 @@ export default function ProjectDetailPage() {
               {project.base_url}
             </span>
             <Badge variant={project.status === 1 ? "default" : "secondary"}>
-              {PROJECT_STATUS_MAP[project.status] ?? "Unknown"}
+              {PROJECT_STATUS_MAP[project.status] ?? "未知"}
             </Badge>
           </div>
           {project.description && (
@@ -224,9 +224,9 @@ export default function ProjectDetailPage() {
 
       <Tabs defaultValue="endpoints" className="w-full">
         <TabsList>
-          <TabsTrigger value="endpoints">Endpoints</TabsTrigger>
-          <TabsTrigger value="environments">Environments</TabsTrigger>
-          <TabsTrigger value="test-runs">Test Runs</TabsTrigger>
+          <TabsTrigger value="endpoints">接口</TabsTrigger>
+          <TabsTrigger value="environments">环境</TabsTrigger>
+          <TabsTrigger value="test-runs">测试运行</TabsTrigger>
         </TabsList>
 
         <TabsContent value="endpoints" className="space-y-4">
@@ -234,7 +234,7 @@ export default function ProjectDetailPage() {
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search endpoints..."
+                placeholder="搜索接口…"
                 value={endpointSearch}
                 onChange={(e) => setEndpointSearch(e.target.value)}
                 className="pl-9"
@@ -248,14 +248,14 @@ export default function ProjectDetailPage() {
               }}
             >
               <Plus className="mr-2 h-4 w-4" />
-              Add Endpoint
+              添加接口
             </Button>
           </div>
           <DataTable
             columns={endpointColumns}
             data={filteredEndpoints}
             loading={endpointsLoading}
-            emptyText="No endpoints found for this project."
+            emptyText="该项目暂无接口。"
             pagination={{
               page: endpointPage,
               pageSize,
@@ -267,9 +267,7 @@ export default function ProjectDetailPage() {
 
         <TabsContent value="environments" className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Manage environments for different deployment targets.
-            </p>
+            <p className="text-sm text-muted-foreground">为不同的部署目标管理环境。</p>
             <Button
               size="sm"
               onClick={() => {
@@ -278,7 +276,7 @@ export default function ProjectDetailPage() {
               }}
             >
               <Plus className="mr-2 h-4 w-4" />
-              Add Environment
+              添加环境
             </Button>
           </div>
           {environmentsLoading ? (
@@ -293,10 +291,7 @@ export default function ProjectDetailPage() {
               ))}
             </div>
           ) : (environmentsData?.items ?? []).length === 0 ? (
-            <EmptyState
-              title="No environments"
-              description="Add an environment to configure different base URLs and variables."
-            />
+            <EmptyState title="暂无环境" description="添加环境以配置不同的基础 URL 和变量。" />
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {(environmentsData?.items ?? []).map((env) => (
@@ -307,7 +302,7 @@ export default function ProjectDetailPage() {
                       <div className="flex items-center gap-2">
                         {env.is_default === 1 && (
                           <Badge variant="outline" className="text-xs">
-                            Default
+                            默认
                           </Badge>
                         )}
                         <DropdownMenu>
@@ -324,14 +319,14 @@ export default function ProjectDetailPage() {
                               }}
                             >
                               <Pencil className="mr-2 h-3.5 w-3.5" />
-                              Edit
+                              编辑
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               className="text-destructive"
                               onClick={() => setDeleteEnvTarget(env)}
                             >
                               <Trash2 className="mr-2 h-3.5 w-3.5" />
-                              Delete
+                              删除
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -355,7 +350,7 @@ export default function ProjectDetailPage() {
             columns={testRunColumns}
             data={testRunsData?.items ?? []}
             loading={testRunsLoading}
-            emptyText="No test runs found for this project."
+            emptyText="该项目暂无测试运行。"
             pagination={{
               page: testRunPage,
               pageSize,
@@ -384,11 +379,10 @@ export default function ProjectDetailPage() {
             setDeleteEndpointTarget(null);
           }
         }}
-        title="Delete Endpoint"
+        title="删除接口"
         description={
           <>
-            Are you sure you want to delete endpoint <strong>{deleteEndpointTarget?.name}</strong>?
-            This action cannot be undone.
+            确定要删除接口 <strong>{deleteEndpointTarget?.name}</strong> 吗？此操作无法撤销。
           </>
         }
       />
@@ -411,11 +405,10 @@ export default function ProjectDetailPage() {
             setDeleteEnvTarget(null);
           }
         }}
-        title="Delete Environment"
+        title="删除环境"
         description={
           <>
-            Are you sure you want to delete environment <strong>{deleteEnvTarget?.name}</strong>?
-            This action cannot be undone.
+            确定要删除环境 <strong>{deleteEnvTarget?.name}</strong> 吗？此操作无法撤销。
           </>
         }
       />

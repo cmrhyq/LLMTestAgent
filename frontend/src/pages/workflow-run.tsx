@@ -40,6 +40,13 @@ export default function WorkflowRunPage() {
     }
   };
 
+  const handleInstructionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInstruction(e.target.value);
+    const el = e.target;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (selected) {
@@ -71,66 +78,29 @@ export default function WorkflowRunPage() {
         {isSuccess && data ? (
           <div className="flex flex-col items-center gap-4">
             <CheckCircle2 className="h-16 w-16 text-primary" />
-            <h2 className="text-xl font-semibold text-foreground">Test Started</h2>
+            <h2 className="text-xl font-semibold text-foreground">测试已启动</h2>
             <p className="text-muted-foreground">{data.message}</p>
             <p className="text-sm text-muted-foreground">
-              Run ID:{" "}
+              运行 ID：{" "}
               <span className="font-mono font-semibold text-foreground">{String(data.run_id)}</span>
             </p>
-            <p className="text-xs text-muted-foreground">Redirecting to run details...</p>
+            <p className="text-xs text-muted-foreground">正在跳转到运行详情…</p>
           </div>
         ) : isPending ? (
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="h-10 w-10 animate-spin text-accent" />
-            <p className="text-muted-foreground">Running test...</p>
+            <p className="text-muted-foreground">正在运行测试…</p>
           </div>
         ) : (
           <div className="text-center">
-            <h1 className="text-3xl font-medium text-foreground">What would you like to test?</h1>
-            <p className="mt-2 text-muted-foreground">
-              Enter a natural language instruction to start API testing
-            </p>
+            <h1 className="text-3xl font-medium text-foreground">你想测试什么？</h1>
+            <p className="mt-2 text-muted-foreground">输入自然语言指令，开始 API 测试</p>
           </div>
         )}
       </div>
 
       <div className="shrink-0 px-4 pb-6">
-        {file && (
-          <div className="mb-2 flex items-center gap-2 rounded-lg bg-secondary px-3 py-1.5 w-fit">
-            {isUploading ? (
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            ) : uploadedPath ? (
-              <CheckCircle2 className="h-4 w-4 text-primary" />
-            ) : (
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            )}
-            <span className="text-sm text-foreground">{file.name}</span>
-            {isUploading && <span className="text-xs text-muted-foreground">Uploading...</span>}
-            <button
-              type="button"
-              onClick={handleRemoveFile}
-              disabled={isUploading}
-              className="ml-1 rounded p-0.5 text-muted-foreground hover:bg-border hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        )}
-
-        <div className="flex items-center gap-2 rounded-3xl border border-border bg-card px-2 py-2">
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading || isPending}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-border hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {isUploading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <Plus className="h-5 w-5" />
-            )}
-          </button>
-
+        <div className="mx-auto w-full max-w-3xl">
           <input
             ref={fileInputRef}
             type="file"
@@ -139,29 +109,68 @@ export default function WorkflowRunPage() {
             className="hidden"
           />
 
-          <input
-            type="text"
-            value={instruction}
-            onChange={(e) => setInstruction(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="e.g., Run single-endpoint tests on all endpoints"
-            className="flex-1 bg-transparent px-2 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
-            disabled={isPending}
-          />
+          <div className="rounded-2xl border border-border bg-card px-3 py-2.5 shadow-sm transition-colors focus-within:border-[#8b949e]">
+            {/* 输入框 */}
+            <textarea
+              value={instruction}
+              onChange={handleInstructionChange}
+              onKeyDown={handleKeyDown}
+              placeholder="例如：对所有接口运行单接口测试"
+              rows={1}
+              disabled={isPending}
+              className="max-h-40 w-full resize-none bg-transparent px-1 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
+            />
 
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={!instruction.trim() || isPending || isUploading}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/80 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <Send className="h-4 w-4" />
-          </button>
+            {/* 工具栏 */}
+            <div className="mt-1.5 flex items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-2">
+                {file ? (
+                  <span className="flex min-w-0 items-center gap-1.5 rounded-md border border-border bg-secondary px-2 py-1 text-xs text-foreground">
+                    {isUploading ? (
+                      <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground" />
+                    ) : uploadedPath ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-primary" />
+                    ) : (
+                      <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    )}
+                    <span className="truncate max-w-[160px]">{file.name}</span>
+                    <button
+                      type="button"
+                      onClick={handleRemoveFile}
+                      disabled={isUploading}
+                      className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:bg-border hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading || isPending}
+                    className="flex items-center gap-1.5 rounded-md border border-border bg-transparent px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    附加文档
+                  </button>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!instruction.trim() || isPending || isUploading}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            通过「附加文档」添加 OpenAPI 文档（.json/.yaml），或直接输入你的指令
+          </p>
         </div>
-
-        <p className="mt-2 text-center text-xs text-muted-foreground">
-          Attach an OpenAPI document (.json/.yaml) with the + button, or just type your instruction
-        </p>
       </div>
     </div>
   );

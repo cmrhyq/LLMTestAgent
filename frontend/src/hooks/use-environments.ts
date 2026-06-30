@@ -30,10 +30,10 @@ export function useCreateEnvironment() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["environments"] });
-      toast.success("Environment created successfully");
+      toast.success("环境创建成功");
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create environment");
+      toast.error(error.message || "环境创建失败");
     },
   });
 }
@@ -47,10 +47,10 @@ export function useDeleteEnvironment() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["environments"] });
-      toast.success("Environment deleted successfully");
+      toast.success("环境删除成功");
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to delete environment");
+      toast.error(error.message || "环境删除失败");
     },
   });
 }
@@ -66,10 +66,10 @@ export function useUpdateEnvironment() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["environments"] });
       queryClient.invalidateQueries({ queryKey: ["environments", variables.id] });
-      toast.success("Environment updated successfully");
+      toast.success("环境更新成功");
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update environment");
+      toast.error(error.message || "环境更新失败");
     },
   });
 }

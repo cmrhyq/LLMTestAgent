@@ -40,28 +40,23 @@ export function Sidebar({ collapsed }: SidebarProps) {
       )}
     >
       <nav className="flex flex-1 flex-col gap-1 p-3 min-w-[200px]">
-        <NavItem to="/dashboard" icon={<LayoutDashboard className="h-4 w-4" />} label="Dashboard" />
+        <NavItem to="/dashboard" icon={<LayoutDashboard className="h-4 w-4" />} label="仪表盘" />
 
         <div className="mt-4 mb-2 px-3">
           <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Workflows
+            工作流
           </span>
         </div>
 
-        {/*<NavItem*/}
-        {/*  to="/workflows/parse"*/}
-        {/*  icon={<FileUp className="h-4 w-4" />}*/}
-        {/*  label="Parse Document"*/}
-        {/*/>*/}
-        <NavItem to="/workflows/run" icon={<Play className="h-4 w-4" />} label="New Test" />
+        <NavItem to="/workflows/run" icon={<Play className="h-4 w-4" />} label="新建测试" />
 
         <div className="mt-4 mb-2 px-3">
           <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Results
+            结果
           </span>
         </div>
 
-        <NavItem to="/reports" icon={<FileText className="h-4 w-4" />} label="Reports" />
+        <NavItem to="/reports" icon={<FileText className="h-4 w-4" />} label="报告" />
       </nav>
     </aside>
   );

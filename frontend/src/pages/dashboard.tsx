@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Folder, Globe, CheckCircle, MoreHorizontal, FileText, Play } from "lucide-react";
+import { Folder, Globe, CheckCircle, MoreHorizontal, Play } from "lucide-react";
 
 import { useProjects, useDeleteProject } from "@/hooks/use-projects";
 import { useTestRuns } from "@/hooks/use-test-runs";
@@ -21,8 +21,8 @@ import type { Column } from "@/components/shared/data-table";
 import type { Project } from "@/lib/types";
 
 const STATUS_MAP: Record<number, string> = {
-  0: "Inactive",
-  1: "Active",
+  0: "未启用",
+  1: "已启用",
 };
 
 export default function DashboardPage() {
@@ -57,7 +57,7 @@ export default function DashboardPage() {
   const columns: Column<Project>[] = [
     {
       key: "name",
-      header: "Name",
+      header: "名称",
       render: (_, row) => (
         <Link to={`/projects/${row.id}`} className="font-medium text-accent hover:text-accent/80">
           {row.name}
@@ -66,23 +66,23 @@ export default function DashboardPage() {
     },
     {
       key: "base_url",
-      header: "Base URL",
+      header: "基础 URL",
       render: (_, row) => (
         <span className="font-mono text-xs text-muted-foreground">{row.base_url}</span>
       ),
     },
     {
       key: "status",
-      header: "Status",
+      header: "状态",
       render: (_, row) => (
         <Badge variant={row.status === 1 ? "default" : "secondary"}>
-          {STATUS_MAP[row.status] ?? "Unknown"}
+          {STATUS_MAP[row.status] ?? "未知"}
         </Badge>
       ),
     },
     {
       key: "created_at",
-      header: "Created At",
+      header: "创建时间",
       render: (_, row) => (
         <span className="text-sm text-muted-foreground">
           {new Date(row.created_at).toLocaleDateString()}
@@ -91,7 +91,7 @@ export default function DashboardPage() {
     },
     {
       key: "id",
-      header: "Actions",
+      header: "操作",
       className: "w-12",
       render: (_, row) => (
         <DropdownMenu>
@@ -102,10 +102,10 @@ export default function DashboardPage() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link to={`/projects/${row.id}`}>Edit</Link>
+              <Link to={`/projects/${row.id}`}>编辑</Link>
             </DropdownMenuItem>
             <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(row)}>
-              Delete
+              删除
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -116,16 +116,14 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Dashboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Overview of your API testing projects.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">仪表盘</h1>
+        <p className="mt-1 text-sm text-muted-foreground">API 测试项目概览。</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Projects
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">项目总数</CardTitle>
             <Folder className="h-4 w-4 text-accent" />
           </CardHeader>
           <CardContent>
@@ -134,9 +132,7 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Endpoints
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">接口总数</CardTitle>
             <Globe className="h-4 w-4 text-teal-500" />
           </CardHeader>
           <CardContent>
@@ -145,9 +141,7 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Avg Pass Rate
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">平均通过率</CardTitle>
             <CheckCircle className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
@@ -157,18 +151,12 @@ export default function DashboardPage() {
       </div>
 
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-foreground">Quick Actions</h2>
+        <h2 className="mb-3 text-lg font-semibold text-foreground">快捷操作</h2>
         <div className="flex gap-3">
-          <Button asChild variant="outline">
-            <Link to="/workflows/parse">
-              <FileText className="mr-2 h-4 w-4" />
-              Parse Document
-            </Link>
-          </Button>
           <Button asChild variant="outline">
             <Link to="/workflows/run">
               <Play className="mr-2 h-4 w-4" />
-              Run Test
+              运行测试
             </Link>
           </Button>
         </div>
@@ -176,14 +164,14 @@ export default function DashboardPage() {
 
       <div>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Projects</h2>
+          <h2 className="text-lg font-semibold text-foreground">项目</h2>
           <CreateProjectDialog />
         </div>
         <DataTable
           columns={columns}
           data={projectsData?.items ?? []}
           loading={projectsLoading}
-          emptyText="No projects yet. Create one to get started."
+          emptyText="暂无项目，创建一个开始使用吧。"
           pagination={{
             page,
             pageSize,
@@ -204,16 +192,15 @@ export default function DashboardPage() {
             setDeleteTarget(null);
           }
         }}
-        title="Delete Project"
+        title="删除项目"
         description={
           <span>
-            Are you sure you want to delete project <strong>{deleteTarget?.name}</strong>? This will
-            permanently delete all associated data including environments, endpoints, test runs,
-            test cases, and reports.{" "}
-            <span className="font-semibold text-destructive">This action cannot be undone.</span>
+            确定要删除项目 <strong>{deleteTarget?.name}</strong> 吗？此操作将永久删除所有关联数据，
+            包括环境、接口、测试运行、测试用例和报告。{" "}
+            <span className="font-semibold text-destructive">此操作无法撤销。</span>
           </span>
         }
-        confirmText="Delete Project"
+        confirmText="删除项目"
       />
     </div>
   );
