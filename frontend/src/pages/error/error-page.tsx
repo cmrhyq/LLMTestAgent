@@ -1,8 +1,8 @@
 import { Link, useNavigate, useRouteError, isRouteErrorResponse } from "react-router-dom";
 import { AlertTriangle, RefreshCw, LayoutDashboard } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import NotFoundPage from "./not-found";
+import { Button } from "@/components/ui/button.tsx";
+import NotFoundPage from "./not-found.tsx";
 
 function resolveError(error: unknown): { status?: number; title: string; message: string } {
   if (isRouteErrorResponse(error)) {

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Send, X, FileText, Loader2, CheckCircle2 } from "lucide-react";
 
-import { useRunTest, useUploadOpenAPI } from "@/hooks/use-workflows";
+import { useRunTest, useUploadOpenAPI } from "@/hooks/use-workflows.ts";
 
 const REDIRECT_DELAY_MS = 2000;
 
@@ -151,6 +151,7 @@ export default function WorkflowRunPage() {
                     className="flex items-center gap-1.5 rounded-md border border-border bg-transparent px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <Plus className="h-3.5 w-3.5" />
+                    解析文档
                   </button>
                 )}
               </div>

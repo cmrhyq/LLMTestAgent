@@ -1,7 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { AppLayout } from "./components/layout/app-layout";
-import ErrorPage from "./pages/error-page";
-import NotFoundPage from "./pages/not-found";
+import ErrorPage from "./pages/error/error-page.tsx";
+import NotFoundPage from "./pages/error/not-found.tsx";
 
 export const router = createBrowserRouter([
   {
@@ -22,7 +22,7 @@ export const router = createBrowserRouter([
           {
             path: "projects/:id",
             lazy: async () => {
-              const { default: Component } = await import("./pages/project-detail");
+              const { default: Component } = await import("./pages/poject/project-detail.tsx");
               return { Component };
             },
           },
@@ -41,28 +41,28 @@ export const router = createBrowserRouter([
           {
             path: "runs/:id",
             lazy: async () => {
-              const { default: Component } = await import("./pages/run-detail");
+              const { default: Component } = await import("./pages/run/run-detail.tsx");
               return { Component };
             },
           },
           {
             path: "workflows/run",
             lazy: async () => {
-              const { default: Component } = await import("./pages/workflow-run");
+              const { default: Component } = await import("./pages/run/workflow-run.tsx");
               return { Component };
             },
           },
           {
             path: "reports",
             lazy: async () => {
-              const { default: Component } = await import("./pages/reports");
+              const { default: Component } = await import("./pages/report/reports.tsx");
               return { Component };
             },
           },
           {
             path: "reports/:id",
             lazy: async () => {
-              const { default: Component } = await import("./pages/report-view");
+              const { default: Component } = await import("./pages/report/report-view.tsx");
               return { Component };
             },
           },

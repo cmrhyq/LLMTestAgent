@@ -1,17 +1,17 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, FileText } from "lucide-react";
 
-import { useTestRunDetail } from "@/hooks/use-test-runs";
-import { useReports } from "@/hooks/use-reports";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { StatusBadge } from "@/components/shared/status-badge";
-import { HttpMethodBadge } from "@/components/shared/http-method-badge";
-import { PassRateBar } from "@/components/shared/pass-rate-bar";
-import { DataTable } from "@/components/shared/data-table";
-import type { Column } from "@/components/shared/data-table";
-import type { TestCaseBrief, TestResultBrief } from "@/lib/types";
+import { useTestRunDetail } from "@/hooks/use-test-runs.ts";
+import { useReports } from "@/hooks/use-reports.ts";
+import { Button } from "@/components/ui/button.tsx";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.tsx";
+import { Skeleton } from "@/components/ui/skeleton.tsx";
+import { StatusBadge } from "@/components/shared/status-badge.tsx";
+import { HttpMethodBadge } from "@/components/shared/http-method-badge.tsx";
+import { PassRateBar } from "@/components/shared/pass-rate-bar.tsx";
+import { DataTable } from "@/components/shared/data-table.tsx";
+import type { Column } from "@/components/shared/data-table.tsx";
+import type { TestCaseBrief, TestResultBrief } from "@/lib/types.ts";
 
 interface CaseRow {
   case_name: string;

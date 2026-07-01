@@ -100,7 +100,7 @@ export default function DashboardPage() {
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent className="border-border shadow-border" align="end">
             <DropdownMenuItem asChild>
               <Link to={`/projects/${row.id}`}>编辑</Link>
             </DropdownMenuItem>
@@ -156,7 +156,7 @@ export default function DashboardPage() {
           <Button asChild variant="outline">
             <Link to="/workflows/run">
               <Play className="mr-2 h-4 w-4" />
-              运行测试
+              新建测试
             </Link>
           </Button>
         </div>

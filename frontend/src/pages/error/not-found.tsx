@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Compass, ArrowLeft, LayoutDashboard } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button.tsx";
 
 export default function NotFoundPage() {
   const navigate = useNavigate();

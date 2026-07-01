@@ -2,10 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FileText, Download, Eye } from "lucide-react";
 
-import { useReports, downloadReport } from "@/hooks/use-reports";
-import { DataTable } from "@/components/shared/data-table";
-import type { Column } from "@/components/shared/data-table";
-import type { Report } from "@/lib/types";
+import { useReports, downloadReport } from "@/hooks/use-reports.ts";
+import { DataTable } from "@/components/shared/data-table.tsx";
+import type { Column } from "@/components/shared/data-table.tsx";
+import type { Report } from "@/lib/types.ts";
 
 type ReportRow = Report & Record<string, unknown>;
 

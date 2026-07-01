@@ -2,31 +2,31 @@ import { useState, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Search, Globe, Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
-import { useProject } from "@/hooks/use-projects";
-import { useEndpoints, useDeleteEndpoint } from "@/hooks/use-endpoints";
-import { useEnvironments, useDeleteEnvironment } from "@/hooks/use-environments";
-import { useTestRuns } from "@/hooks/use-test-runs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useProject } from "@/hooks/use-projects.ts";
+import { useEndpoints, useDeleteEndpoint } from "@/hooks/use-endpoints.ts";
+import { useEnvironments, useDeleteEnvironment } from "@/hooks/use-environments.ts";
+import { useTestRuns } from "@/hooks/use-test-runs.ts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.tsx";
+import { Button } from "@/components/ui/button.tsx";
+import { Badge } from "@/components/ui/badge.tsx";
+import { Input } from "@/components/ui/input.tsx";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs.tsx";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { DataTable } from "@/components/shared/data-table";
-import { StatusBadge } from "@/components/shared/status-badge";
-import { HttpMethodBadge } from "@/components/shared/http-method-badge";
-import { PassRateBar } from "@/components/shared/pass-rate-bar";
-import { EmptyState } from "@/components/shared/empty-state";
-import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
-import { EndpointFormDialog } from "@/components/endpoint/endpoint-form-dialog";
-import { EnvironmentFormDialog } from "@/components/environment/environment-form-dialog";
-import type { Column } from "@/components/shared/data-table";
-import type { Endpoint, Environment, TestRun } from "@/lib/types";
+} from "@/components/ui/dropdown-menu.tsx";
+import { DataTable } from "@/components/shared/data-table.tsx";
+import { StatusBadge } from "@/components/shared/status-badge.tsx";
+import { HttpMethodBadge } from "@/components/shared/http-method-badge.tsx";
+import { PassRateBar } from "@/components/shared/pass-rate-bar.tsx";
+import { EmptyState } from "@/components/shared/empty-state.tsx";
+import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog.tsx";
+import { EndpointFormDialog } from "@/components/endpoint/endpoint-form-dialog.tsx";
+import { EnvironmentFormDialog } from "@/components/environment/environment-form-dialog.tsx";
+import type { Column } from "@/components/shared/data-table.tsx";
+import type { Endpoint, Environment, TestRun } from "@/lib/types.ts";
 
 const PROJECT_STATUS_MAP: Record<number, string> = {
   0: "未启用",
@@ -117,7 +117,7 @@ export default function ProjectDetailPage() {
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent className="border-border shadow-border" align="end">
             <DropdownMenuItem
               onClick={() => {
                 setEditingEndpoint(row);
@@ -311,7 +311,7 @@ export default function ProjectDetailPage() {
                               <MoreHorizontal className="h-3.5 w-3.5" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent className="border-border shadow-border" align="end">
                             <DropdownMenuItem
                               onClick={() => {
                                 setEditingEnv(env);

@@ -2,15 +2,15 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Download, ChevronDown, ChevronRight } from "lucide-react";
 
-import { useReportDetail, downloadReport } from "@/hooks/use-reports";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { StatusBadge } from "@/components/shared/status-badge";
-import { HttpMethodBadge } from "@/components/shared/http-method-badge";
-import { PassRateBar } from "@/components/shared/pass-rate-bar";
-import type { TestResultDetail } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { useReportDetail, downloadReport } from "@/hooks/use-reports.ts";
+import { Button } from "@/components/ui/button.tsx";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.tsx";
+import { Skeleton } from "@/components/ui/skeleton.tsx";
+import { StatusBadge } from "@/components/shared/status-badge.tsx";
+import { HttpMethodBadge } from "@/components/shared/http-method-badge.tsx";
+import { PassRateBar } from "@/components/shared/pass-rate-bar.tsx";
+import type { TestResultDetail } from "@/lib/types.ts";
+import { cn } from "@/lib/utils.ts";
 
 function formatJson(raw: string | null): string {
   if (!raw) return "";
