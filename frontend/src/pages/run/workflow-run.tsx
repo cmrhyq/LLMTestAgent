@@ -1,14 +1,36 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Send, X, FileText, Loader2, CheckCircle2 } from "lucide-react";
+import {
+  Plus,
+  Send,
+  X,
+  FileText,
+  Loader2,
+  CheckCircle2,
+  ChevronDown,
+  Check,
+  HelpCircle,
+} from "lucide-react";
 
 import { useRunTest, useUploadOpenAPI } from "@/hooks/use-workflows.ts";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const REDIRECT_DELAY_MS = 2000;
+const MODES = [
+  { value: "Ask", description: "询问模式：分析接口并解答问题，不实际执行测试" },
+  { value: "Plan", description: "计划模式：生成测试计划，确认后执行测试" },
+] as const;
 
 export default function WorkflowRunPage() {
   const navigate = useNavigate();
   const [instruction, setInstruction] = useState("");
+  const [mode, setMode] = useState("Ask");
   const [file, setFile] = useState<File | null>(null);
   const [uploadedPath, setUploadedPath] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -124,6 +146,45 @@ export default function WorkflowRunPage() {
             {/* 工具栏 */}
             <div className="mt-1.5 flex items-center justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex items-center gap-1.5 rounded-md border border-border bg-transparent px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {mode}
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="border-border shadow-border">
+                    <TooltipProvider delayDuration={200}>
+                      {MODES.map((m) => (
+                        <DropdownMenuItem key={m.value} onClick={() => setMode(m.value)}>
+                          <span className="flex-1">{m.value}</span>
+                          {mode === m.value && <Check className="h-3.5 w-3.5" />}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span
+                                onClick={(e) => e.stopPropagation()}
+                                onPointerDown={(e) => e.stopPropagation()}
+                                className="text-muted-foreground transition-colors hover:text-foreground"
+                              >
+                                <HelpCircle className="h-3.5 w-3.5" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent
+                              side="right"
+                              className="max-w-[220px] border border-border bg-popover text-popover-foreground shadow-md"
+                            >
+                              {m.description}
+                            </TooltipContent>
+                          </Tooltip>
+                        </DropdownMenuItem>
+                      ))}
+                    </TooltipProvider>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
                 {file ? (
                   <span className="flex min-w-0 items-center gap-1.5 rounded-md border border-border bg-secondary px-2 py-1 text-xs text-foreground">
                     {isUploading ? (
@@ -150,8 +211,8 @@ export default function WorkflowRunPage() {
                     disabled={isUploading || isPending}
                     className="flex items-center gap-1.5 rounded-md border border-border bg-transparent px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    <Plus className="h-3.5 w-3.5" />
                     解析文档
+                    <Plus className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
