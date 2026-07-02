@@ -229,7 +229,7 @@ export default function WorkflowRunPage() {
           </div>
 
           <p className="mt-2 text-center text-xs text-muted-foreground">
-            通过「附加文档」添加 OpenAPI 文档（.json/.yaml），或直接输入你的指令
+            通过「解析文档」添加 OpenAPI 文档（.json/.yaml），或直接输入你的指令
           </p>
         </div>
       </div>

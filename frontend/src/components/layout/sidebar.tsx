@@ -16,8 +16,8 @@ function NavItem({ to, icon, label }: NavItemProps) {
         cn(
           "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors no-underline",
           isActive
-            ? "border-l-2 border-accent bg-secondary font-medium text-foreground"
-            : "border-l-2 border-transparent text-muted-foreground hover:bg-secondary hover:text-foreground"
+            ? "border-l-2 border-accent bg-blue-50 font-medium text-foreground"
+            : "border-l-2 border-transparent text-muted-foreground hover:bg-blue-100 hover:text-foreground"
         )
       }
     >
