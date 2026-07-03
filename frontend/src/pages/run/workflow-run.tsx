@@ -10,6 +10,8 @@ import {
   ChevronDown,
   Check,
   HelpCircle,
+  MessageSquare,
+  ListTodo,
 } from "lucide-react";
 
 import { useRunTest, useUploadOpenAPI } from "@/hooks/use-workflows.ts";
@@ -23,8 +25,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 const REDIRECT_DELAY_MS = 2000;
 const MODES = [
-  { value: "Ask", description: "询问模式：分析接口并解答问题，不实际执行测试" },
-  { value: "Plan", description: "计划模式：生成测试计划，确认后执行测试" },
+  {
+    icon: <MessageSquare />,
+    value: "Ask",
+    description: "询问模式：分析接口并解答问题，不实际执行测试",
+  },
+  { icon: <ListTodo />, value: "Plan", description: "计划模式：生成测试计划，确认后执行测试" },
 ] as const;
 
 export default function WorkflowRunPage() {
@@ -160,6 +166,7 @@ export default function WorkflowRunPage() {
                     <TooltipProvider delayDuration={200}>
                       {MODES.map((m) => (
                         <DropdownMenuItem key={m.value} onClick={() => setMode(m.value)}>
+                          {m.icon}
                           <span className="flex-1">{m.value}</span>
                           {mode === m.value && <Check className="h-3.5 w-3.5" />}
                           <Tooltip>

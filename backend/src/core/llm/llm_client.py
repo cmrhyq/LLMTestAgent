@@ -5,6 +5,8 @@
 """
 
 import time
+from collections.abc import AsyncIterator, Iterator
+from typing import Any, Literal, cast
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
@@ -135,11 +137,38 @@ def convert_to_langchain_messages(messages: list[dict[str, str]]) -> list[BaseMe
     return result
 
 
+def _normalize_message_content(content: str | list) -> str:
+    """将 LangChain 消息的 content 归一化为纯文本字符串。
+
+    部分模型（如多模态场景）会返回由字符串或字典片段组成的列表，
+    此函数统一拼接为单个字符串，避免各调用点重复处理。
+
+    Args:
+        content: BaseMessage.content，可能是 str 或片段列表。
+
+    Returns:
+        归一化后的纯文本；None 或空值返回空字符串。
+    """
+    if isinstance(content, list):
+        return "".join(part if isinstance(part, str) else str(part) for part in content)
+    return content or ""
+
+
+def _extract_chunk_text(chunk: BaseMessage) -> str:
+    """从流式响应 chunk 中提取纯文本增量。
+
+    Args:
+        chunk: 流式迭代产出的消息块（通常为 AIMessageChunk）。
+
+    Returns:
+        该 chunk 归一化后的文本内容；无内容时返回空字符串。
+    """
+    return _normalize_message_content(getattr(chunk, "content", "") or "")
+
+
 # ---------------------------------------------------------------------------
 # 兼容层：保持 get_llm_client() 接口可用，避免一次性改动所有调用方
 # ---------------------------------------------------------------------------
-
-
 class LLMClient:
     """LLM 客户端兼容包装。
 
@@ -159,9 +188,7 @@ class LLMClient:
         start_time = time.perf_counter()
         langchain_messages = convert_to_langchain_messages(messages)
         response = self._model.invoke(langchain_messages)
-        content = response.content
-        if isinstance(content, list):
-            content = "".join(part if isinstance(part, str) else str(part) for part in content)
+        content = _normalize_message_content(response.content)
         elapsed_ms = round((time.perf_counter() - start_time) * 1000, 2)
         logger.debug(
             f"LLM调用完成，耗时: {elapsed_ms}ms，响应长度: {len(content)}",
@@ -179,6 +206,249 @@ class LLMClient:
         """使用已转换的消息发送带工具绑定的请求。"""
         model_with_tools = self._model.bind_tools(tools)
         return model_with_tools.invoke(messages)
+
+    # -----------------------------------------------------------------------
+    # 流式接口：文本增量（str）
+    # -----------------------------------------------------------------------
+    def chat_stream(self, messages: list[dict[str, str]], **kwargs) -> Iterator[str]:
+        """流式发送聊天请求，逐个产出文本增量（token）。
+
+        对应 `chat()` 的同步流式版本：不等待完整响应，而是随 LLM 生成
+        实时 yield 文本片段，适用于命令行打字机效果、日志实时输出等场景。
+
+        Args:
+            messages: 字典格式消息列表，形如
+                [{"role": "system/user/assistant", "content": "..."}]。
+            **kwargs: 透传给底层 LangChain 模型的参数（如 stop、temperature）。
+
+        Yields:
+            str: 非空文本增量。content 为空的 chunk 会被跳过。
+
+        Example:
+            >>> for token in client.chat_stream([{"role": "user", "content": "hi"}]):
+            ...     print(token, end="", flush=True)
+        """
+        logger.debug(f"LLM流式调用开始，消息数: {len(messages)}", message_count=len(messages))
+        start_time = time.perf_counter()
+        langchain_messages = convert_to_langchain_messages(messages)
+        total_length = 0
+        for chunk in self._model.stream(langchain_messages, **kwargs):
+            text = _extract_chunk_text(chunk)
+            if text:
+                total_length += len(text)
+                yield text
+        elapsed_ms = round((time.perf_counter() - start_time) * 1000, 2)
+        logger.debug(
+            f"LLM流式调用完成，耗时: {elapsed_ms}ms，累计响应长度: {total_length}",
+            elapsed_ms=elapsed_ms,
+            response_length=total_length,
+        )
+
+    async def achat_stream(self, messages: list[dict[str, str]], **kwargs) -> AsyncIterator[str]:
+        """异步流式发送聊天请求，逐个产出文本增量（token）。
+
+        对应 `chat()` 的异步流式版本，是 FastAPI SSE / WebSocket 推送等
+        异步场景的首选接口。
+
+        Args:
+            messages: 字典格式消息列表，形如
+                [{"role": "system/user/assistant", "content": "..."}]。
+            **kwargs: 透传给底层 LangChain 模型的参数（如 stop、temperature）。
+
+        Yields:
+            str: 非空文本增量。content 为空的 chunk 会被跳过。
+
+        Example:
+            >>> async for token in client.achat_stream(messages):
+            ...     await ws.send_text(token)
+        """
+        logger.debug(f"LLM异步流式调用开始，消息数: {len(messages)}", message_count=len(messages))
+        start_time = time.perf_counter()
+        langchain_messages = convert_to_langchain_messages(messages)
+        total_length = 0
+        async for chunk in self._model.astream(langchain_messages, **kwargs):
+            text = _extract_chunk_text(chunk)
+            if text:
+                total_length += len(text)
+                yield text
+        elapsed_ms = round((time.perf_counter() - start_time) * 1000, 2)
+        logger.debug(
+            f"LLM异步流式调用完成，耗时: {elapsed_ms}ms，累计响应长度: {total_length}",
+            elapsed_ms=elapsed_ms,
+            response_length=total_length,
+        )
+
+    # -----------------------------------------------------------------------
+    # 流式接口：原始消息块（BaseMessage / AIMessageChunk）
+    # -----------------------------------------------------------------------
+    def stream(self, messages: list[dict[str, str]], **kwargs) -> Iterator[BaseMessage]:
+        """流式产出原始消息块，保留完整 chunk 元数据。
+
+        与 `chat_stream()` 只返回文本不同，本方法产出完整的 `AIMessageChunk`，
+        便于访问 tool_call_chunks、response_metadata、usage_metadata 等高级字段。
+
+        Args:
+            messages: 字典格式消息列表（同 `chat()`）。
+            **kwargs: 透传给底层 LangChain 模型的参数。
+
+        Yields:
+            BaseMessage: 每次迭代产出的原始消息块（通常为 AIMessageChunk）。
+
+        Example:
+            >>> for chunk in client.stream(messages):
+            ...     print(chunk.content, chunk.usage_metadata)
+        """
+        langchain_messages = convert_to_langchain_messages(messages)
+        yield from self._model.stream(langchain_messages, **kwargs)
+
+    async def astream(self, messages: list[dict[str, str]], **kwargs) -> AsyncIterator[BaseMessage]:
+        """异步流式产出原始消息块，保留完整 chunk 元数据。
+
+        `stream()` 的异步版本，产出完整 `AIMessageChunk` 而非纯文本。
+
+        Args:
+            messages: 字典格式消息列表（同 `chat()`）。
+            **kwargs: 透传给底层 LangChain 模型的参数。
+
+        Yields:
+            BaseMessage: 每次迭代产出的原始消息块（通常为 AIMessageChunk）。
+
+        Example:
+            >>> async for chunk in client.astream(messages):
+            ...     print(chunk.content)
+        """
+        langchain_messages = convert_to_langchain_messages(messages)
+        async for chunk in self._model.astream(langchain_messages, **kwargs):
+            yield chunk
+
+    def stream_messages(self, messages: list[BaseMessage], **kwargs) -> Iterator[BaseMessage]:
+        """使用已转换的 LangChain 消息流式产出原始消息块。
+
+        当调用方已持有 `BaseMessage` 列表（例如来自 LangGraph 状态），
+        可直接使用本方法，跳过字典 → 消息的转换。
+
+        Args:
+            messages: 已转换的 LangChain 消息列表。
+            **kwargs: 透传给底层 LangChain 模型的参数。
+
+        Yields:
+            BaseMessage: 每次迭代产出的原始消息块（通常为 AIMessageChunk）。
+
+        Example:
+            >>> for chunk in client.stream_messages(lc_messages):
+            ...     print(chunk.content, end="")
+        """
+        yield from self._model.stream(messages, **kwargs)
+
+    async def astream_messages(self, messages: list[BaseMessage], **kwargs) -> AsyncIterator[BaseMessage]:
+        """使用已转换的 LangChain 消息异步流式产出原始消息块。
+
+        `stream_messages()` 的异步版本。
+
+        Args:
+            messages: 已转换的 LangChain 消息列表。
+            **kwargs: 透传给底层 LangChain 模型的参数。
+
+        Yields:
+            BaseMessage: 每次迭代产出的原始消息块（通常为 AIMessageChunk）。
+
+        Example:
+            >>> async for chunk in client.astream_messages(lc_messages):
+            ...     print(chunk.content, end="")
+        """
+        async for chunk in self._model.astream(messages, **kwargs):
+            yield chunk
+
+    # -----------------------------------------------------------------------
+    # 流式接口：工具绑定（返回含 tool_call_chunks 的消息块）
+    # -----------------------------------------------------------------------
+    def invoke_with_tools_stream(
+        self,
+        messages: list[BaseMessage],
+        tools,
+        **kwargs,
+    ) -> Iterator[BaseMessage]:
+        """流式发送带工具绑定的请求，产出含工具调用信息的消息块。
+
+        对应 `invoke_with_tools()` 的流式版本。产出的 `AIMessageChunk`
+        携带 `tool_call_chunks`，可用于实时观测模型的工具调用意图。
+
+        Args:
+            messages: 已转换的 LangChain 消息列表。
+            tools: 待绑定的工具列表（LangChain 工具或函数 schema）。
+            **kwargs: 透传给底层 LangChain 模型的参数。
+
+        Yields:
+            BaseMessage: 每次迭代产出的原始消息块（含 tool_call_chunks）。
+
+        Example:
+            >>> for chunk in client.invoke_with_tools_stream(lc_messages, tools):
+            ...     print(chunk.tool_call_chunks)
+        """
+        model_with_tools = self._model.bind_tools(tools)
+        yield from model_with_tools.stream(messages, **kwargs)
+
+    async def ainvoke_with_tools_stream(
+        self,
+        messages: list[BaseMessage],
+        tools,
+        **kwargs,
+    ) -> AsyncIterator[BaseMessage]:
+        """异步流式发送带工具绑定的请求，产出含工具调用信息的消息块。
+
+        `invoke_with_tools_stream()` 的异步版本。
+
+        Args:
+            messages: 已转换的 LangChain 消息列表。
+            tools: 待绑定的工具列表（LangChain 工具或函数 schema）。
+            **kwargs: 透传给底层 LangChain 模型的参数。
+
+        Yields:
+            BaseMessage: 每次迭代产出的原始消息块（含 tool_call_chunks）。
+
+        Example:
+            >>> async for chunk in client.ainvoke_with_tools_stream(lc_messages, tools):
+            ...     print(chunk.tool_call_chunks)
+        """
+        model_with_tools = self._model.bind_tools(tools)
+        async for chunk in model_with_tools.astream(messages, **kwargs):
+            yield chunk
+
+    # -----------------------------------------------------------------------
+    # 流式接口：事件流（细粒度可观测性）
+    # -----------------------------------------------------------------------
+    async def astream_events(
+        self,
+        messages: list[dict[str, str]] | list[BaseMessage],
+        version: Literal["v1", "v2"] = "v2",
+        **kwargs,
+    ) -> AsyncIterator[dict[str, Any]]:
+        """异步流式产出细粒度事件，用于 Agent / 链路的深度观测。
+
+        封装 LangChain 的 `astream_events`，产出 `on_chat_model_start`、
+        `on_chat_model_stream`、`on_chat_model_end` 等事件字典，是调试
+        LangGraph / Agent 执行过程最常用的接口。方法会根据入参类型自动
+        决定是否执行字典 → LangChain 消息的转换。
+
+        Args:
+            messages: 字典格式消息列表或已转换的 LangChain 消息列表，两者皆可。
+            version: 事件 schema 版本，LangChain 当前推荐 "v2"。
+            **kwargs: 透传给底层 astream_events 的参数（如 include_names）。
+
+        Yields:
+            dict[str, Any]: LangChain 事件字典，含 event、name、data 等键。
+
+        Example:
+            >>> async for event in client.astream_events(messages):
+            ...     if event["event"] == "on_chat_model_stream":
+            ...         print(event["data"]["chunk"].content, end="")
+        """
+        if messages and isinstance(messages[0], BaseMessage):
+            langchain_messages = messages
+        else:
+            langchain_messages = convert_to_langchain_messages(messages)  # type: ignore[arg-type]
+        async for event in self._model.astream_events(langchain_messages, version=version, **kwargs):
+            yield cast(dict[str, Any], event)
 
     def get_model(self) -> BaseChatModel:
         return self._model
