@@ -100,6 +100,46 @@ def parse_llm_json_response(
     return cases
 
 
+def parse_llm_json_object(response: str) -> dict[str, Any]:
+    """从 LLM 响应文本中解析出单个 JSON 对象。
+
+    支持 markdown code block 包裹和纯 JSON 文本。与 `parse_llm_json_response`
+    返回列表不同，本函数返回单个 dict，适用于结构化对象（如安全审计结果）。
+    解析失败或结果非 dict 时返回空 dict。
+
+    Args:
+        response: 待解析的 LLM 响应文本
+
+    Returns:
+        解析后的 dict；失败时返回空 dict
+    """
+    if not response:
+        return {}
+
+    text = response.strip()
+
+    code_block_match = re.search(r"```(?:json)?\s*([\s\S]*?)```", text)
+    if code_block_match:
+        json_str = code_block_match.group(1).strip()
+    else:
+        json_start = text.find("{")
+        json_end = text.rfind("}") + 1
+        if json_start == -1 or json_end <= 0:
+            logger.warning("LLM响应中未找到JSON对象内容")
+            return {}
+        json_str = text[json_start:json_end]
+
+    try:
+        data = robust_json_loads(json_str)
+    except json.JSONDecodeError as e:
+        logger.error(f"解析LLM JSON对象失败: {e}", error=str(e))
+        return {}
+
+    if isinstance(data, dict):
+        return data
+    return {}
+
+
 def ensure_db() -> None:
     """确保数据库已初始化。"""
     manager = get_db_manager()

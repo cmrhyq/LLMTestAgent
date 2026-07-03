@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter
 
+from src.api.v1.chat import router as chat_router
 from src.api.v1.endpoint import router as endpoint_router
 from src.api.v1.environment import router as environment_router
 from src.api.v1.project import router as project_router
@@ -17,3 +18,4 @@ api_router.include_router(environment_router)
 api_router.include_router(test_run_router)
 api_router.include_router(workflow_router)
 api_router.include_router(report_router)
+api_router.include_router(chat_router)

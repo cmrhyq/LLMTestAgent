@@ -53,6 +53,13 @@ export const router = createBrowserRouter([
             },
           },
           {
+            path: "workflows/chat",
+            lazy: async () => {
+              const { default: Component } = await import("./pages/run/security-chat.tsx");
+              return { Component };
+            },
+          },
+          {
             path: "reports",
             lazy: async () => {
               const { default: Component } = await import("./pages/report/reports.tsx");

@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Play, FileText } from "lucide-react";
+import { LayoutDashboard, Play, FileText, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NavItemProps {
@@ -49,6 +49,11 @@ export function Sidebar({ collapsed }: SidebarProps) {
         </div>
 
         <NavItem to="/workflows/run" icon={<Play className="h-4 w-4" />} label="新建测试" />
+        <NavItem
+          to="/workflows/chat"
+          icon={<MessageSquare className="h-4 w-4" />}
+          label="安全对话"
+        />
 
         <div className="mt-4 mb-2 px-3">
           <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
