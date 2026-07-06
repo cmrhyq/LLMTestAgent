@@ -34,6 +34,7 @@ _ASSISTANT_SYSTEM_PROMPT = (
     "你是一名专业的 API 测试助手，擅长接口测试用例设计、测试策略、"
     "自动化测试脚本编写以及 HTTP 请求/响应构造与断言。"
     "请针对用户的 API 测试相关问题给出专业、准确、可落地的解答。"
+    "请使用 Markdown 格式组织回答；代码示例使用 fenced code block 并标注语言（如 json、bash、python）。"
 )
 
 
