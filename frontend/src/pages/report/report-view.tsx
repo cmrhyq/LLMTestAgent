@@ -261,10 +261,10 @@ export default function ReportViewPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-emerald-400">已通过</CardTitle>
+            <CardTitle className="text-sm font-medium text-success">已通过</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-emerald-400">{test_run.passed_cases}</p>
+            <p className="text-2xl font-bold text-success">{test_run.passed_cases}</p>
           </CardContent>
         </Card>
         <Card>
@@ -285,10 +285,10 @@ export default function ReportViewPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-orange-400">错误</CardTitle>
+            <CardTitle className="text-sm font-medium text-warning">错误</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-orange-400">{test_run.error_cases}</p>
+            <p className="text-2xl font-bold text-warning">{test_run.error_cases}</p>
           </CardContent>
         </Card>
         <Card>

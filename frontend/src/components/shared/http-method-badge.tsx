@@ -5,11 +5,11 @@ interface HttpMethodBadgeProps {
 }
 
 const methodStyles: Record<string, string> = {
-  GET: "bg-emerald-900/20 text-emerald-400",
-  POST: "bg-blue-900/20 text-blue-400",
-  PUT: "bg-amber-900/20 text-amber-400",
-  DELETE: "bg-red-900/20 text-red-400",
-  PATCH: "bg-sky-900/20 text-sky-400",
+  GET: "bg-emerald-100 text-emerald-700",
+  POST: "bg-blue-100 text-blue-700",
+  PUT: "bg-amber-100 text-amber-700",
+  DELETE: "bg-red-100 text-red-700",
+  PATCH: "bg-sky-100 text-sky-700",
 };
 
 const DEFAULT_STYLE = "bg-muted text-muted-foreground";

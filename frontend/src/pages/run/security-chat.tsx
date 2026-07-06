@@ -143,7 +143,7 @@ export default function SecurityChatPage() {
             className="hidden"
           />
 
-          <div className="rounded-2xl border border-border bg-card px-3 py-2.5 shadow-sm transition-colors focus-within:border-[#8b949e]">
+          <div className="rounded-2xl border border-border bg-card px-3 py-2.5 shadow-sm transition-colors focus-within:border-muted-foreground">
             {/* 输入框 */}
             <textarea
               value={instruction}
@@ -244,10 +244,6 @@ export default function SecurityChatPage() {
               </button>
             </div>
           </div>
-
-          <p className="mt-2 text-center text-xs text-muted-foreground">
-            通过「解析文档」添加 OpenAPI 文档（.json/.yaml），或直接输入你的指令
-          </p>
         </div>
       </div>
     </div>

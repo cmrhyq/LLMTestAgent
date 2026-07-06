@@ -12,7 +12,7 @@ export function AppLayout() {
       <HeaderNav onToggleSidebar={() => setSidebarCollapsed((v) => !v)} />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar collapsed={sidebarCollapsed} />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-6 rounded-xl">
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>

@@ -16,7 +16,7 @@ export function PassRateBar({ passed, total }: PassRateBarProps) {
     percentage >= 80 ? "bg-emerald-500" : percentage >= 50 ? "bg-amber-500" : "bg-red-500";
 
   const textColor =
-    percentage >= 80 ? "text-emerald-400" : percentage >= 50 ? "text-amber-400" : "text-red-400";
+    percentage >= 80 ? "text-emerald-600" : percentage >= 50 ? "text-amber-600" : "text-red-600";
 
   return (
     <div className="flex items-center gap-2">
