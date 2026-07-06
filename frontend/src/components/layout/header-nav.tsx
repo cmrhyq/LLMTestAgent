@@ -1,15 +1,11 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import { PanelLeft, Settings } from "lucide-react";
-import { SettingsDialog } from "./settings-dialog";
+import { PanelLeft } from "lucide-react";
 
 interface HeaderNavProps {
   onToggleSidebar: () => void;
 }
 
 export function HeaderNav({ onToggleSidebar }: HeaderNavProps) {
-  const [settingsOpen, setSettingsOpen] = useState(false);
-
   return (
     <header className="sticky top-0 z-50 h-12 border-b border-border bg-card">
       <div className="flex h-full items-center px-4 gap-3">
@@ -27,17 +23,7 @@ export function HeaderNav({ onToggleSidebar }: HeaderNavProps) {
         </Link>
 
         <div className="flex-1" />
-
-        <button
-          type="button"
-          onClick={() => setSettingsOpen(true)}
-          className="flex items-center justify-center rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-        >
-          <Settings className="h-4.5 w-4.5" />
-        </button>
       </div>
-
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </header>
   );
 }
