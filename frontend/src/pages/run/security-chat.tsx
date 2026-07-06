@@ -15,7 +15,9 @@ import {
 import { toast } from "sonner";
 
 import { useUploadOpenAPI } from "@/hooks/use-workflows.ts";
+import { useStreamingMarkdown } from "@/hooks/use-streaming-markdown.ts";
 import { streamChat } from "@/lib/stream.ts";
+import { MarkdownRenderer } from "@/components/markdown";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,6 +46,7 @@ export default function SecurityChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { mutate: uploadFile, isPending: isUploading } = useUploadOpenAPI();
+  const { displayText } = useStreamingMarkdown({ rawText: answer, isStreaming });
 
   const handleSubmit = async () => {
     if (!instruction.trim() || isStreaming || isUploading) return;
@@ -119,12 +122,7 @@ export default function SecurityChatPage() {
                 <span>正在处理…</span>
               </div>
             ) : (
-              <div className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground">
-                {answer}
-                {isStreaming && (
-                  <span className="ml-0.5 inline-block h-4 w-1.5 translate-y-0.5 animate-pulse bg-foreground align-middle" />
-                )}
-              </div>
+              <MarkdownRenderer content={displayText} isStreaming={isStreaming} />
             )}
           </div>
         ) : (

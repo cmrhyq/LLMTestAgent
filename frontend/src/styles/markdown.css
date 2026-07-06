@@ -1,0 +1,151 @@
+/* Markdown 渲染子系统样式 — 与 index.css design tokens 对齐 */
+
+.markdown-body {
+  @apply prose prose-neutral max-w-none text-sm leading-relaxed text-foreground;
+  --tw-prose-body: var(--color-foreground);
+  --tw-prose-headings: var(--color-foreground);
+  --tw-prose-bold: var(--color-foreground);
+  --tw-prose-code: var(--color-foreground);
+  --tw-prose-pre-code: var(--color-foreground);
+  --tw-prose-pre-bg: var(--color-background);
+  --tw-prose-quotes: var(--color-foreground);
+}
+
+.markdown-body :where(a) {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.markdown-body :where(a:hover) {
+  text-decoration: underline;
+}
+
+.markdown-body :where(h1, h2, h3, h4, h5, h6, p, li, strong, em) {
+  color: var(--color-foreground);
+}
+
+.markdown-body :where(blockquote) {
+  border-left-color: var(--color-border);
+  color: var(--color-foreground);
+  background: color-mix(in srgb, var(--color-secondary) 50%, var(--color-background));
+}
+
+.markdown-body :where(hr) {
+  border-color: var(--color-border);
+}
+
+.markdown-body :where(th, td) {
+  border-color: var(--color-border);
+  color: var(--color-foreground);
+}
+
+.markdown-body :where(th) {
+  background: var(--color-secondary);
+}
+
+.markdown-inline-code {
+  @apply rounded px-1 py-0.5 font-mono text-xs;
+  color: var(--color-foreground);
+  background: var(--color-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.markdown-code-block {
+  @apply my-3 overflow-x-auto rounded-md p-3 font-mono text-xs leading-relaxed;
+  color: var(--color-foreground);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  white-space: pre;
+}
+
+.markdown-code-block code {
+  @apply block font-mono text-xs leading-relaxed;
+  color: var(--color-foreground);
+  background: transparent;
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.markdown-code-block--highlighted {
+  @apply p-0;
+  color: var(--color-foreground);
+  background: var(--color-background);
+}
+
+.markdown-code-block--highlighted :where(pre) {
+  @apply m-0 overflow-x-auto rounded-md p-3;
+  color: var(--color-foreground) !important;
+  background: var(--color-background) !important;
+}
+
+.markdown-code-block--highlighted :where(.shiki) {
+  background: var(--color-background) !important;
+}
+
+.markdown-mermaid-block {
+  @apply my-3 overflow-x-auto rounded-md p-4;
+  color: var(--color-foreground);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+}
+
+/* Mermaid SVG 浅色主题对比度增强 */
+.markdown-mermaid-block :where(svg) {
+  max-width: 100%;
+  height: auto;
+}
+
+.markdown-mermaid-block :where(.node rect),
+.markdown-mermaid-block :where(.node polygon),
+.markdown-mermaid-block :where(.node circle),
+.markdown-mermaid-block :where(.cluster rect) {
+  stroke: var(--color-foreground) !important;
+}
+
+.markdown-mermaid-block :where(.edgePath path),
+.markdown-mermaid-block :where(line),
+.markdown-mermaid-block :where(path.flowchart-link) {
+  stroke: var(--color-foreground) !important;
+}
+
+.markdown-mermaid-block :where(.nodeLabel),
+.markdown-mermaid-block :where(.edgeLabel),
+.markdown-mermaid-block :where(text),
+.markdown-mermaid-block :where(tspan),
+.markdown-mermaid-block :where(p) {
+  fill: var(--color-foreground) !important;
+  color: var(--color-foreground) !important;
+}
+
+.markdown-table-wrapper {
+  @apply my-3 overflow-x-auto;
+}
+
+.markdown-table-wrapper :where(table) {
+  @apply w-full border-collapse text-sm;
+  border: 1px solid var(--color-border);
+  color: var(--color-foreground);
+}
+
+.markdown-table-wrapper :where(thead th) {
+  background: var(--color-secondary);
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.markdown-table-wrapper :where(th, td) {
+  border: 1px solid var(--color-border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+  color: var(--color-foreground);
+}
+
+.markdown-table-wrapper :where(tr:nth-child(even) td) {
+  background: color-mix(in srgb, var(--color-secondary) 40%, transparent);
+}
+
+.markdown-streaming-cursor {
+  /* 光标样式由 Tailwind utility 与 index 变量共同定义 */
+}
