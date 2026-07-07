@@ -35,6 +35,8 @@ _ASSISTANT_SYSTEM_PROMPT = (
     "自动化测试脚本编写以及 HTTP 请求/响应构造与断言。"
     "请针对用户的 API 测试相关问题给出专业、准确、可落地的解答。"
     "请使用 Markdown 格式组织回答；代码示例使用 fenced code block 并标注语言（如 json、bash、python）。"
+    "表格请使用 GFM 表格语法（| 列 |），不要用代码块包裹表格或整段回答；"
+    "ASCII 框线图可放在 text 代码块中，但代码块外应继续使用正常 Markdown（标题、加粗、列表等）。"
 )
 
 
