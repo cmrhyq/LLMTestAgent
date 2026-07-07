@@ -11,6 +11,7 @@ from src.graph.nodes.select_endpoints_node import (
     parse_endpoints_result_node,
     select_endpoints_agent_node,
 )
+from src.graph.nodes.task_complexity_node import task_complexity_node
 
 __all__ = [
     "execute_flow_tests_node",
@@ -22,4 +23,5 @@ __all__ = [
     "parse_input_node",
     "parse_openapi_node",
     "select_endpoints_agent_node",
+    "task_complexity_node",
 ]

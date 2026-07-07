@@ -24,6 +24,30 @@
   color: var(--color-foreground);
 }
 
+.markdown-body :where(h1) {
+  @apply mt-6 mb-4 text-2xl font-semibold;
+}
+
+.markdown-body :where(h2) {
+  @apply mt-5 mb-3 text-xl font-semibold;
+}
+
+.markdown-body :where(h3) {
+  @apply mt-4 mb-2 text-lg font-semibold;
+}
+
+.markdown-body :where(p) {
+  @apply my-3;
+}
+
+.markdown-body :where(ul, ol) {
+  @apply my-3 pl-6;
+}
+
+.markdown-body :where(li) {
+  @apply my-1;
+}
+
 .markdown-body :where(blockquote) {
   border-left-color: var(--color-border);
   color: var(--color-foreground);
@@ -51,11 +75,14 @@
 }
 
 .markdown-code-block {
-  @apply my-3 overflow-x-auto rounded-md p-3 font-mono text-xs leading-relaxed;
+  @apply my-3 overflow-x-auto rounded-md p-3 text-xs leading-relaxed;
+  font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   color: var(--color-foreground);
   background: var(--color-background);
   border: 1px solid var(--color-border);
   white-space: pre;
+  tab-size: 4;
 }
 
 .markdown-code-block code {

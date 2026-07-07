@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 
 import { createMarkdownComponents } from "./markdown-components.tsx";
+import { preprocessMarkdown } from "./markdown-preprocess.ts";
 import { markdownRehypePlugins, markdownRemarkPlugins } from "./markdown-plugins.ts";
 import { StreamingCursor } from "./streaming-cursor.tsx";
 
@@ -16,6 +17,10 @@ interface MarkdownRendererProps {
  */
 export function MarkdownRenderer({ content, isStreaming = false }: MarkdownRendererProps) {
   const components = useMemo(() => createMarkdownComponents(isStreaming), [isStreaming]);
+  const processedContent = useMemo(
+    () => preprocessMarkdown(content, isStreaming),
+    [content, isStreaming]
+  );
 
   if (!content) {
     return null;
@@ -28,7 +33,7 @@ export function MarkdownRenderer({ content, isStreaming = false }: MarkdownRende
         rehypePlugins={markdownRehypePlugins}
         components={components}
       >
-        {content}
+        {processedContent}
       </ReactMarkdown>
       {isStreaming && <StreamingCursor />}
     </div>
