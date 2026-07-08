@@ -10,7 +10,7 @@ const statusStyles: Record<string, string> = {
   failed: "bg-destructive/10 text-destructive",
   running: "bg-info/10 text-info animate-pulse",
   pending: "bg-info/10 text-info",
-  skipped: "bg-amber-100 text-amber-700",
+  skipped: "bg-warning/10 text-warning",
 };
 
 const DEFAULT_STYLE = "bg-muted text-muted-foreground";

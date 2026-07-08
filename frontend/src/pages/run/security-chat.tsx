@@ -143,7 +143,7 @@ export default function SecurityChatPage() {
             className="hidden"
           />
 
-          <div className="rounded-2xl border border-border bg-card px-3 py-2.5 shadow-sm transition-colors focus-within:border-muted-foreground">
+          <div className="rounded-xl border border-border bg-background px-3 py-2.5 shadow-card transition-shadow focus-within:border-accent/30 focus-within:shadow-elevated">
             {/* 输入框 */}
             <textarea
               value={instruction}
@@ -162,13 +162,13 @@ export default function SecurityChatPage() {
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="flex items-center gap-1.5 rounded-md border border-border bg-transparent px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                      className="flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground shadow-xs transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       {mode}
                       <ChevronDown className="h-3.5 w-3.5" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="border-border shadow-border">
+                  <DropdownMenuContent className="shadow-popover">
                     <TooltipProvider delayDuration={200}>
                       {MODES.map((m) => (
                         <DropdownMenuItem key={m.value} onClick={() => setMode(m.value)}>
@@ -187,7 +187,7 @@ export default function SecurityChatPage() {
                             </TooltipTrigger>
                             <TooltipContent
                               side="right"
-                              className="max-w-[220px] border border-border bg-popover text-popover-foreground shadow-md"
+                              className="max-w-[220px] border-0 bg-popover text-popover-foreground shadow-popover"
                             >
                               {m.description}
                             </TooltipContent>
@@ -199,7 +199,7 @@ export default function SecurityChatPage() {
                 </DropdownMenu>
 
                 {file ? (
-                  <span className="flex min-w-0 items-center gap-1.5 rounded-md border border-border bg-secondary px-2 py-1 text-xs text-foreground">
+                  <span className="flex min-w-0 items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs text-foreground">
                     {isUploading ? (
                       <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground" />
                     ) : uploadedPath ? (
@@ -222,7 +222,7 @@ export default function SecurityChatPage() {
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading || isStreaming}
-                    className="flex items-center gap-1.5 rounded-md border border-border bg-transparent px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground shadow-xs transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     解析文档
                     <Plus className="h-3.5 w-3.5" />

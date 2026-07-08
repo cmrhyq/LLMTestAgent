@@ -117,7 +117,7 @@ export default function ProjectDetailPage() {
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="border-border shadow-border" align="end">
+          <DropdownMenuContent className="shadow-popover" align="end">
             <DropdownMenuItem
               onClick={() => {
                 setEditingEndpoint(row);
@@ -204,23 +204,27 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">{project.name}</h1>
-          <div className="mt-2 flex items-center gap-3">
-            <span className="flex items-center gap-1 font-mono text-sm text-muted-foreground">
-              <Globe className="h-3.5 w-3.5" />
-              {project.base_url}
-            </span>
-            <Badge variant={project.status === 1 ? "default" : "secondary"}>
-              {PROJECT_STATUS_MAP[project.status] ?? "未知"}
-            </Badge>
+      <Card className="bg-surface-accent">
+        <CardContent className="pt-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">{project.name}</h1>
+              <div className="mt-2 flex items-center gap-3">
+                <span className="flex items-center gap-1 font-mono text-sm text-muted-foreground">
+                  <Globe className="h-3.5 w-3.5" />
+                  {project.base_url}
+                </span>
+                <Badge variant={project.status === 1 ? "default" : "secondary"}>
+                  {PROJECT_STATUS_MAP[project.status] ?? "未知"}
+                </Badge>
+              </div>
+              {project.description && (
+                <p className="mt-2 text-sm text-muted-foreground">{project.description}</p>
+              )}
+            </div>
           </div>
-          {project.description && (
-            <p className="mt-2 text-sm text-muted-foreground">{project.description}</p>
-          )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="endpoints" className="w-full">
         <TabsList>
@@ -311,7 +315,7 @@ export default function ProjectDetailPage() {
                               <MoreHorizontal className="h-3.5 w-3.5" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent className="border-border shadow-border" align="end">
+                          <DropdownMenuContent className="shadow-popover" align="end">
                             <DropdownMenuItem
                               onClick={() => {
                                 setEditingEnv(env);

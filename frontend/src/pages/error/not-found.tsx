@@ -8,7 +8,7 @@ export default function NotFoundPage() {
 
   return (
     <div className="flex h-full min-h-[60vh] flex-col items-center justify-center gap-6 px-4 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent/10">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
         <Compass className="h-8 w-8 text-accent" />
       </div>
 

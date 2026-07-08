@@ -1,6 +1,10 @@
-import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Play, FileText, MessageSquare } from "lucide-react";
+import { Link } from "react-router-dom";
+import { LayoutDashboard, Play, FileText, MessageSquare, PanelLeftClose } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NavLink } from "react-router";
+
+const APP_VERSION = "v0.0.1";
+const SIDEBAR_WIDTH = 250;
 
 interface NavItemProps {
   to: string;
@@ -29,40 +33,60 @@ function NavItem({ to, icon, label }: NavItemProps) {
 
 interface SidebarProps {
   collapsed: boolean;
+  onToggle: () => void;
 }
 
-export function Sidebar({ collapsed }: SidebarProps) {
+export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside
-      className={cn(
-        "flex shrink-0 flex-col border-r border-border bg-card overflow-hidden transition-all duration-200",
-        collapsed ? "w-0 border-r-0" : "w-[200px]"
-      )}
+      className="flex shrink-0 flex-col overflow-hidden border-r border-border bg-sidebar transition-[width] duration-300 ease-in-out"
+      style={{ width: collapsed ? 0 : SIDEBAR_WIDTH }}
     >
-      <nav className="flex flex-1 flex-col gap-1 p-3 min-w-[200px]">
-        <NavItem to="/dashboard" icon={<LayoutDashboard className="h-4 w-4" />} label="仪表盘" />
-
-        <div className="mt-4 mb-2 px-3">
-          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            工作流
-          </span>
+      <div
+        className={cn(
+          "flex min-w-[250px] flex-1 flex-col transition-opacity duration-200",
+          collapsed ? "pointer-events-none opacity-0" : "opacity-100"
+        )}
+      >
+        <div className="flex items-start justify-between gap-2 px-4 pb-3 pt-4">
+          <Link to="/dashboard" className="flex min-w-0 items-start gap-2.5 no-underline">
+            <img src="/favicon.svg" alt="Logo" className="mt-0.5 h-6 w-6 shrink-0" />
+            <div className="min-w-0">
+              <span className="block text-sm font-medium text-foreground">LLMTestAgent</span>
+              <span className="block text-[10px] text-muted-foreground">{APP_VERSION}</span>
+            </div>
+          </Link>
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-label="隐藏侧边栏"
+            className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <PanelLeftClose className="h-4 w-4" />
+          </button>
         </div>
 
-        <NavItem to="/workflows/run" icon={<Play className="h-4 w-4" />} label="新建测试" />
-        <NavItem
-          to="/workflows/chat"
-          icon={<MessageSquare className="h-4 w-4" />}
-          label="安全对话"
-        />
+        <nav className="flex flex-1 flex-col gap-0.5 px-3 pb-4">
+          <NavItem to="/dashboard" icon={<LayoutDashboard className="h-4 w-4" />} label="仪表盘" />
 
-        <div className="mt-4 mb-2 px-3">
-          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            结果
-          </span>
-        </div>
+          <div className="mb-1 mt-5 px-2.5">
+            <span className="text-[11px] font-medium text-muted-foreground">工作流</span>
+          </div>
 
-        <NavItem to="/reports" icon={<FileText className="h-4 w-4" />} label="报告" />
-      </nav>
+          <NavItem to="/workflows/run" icon={<Play className="h-4 w-4" />} label="新建测试" />
+          <NavItem
+            to="/workflows/chat"
+            icon={<MessageSquare className="h-4 w-4" />}
+            label="安全对话"
+          />
+
+          <div className="mb-1 mt-5 px-2.5">
+            <span className="text-[11px] font-medium text-muted-foreground">结果</span>
+          </div>
+
+          <NavItem to="/reports" icon={<FileText className="h-4 w-4" />} label="报告" />
+        </nav>
+      </div>
     </aside>
   );
 }

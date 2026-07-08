@@ -48,10 +48,10 @@ export function DataTable<T extends object>({
   const SKELETON_ROWS = 5;
 
   return (
-    <div className="w-full overflow-hidden rounded-md border border-border">
+    <div className="w-full overflow-hidden rounded-xl border border-border bg-background shadow-xs">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="border-b border-border bg-card">
+          <thead className="border-b border-border bg-muted/60">
             <tr>
               {columns.map((col) => (
                 <th
@@ -69,7 +69,7 @@ export function DataTable<T extends object>({
           <tbody>
             {loading &&
               Array.from({ length: SKELETON_ROWS }).map((_, rowIdx) => (
-                <tr key={`skeleton-${rowIdx.toString()}`} className="border-b border-border">
+                <tr key={`skeleton-${rowIdx.toString()}`} className="border-b border-border-subtle">
                   {columns.map((col) => (
                     <td key={col.key} className="px-4 py-3">
                       <Skeleton className="h-4 w-3/4" />
@@ -93,7 +93,7 @@ export function DataTable<T extends object>({
               data.map((row, rowIdx) => (
                 <tr
                   key={rowIdx.toString()}
-                  className="border-b border-border transition-colors hover:bg-card last:border-b-0"
+                  className="border-b border-border-subtle transition-colors hover:bg-muted last:border-b-0"
                 >
                   {columns.map((col) => {
                     const value = getNestedValue(row, col.key);
@@ -110,7 +110,7 @@ export function DataTable<T extends object>({
       </div>
 
       {pagination && totalPages > 1 && (
-        <div className="flex items-center justify-between border-t px-4 py-3">
+        <div className="flex items-center justify-between border-t border-border px-4 py-3">
           <span className="text-sm text-muted-foreground">
             第 {pagination.page} / {totalPages} 页
           </span>
@@ -120,7 +120,7 @@ export function DataTable<T extends object>({
               disabled={pagination.page <= 1}
               onClick={() => pagination.onChange(pagination.page - 1)}
               className={cn(
-                "rounded-md border px-3 py-1.5 text-sm font-medium transition-colors",
+                "rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium shadow-xs transition-colors",
                 pagination.page <= 1 ? "cursor-not-allowed opacity-50" : "hover:bg-muted"
               )}
             >
@@ -131,7 +131,7 @@ export function DataTable<T extends object>({
               disabled={pagination.page >= totalPages}
               onClick={() => pagination.onChange(pagination.page + 1)}
               className={cn(
-                "rounded-md border px-3 py-1.5 text-sm font-medium transition-colors",
+                "rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium shadow-xs transition-colors",
                 pagination.page >= totalPages ? "cursor-not-allowed opacity-50" : "hover:bg-muted"
               )}
             >

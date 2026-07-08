@@ -45,7 +45,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <button
             type="button"
             onClick={this.handleReset}
-            className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+            className="inline-flex items-center gap-2 rounded-md border-0 bg-card px-4 py-2 text-sm font-medium text-foreground shadow-card transition-colors hover:bg-secondary"
           >
             <RefreshCw className="h-4 w-4" />
             重试

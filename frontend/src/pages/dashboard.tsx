@@ -100,7 +100,7 @@ export default function DashboardPage() {
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="border-border shadow-border" align="end">
+          <DropdownMenuContent className="shadow-popover" align="end">
             <DropdownMenuItem asChild>
               <Link to={`/projects/${row.id}`}>编辑</Link>
             </DropdownMenuItem>
@@ -116,7 +116,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">仪表盘</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">仪表盘</h1>
         <p className="mt-1 text-sm text-muted-foreground">API 测试项目概览。</p>
       </div>
 
@@ -124,28 +124,34 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">项目总数</CardTitle>
-            <Folder className="h-4 w-4 text-accent" />
+            <div className="rounded-lg bg-surface-accent p-2">
+              <Folder className="h-4 w-4 text-accent" />
+            </div>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{stats.totalProjects}</p>
+            <p className="text-2xl font-semibold tracking-tight">{stats.totalProjects}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">接口总数</CardTitle>
-            <Globe className="h-4 w-4 text-teal-500" />
+            <div className="rounded-lg bg-surface-primary p-2">
+              <Globe className="h-4 w-4 text-primary" />
+            </div>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{stats.totalEndpoints}</p>
+            <p className="text-2xl font-semibold tracking-tight">{stats.totalEndpoints}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">平均通过率</CardTitle>
-            <CheckCircle className="h-4 w-4 text-emerald-500" />
+            <div className="rounded-lg bg-surface-success p-2">
+              <CheckCircle className="h-4 w-4 text-success" />
+            </div>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{stats.avgPassRate}%</p>
+            <p className="text-2xl font-semibold tracking-tight">{stats.avgPassRate}%</p>
           </CardContent>
         </Card>
       </div>

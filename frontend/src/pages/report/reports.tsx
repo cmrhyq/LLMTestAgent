@@ -25,7 +25,7 @@ const columns: Column<ReportRow>[] = [
     key: "format",
     header: "格式",
     render: (val) => (
-      <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-medium uppercase">
+      <span className="inline-flex items-center rounded-md bg-info/10 px-2 py-0.5 text-xs font-medium uppercase text-info">
         {val as string}
       </span>
     ),
@@ -61,7 +61,7 @@ export default function ReportsPage() {
         <button
           type="button"
           onClick={() => navigate(`/reports/${row.id}`)}
-          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
         >
           <Eye className="h-3.5 w-3.5" />
           查看
@@ -69,7 +69,7 @@ export default function ReportsPage() {
         <button
           type="button"
           onClick={() => downloadReport(row.id)}
-          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
         >
           <Download className="h-3.5 w-3.5" />
           下载
@@ -81,7 +81,7 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <FileText className="h-6 w-6 text-muted-foreground" />
+        <FileText className="h-6 w-6 text-accent" />
         <h1 className="text-2xl font-bold tracking-tight text-foreground">测试报告</h1>
       </div>
 

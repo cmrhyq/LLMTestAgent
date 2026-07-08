@@ -90,7 +90,7 @@ function ExpandableRow({ result }: { result: TestResultDetail }) {
         </td>
       </tr>
       {expanded && (
-        <tr className="border-b border-border bg-muted/30">
+        <tr className="border-b border-border-subtle bg-muted/30">
           <td colSpan={6} className="px-4 py-4">
             <div className="grid gap-4 lg:grid-cols-2">
               <div className="space-y-3">
@@ -105,7 +105,7 @@ function ExpandableRow({ result }: { result: TestResultDetail }) {
                   {result.request_headers && result.request_headers !== "{}" && (
                     <div>
                       <span className="font-medium text-muted-foreground">请求头：</span>
-                      <pre className="mt-1 max-h-40 overflow-auto rounded-md border bg-card p-2 text-xs">
+                      <pre className="mt-1 max-h-40 overflow-auto rounded-md border-0 bg-card p-2 text-xs shadow-xs">
                         {formatJson(result.request_headers)}
                       </pre>
                     </div>
@@ -113,7 +113,7 @@ function ExpandableRow({ result }: { result: TestResultDetail }) {
                   {result.query_params && (
                     <div>
                       <span className="font-medium text-muted-foreground">查询参数：</span>
-                      <pre className="mt-1 max-h-40 overflow-auto rounded-md border bg-card p-2 text-xs">
+                      <pre className="mt-1 max-h-40 overflow-auto rounded-md border-0 bg-card p-2 text-xs shadow-xs">
                         {formatJson(result.query_params)}
                       </pre>
                     </div>
@@ -121,7 +121,7 @@ function ExpandableRow({ result }: { result: TestResultDetail }) {
                   {result.request_body && (
                     <div>
                       <span className="font-medium text-muted-foreground">请求体：</span>
-                      <pre className="mt-1 max-h-60 overflow-auto rounded-md border bg-card p-2 text-xs">
+                      <pre className="mt-1 max-h-60 overflow-auto rounded-md border-0 bg-card p-2 text-xs shadow-xs">
                         {formatJson(result.request_body)}
                       </pre>
                     </div>
@@ -138,7 +138,7 @@ function ExpandableRow({ result }: { result: TestResultDetail }) {
                       className={cn(
                         "font-mono font-semibold",
                         result.response_status_code && result.response_status_code < 400
-                          ? "text-emerald-500"
+                          ? "text-success"
                           : "text-destructive"
                       )}
                     >
@@ -148,7 +148,7 @@ function ExpandableRow({ result }: { result: TestResultDetail }) {
                   {result.response_headers && result.response_headers !== "{}" && (
                     <div>
                       <span className="font-medium text-muted-foreground">响应头：</span>
-                      <pre className="mt-1 max-h-40 overflow-auto rounded-md border bg-card p-2 text-xs">
+                      <pre className="mt-1 max-h-40 overflow-auto rounded-md border-0 bg-card p-2 text-xs shadow-xs">
                         {formatJson(result.response_headers)}
                       </pre>
                     </div>
@@ -156,7 +156,7 @@ function ExpandableRow({ result }: { result: TestResultDetail }) {
                   {result.response_body && (
                     <div>
                       <span className="font-medium text-muted-foreground">响应体：</span>
-                      <pre className="mt-1 max-h-60 overflow-auto rounded-md border bg-card p-2 text-xs">
+                      <pre className="mt-1 max-h-60 overflow-auto rounded-md border-0 bg-card p-2 text-xs shadow-xs">
                         {formatJson(result.response_body)}
                       </pre>
                     </div>
@@ -164,7 +164,7 @@ function ExpandableRow({ result }: { result: TestResultDetail }) {
                   {result.error_message && (
                     <div>
                       <span className="font-medium text-destructive">错误：</span>
-                      <pre className="mt-1 max-h-40 overflow-auto rounded-md border border-destructive/20 bg-destructive/5 p-2 text-xs text-destructive">
+                      <pre className="mt-1 max-h-40 overflow-auto rounded-md border-thin border-destructive/20 bg-destructive/5 p-2 text-xs text-destructive shadow-xs">
                         {result.error_message}
                       </pre>
                     </div>
@@ -321,10 +321,10 @@ export default function ReportViewPage() {
           <h2 className="text-lg font-semibold text-destructive">
             失败 / 错误用例（{failedResults.length}）
           </h2>
-          <div className="w-full overflow-hidden rounded-md border border-destructive/20">
+          <div className="w-full overflow-hidden rounded-lg border-0 shadow-card">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="border-b border-border bg-destructive/5">
+                <thead className="border-b border-border/30 bg-destructive/5">
                   <tr>
                     <th className="w-10 px-4 py-3" />
                     <th className="px-4 py-3 text-left font-medium text-muted-foreground">
@@ -354,10 +354,10 @@ export default function ReportViewPage() {
         <h2 className="text-lg font-semibold text-foreground">
           全部测试结果（{test_results.length}）
         </h2>
-        <div className="w-full overflow-hidden rounded-md border border-border">
+        <div className="w-full overflow-hidden rounded-lg border-0 shadow-card">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-border bg-card">
+              <thead className="border-b border-border/30 bg-card">
                 <tr>
                   <th className="w-10 px-4 py-3" />
                   <th className="px-4 py-3 text-left font-medium text-muted-foreground">

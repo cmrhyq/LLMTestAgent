@@ -93,7 +93,7 @@ function EndpointFormContent({ projectId, endpoint, onClose }: EndpointFormConte
             id="ep-method"
             value={method}
             onChange={(e) => setMethod(e.target.value)}
-            className="flex h-9 w-full rounded-md border border-border bg-input px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="flex h-9 w-full rounded-md border-thin border-border/50 bg-input px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:shadow-card"
           >
             {HTTP_METHODS.map((m) => (
               <option key={m} value={m}>
