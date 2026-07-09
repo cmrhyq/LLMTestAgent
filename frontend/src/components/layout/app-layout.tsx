@@ -18,7 +18,7 @@ export function AppLayout() {
             onClick={() => setSidebarCollapsed(false)}
             aria-label="展开侧边栏"
             className={cn(
-              "fixed left-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-full",
+              "fixed left-2 top-2 z-50 flex h-9 w-9 items-center justify-center rounded-full",
               "border border-border bg-background text-muted-foreground shadow-elevated transition-colors",
               "hover:bg-muted hover:text-foreground",
               "animate-in fade-in-0 zoom-in-95 duration-200"

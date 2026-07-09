@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { LayoutDashboard, Play, FileText, MessageSquare, PanelLeftClose } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NavLink } from "react-router";
+import { SpacesSection } from "@/components/layout/spaces-section";
 
 const APP_VERSION = "v0.0.1";
 const SIDEBAR_WIDTH = 250;
@@ -39,12 +40,12 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside
-      className="flex shrink-0 flex-col overflow-hidden border-r border-border bg-sidebar transition-[width] duration-300 ease-in-out"
+      className="flex h-full min-h-0 shrink-0 flex-col overflow-hidden border-r border-border bg-sidebar transition-[width] duration-300 ease-in-out"
       style={{ width: collapsed ? 0 : SIDEBAR_WIDTH }}
     >
       <div
         className={cn(
-          "flex min-w-[250px] flex-1 flex-col transition-opacity duration-200",
+          "flex h-full min-h-0 min-w-[250px] flex-col overflow-hidden transition-opacity duration-200",
           collapsed ? "pointer-events-none opacity-0" : "opacity-100"
         )}
       >
@@ -66,7 +67,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           </button>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-0.5 px-3 pb-4">
+        <nav className="flex shrink-0 flex-col gap-0.5 px-3 pb-4">
           <NavItem to="/dashboard" icon={<LayoutDashboard className="h-4 w-4" />} label="仪表盘" />
 
           <div className="mb-1 mt-5 px-2.5">
@@ -86,6 +87,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
           <NavItem to="/reports" icon={<FileText className="h-4 w-4" />} label="报告" />
         </nav>
+
+        <div className="mt-auto flex min-h-0 flex-1 flex-col overflow-hidden border-t border-border">
+          <SpacesSection />
+        </div>
       </div>
     </aside>
   );

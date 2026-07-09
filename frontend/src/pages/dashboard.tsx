@@ -72,6 +72,13 @@ export default function DashboardPage() {
       ),
     },
     {
+      key: "description",
+      header: "描述",
+      render: (_, row) => (
+        <span className="font-mono text-xs text-muted-foreground">{row.description}</span>
+      ),
+    },
+    {
       key: "status",
       header: "状态",
       render: (_, row) => (
