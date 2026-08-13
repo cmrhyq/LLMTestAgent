@@ -1,11 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/lib/api";
-import type {
-  Conversation,
-  ConversationListResponse,
-  MessageListResponse,
-} from "@/lib/types";
+import type { Conversation, ConversationListResponse, MessageListResponse } from "@/lib/types";
 
 interface UseConversationsParams {
   project_id?: string | number;
