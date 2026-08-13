@@ -11,6 +11,21 @@
 
 ## [Unreleased]
 
+### Added
+
+- **架构设计文档**（[design/Architecture.md](./design/Architecture.md)）：跨前后端的整体架构总览，反映当前真实实现
+  - 顶层架构、后端分层、LangGraph 工作流、数据模型（含新增对话表）、对话历史子系统、前端架构、LLM/Prompt、配置体系
+  - 对既有文档做现状校准：对话历史已实现、对话入口已合并为单一 `/workflows/chat`、Ask/Plan 现状、Chroma 仍未接入
+
+### Implemented（设计已落地到代码）
+
+- **对话历史持久化**（原 ADR-001 §2.2 `Proposed` → 已实现）：
+  - 新增 SQLite 表 `conversation` + `message`（雪花 ID、CASCADE），ORM/Schema/Repository/Service
+  - 新增 `/conversations` CRUD API 与 `/conversations/{id}/messages`
+  - `/chat/stream` 支持 `conversation_id`/`mode`、多轮上下文、消息落库、响应头 `X-Conversation-Id`
+  - 前端 `SpacesSection` 接入真实会话（替换 mock），`security-chat.tsx` 改为多轮消息列表
+- **单一对话入口**：合并「新建测试」与「安全对话」为 `/workflows/chat`；删除 `workflow-run.tsx` 与 `useRunTest`；`/workflows/run` 重定向（后端 `/workflows/run/test` 接口保留）
+
 ### Proposed
 
 - **ADR-001**：引入 Project 工作空间模型（每个 Project = 一个 Codex 式 workspace）
