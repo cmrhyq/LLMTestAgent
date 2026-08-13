@@ -26,6 +26,8 @@ EXPECTED_TABLES = [
     "test_result",
     "test_summary",
     "report",
+    "conversation",
+    "message",
 ]
 
 

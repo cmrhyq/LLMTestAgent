@@ -1,3 +1,4 @@
+from src.data.services.conversation_service import ConversationService
 from src.data.services.endpoint_service import EndpointService
 from src.data.services.environment_service import EnvironmentService
 from src.data.services.project_service import ProjectService
@@ -14,4 +15,5 @@ __all__ = [
     "TestCaseService",
     "TestResultService",
     "ReportService",
+    "ConversationService",
 ]

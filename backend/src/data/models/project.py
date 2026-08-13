@@ -9,6 +9,7 @@ from src.data.models.base import Base, local_now
 from src.utils.id import next_id
 
 if TYPE_CHECKING:
+    from src.data.models.conversation import Conversation
     from src.data.models.endpoint import Endpoint
     from src.data.models.environment import Environment
     from src.data.models.test_run import TestRun
@@ -30,5 +31,6 @@ class Project(Base):
     endpoints: Mapped[list[Endpoint]] = relationship(back_populates="project", cascade="all, delete-orphan")
     environments: Mapped[list[Environment]] = relationship(back_populates="project", cascade="all, delete-orphan")
     test_runs: Mapped[list[TestRun]] = relationship(back_populates="project", cascade="all, delete-orphan")
+    conversations: Mapped[list[Conversation]] = relationship(back_populates="project", cascade="all, delete-orphan")
 
     __table_args__ = (Index("idx_project_name", "name"),)

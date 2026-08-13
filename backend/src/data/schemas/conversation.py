@@ -1,0 +1,64 @@
+from pydantic import BaseModel, Field
+
+from src.data.schemas.message import MessageResponse
+
+
+class ConversationBase(BaseModel):
+    """Conversation 基础字段"""
+
+    project_id: int | None = Field(default=None, description="所属项目ID（可空）")
+    title: str = Field(default="", description="会话标题")
+    mode: str = Field(default="Ask", description="模式: Ask / Plan")
+
+
+class ConversationCreate(ConversationBase):
+    """创建 Conversation 请求体"""
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "project_id": None,
+                    "title": "",
+                    "mode": "Ask",
+                }
+            ]
+        }
+    }
+
+
+class ConversationUpdate(BaseModel):
+    """更新 Conversation 请求体（所有字段可选）"""
+
+    title: str | None = Field(default=None, description="会话标题")
+    mode: str | None = Field(default=None, description="模式: Ask / Plan")
+    status: int | None = Field(default=None, description="状态: 1-正常, 0-删除")
+
+
+class ConversationResponse(ConversationBase):
+    """Conversation 响应体"""
+
+    id: int = Field(..., description="会话ID")
+    status: int = Field(..., description="状态: 1-正常, 0-删除")
+    last_message_at: str | None = Field(default=None, description="最后一条消息时间")
+    created_at: str = Field(..., description="创建时间")
+    updated_at: str = Field(..., description="更新时间")
+
+    model_config = {"from_attributes": True}
+
+
+class ConversationDetail(ConversationResponse):
+    """Conversation 详情响应（含消息列表）"""
+
+    messages: list[MessageResponse] = Field(default=[], description="消息列表")
+
+    model_config = {"from_attributes": True}
+
+
+class ConversationListResponse(BaseModel):
+    """Conversation 列表响应"""
+
+    items: list[ConversationResponse] = Field(default=[], description="会话列表")
+    total: int = Field(default=0, description="总数")
+    page: int = Field(default=1, description="当前页码")
+    page_size: int = Field(default=20, description="每页数量")

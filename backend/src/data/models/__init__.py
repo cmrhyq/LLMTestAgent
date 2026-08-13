@@ -1,5 +1,7 @@
+from src.data.models.conversation import Conversation
 from src.data.models.endpoint import Endpoint
 from src.data.models.environment import Environment
+from src.data.models.message import Message
 from src.data.models.project import Project
 from src.data.models.report import Report
 from src.data.models.test_case import TestCase
@@ -17,4 +19,6 @@ __all__ = [
     "TestResult",
     "TestSummary",
     "Report",
+    "Conversation",
+    "Message",
 ]

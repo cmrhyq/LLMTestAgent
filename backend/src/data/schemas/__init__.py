@@ -1,3 +1,11 @@
+from src.data.schemas.conversation import (
+    ConversationBase,
+    ConversationCreate,
+    ConversationDetail,
+    ConversationListResponse,
+    ConversationResponse,
+    ConversationUpdate,
+)
 from src.data.schemas.endpoint import (
     EndpointBase,
     EndpointBatchDelete,
@@ -19,6 +27,12 @@ from src.data.schemas.environment import (
     EnvironmentQuery,
     EnvironmentResponse,
     EnvironmentUpdate,
+)
+from src.data.schemas.message import (
+    MessageBase,
+    MessageCreate,
+    MessageListResponse,
+    MessageResponse,
 )
 from src.data.schemas.project import (
     ProjectBase,
@@ -93,4 +107,14 @@ __all__ = [
     "TestSummaryResponse",
     "ReportResponse",
     "ReportListResponse",
+    "ConversationBase",
+    "ConversationCreate",
+    "ConversationUpdate",
+    "ConversationResponse",
+    "ConversationDetail",
+    "ConversationListResponse",
+    "MessageBase",
+    "MessageCreate",
+    "MessageResponse",
+    "MessageListResponse",
 ]
