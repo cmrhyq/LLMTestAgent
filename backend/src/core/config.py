@@ -182,36 +182,6 @@ class AppConfig(BaseModel):
     case_generation: CaseGenerationConfig = Field(default_factory=CaseGenerationConfig)
 
 
-def _resolve_env_vars(value: Any) -> Any:
-    """
-    递归解析配置值中的环境变量
-
-    支持两种格式：
-    - 完整匹配: "${VAR_NAME}" -> 环境变量值
-    - 嵌入模式: "Bearer ${TOKEN}" -> "Bearer actual_value"
-
-    Args:
-        value: 配置值
-
-    Returns:
-        解析后的值
-    """
-    import re
-
-    if isinstance(value, str):
-
-        def _replace_env(match):
-            env_var = match.group(1)
-            return os.getenv(env_var, "")
-
-        return re.sub(r"\$\{([^}]+)\}", _replace_env, value)
-    elif isinstance(value, dict):
-        return {k: _resolve_env_vars(v) for k, v in value.items()}
-    elif isinstance(value, list):
-        return [_resolve_env_vars(item) for item in value]
-    return value
-
-
 def load_config(config_path: str | Path | None = None) -> AppConfig:
     """
     加载应用配置
@@ -236,7 +206,6 @@ def load_config(config_path: str | Path | None = None) -> AppConfig:
         try:
             with open(resolved_path, encoding="utf-8") as f:
                 config_data = yaml.safe_load(f) or {}
-            config_data = _resolve_env_vars(config_data)
             logger.info("配置文件加载成功: %s", resolved_path)
         except Exception as e:
             logger.warning(f"配置文件加载失败，使用默认配置, error: {e}", exc_info=e)

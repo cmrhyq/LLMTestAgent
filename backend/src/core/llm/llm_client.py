@@ -112,6 +112,7 @@ def _create_qwen_model(config: AppConfig) -> BaseChatModel:
     return ChatTongyi(
         dashscope_api_key=qwen_config.api_key,  # type: ignore[call-arg]
         model=qwen_config.model,
+        api_key=qwen_config.api_key
     )
 
 
@@ -225,8 +226,8 @@ class LLMClient:
             str: 非空文本增量。content 为空的 chunk 会被跳过。
 
         Example:
-            >>> for token in client.chat_stream([{"role": "user", "content": "hi"}]):
-            ...     print(token, end="", flush=True)
+            for token in client.chat_stream([{"role": "user", "content": "hi"}]):
+            ... print(token, end="", flush=True)
         """
         logger.debug(f"LLM流式调用开始，消息数: {len(messages)}", message_count=len(messages))
         start_time = time.perf_counter()
@@ -259,8 +260,8 @@ class LLMClient:
             str: 非空文本增量。content 为空的 chunk 会被跳过。
 
         Example:
-            >>> async for token in client.achat_stream(messages):
-            ...     await ws.send_text(token)
+            async for token in client.achat_stream(messages):
+            ... await ws.send_text(token)
         """
         logger.debug(f"LLM异步流式调用开始，消息数: {len(messages)}", message_count=len(messages))
         start_time = time.perf_counter()
@@ -295,8 +296,8 @@ class LLMClient:
             BaseMessage: 每次迭代产出的原始消息块（通常为 AIMessageChunk）。
 
         Example:
-            >>> for chunk in client.stream(messages):
-            ...     print(chunk.content, chunk.usage_metadata)
+            for chunk in client.stream(messages):
+            ... print(chunk.content, chunk.usage_metadata)
         """
         langchain_messages = convert_to_langchain_messages(messages)
         yield from self._model.stream(langchain_messages, **kwargs)
@@ -314,8 +315,8 @@ class LLMClient:
             BaseMessage: 每次迭代产出的原始消息块（通常为 AIMessageChunk）。
 
         Example:
-            >>> async for chunk in client.astream(messages):
-            ...     print(chunk.content)
+            async for chunk in client.astream(messages):
+            ... print(chunk.content)
         """
         langchain_messages = convert_to_langchain_messages(messages)
         async for chunk in self._model.astream(langchain_messages, **kwargs):
@@ -335,8 +336,8 @@ class LLMClient:
             BaseMessage: 每次迭代产出的原始消息块（通常为 AIMessageChunk）。
 
         Example:
-            >>> for chunk in client.stream_messages(lc_messages):
-            ...     print(chunk.content, end="")
+            for chunk in client.stream_messages(lc_messages):
+            ... print(chunk.content, end="")
         """
         yield from self._model.stream(messages, **kwargs)
 
@@ -353,8 +354,8 @@ class LLMClient:
             BaseMessage: 每次迭代产出的原始消息块（通常为 AIMessageChunk）。
 
         Example:
-            >>> async for chunk in client.astream_messages(lc_messages):
-            ...     print(chunk.content, end="")
+            async for chunk in client.astream_messages(lc_messages):
+            ... print(chunk.content, end="")
         """
         async for chunk in self._model.astream(messages, **kwargs):
             yield chunk
@@ -382,8 +383,8 @@ class LLMClient:
             BaseMessage: 每次迭代产出的原始消息块（含 tool_call_chunks）。
 
         Example:
-            >>> for chunk in client.invoke_with_tools_stream(lc_messages, tools):
-            ...     print(chunk.tool_call_chunks)
+            for chunk in client.invoke_with_tools_stream(lc_messages, tools):
+            ... print(chunk.tool_call_chunks)
         """
         model_with_tools = self._model.bind_tools(tools)
         yield from model_with_tools.stream(messages, **kwargs)
@@ -407,8 +408,8 @@ class LLMClient:
             BaseMessage: 每次迭代产出的原始消息块（含 tool_call_chunks）。
 
         Example:
-            >>> async for chunk in client.ainvoke_with_tools_stream(lc_messages, tools):
-            ...     print(chunk.tool_call_chunks)
+            async for chunk in client.ainvoke_with_tools_stream(lc_messages, tools):
+            ... print(chunk.tool_call_chunks)
         """
         model_with_tools = self._model.bind_tools(tools)
         async for chunk in model_with_tools.astream(messages, **kwargs):
@@ -439,9 +440,9 @@ class LLMClient:
             dict[str, Any]: LangChain 事件字典，含 event、name、data 等键。
 
         Example:
-            >>> async for event in client.astream_events(messages):
-            ...     if event["event"] == "on_chat_model_stream":
-            ...         print(event["data"]["chunk"].content, end="")
+            async for event in client.astream_events(messages):
+            ... if event["event"] == "on_chat_model_stream":
+            ...     print(event["data"]["chunk"].content, end="")
         """
         if messages and isinstance(messages[0], BaseMessage):
             langchain_messages = messages
