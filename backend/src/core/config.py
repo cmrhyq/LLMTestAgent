@@ -55,6 +55,13 @@ class QwenConfig(BaseModel):
     model: str = Field(default="qwen-max", description="模型名称")
 
 
+class DeepseekConfig(BaseModel):
+    """Deepseek配置"""
+
+    api_key: str = Field(default="", description="DeepseekAPI密钥")
+    model: str = Field(default="qwen-max", description="模型名称")
+
+
 class LLMConfig(BaseModel):
     """LLM配置"""
 
@@ -63,6 +70,7 @@ class LLMConfig(BaseModel):
     bedrock: BedrockConfig = Field(default_factory=BedrockConfig)
     zhipu: ZhipuConfig = Field(default_factory=ZhipuConfig)
     qwen: QwenConfig = Field(default_factory=QwenConfig)
+    deepseek: DeepseekConfig = Field(default=DeepseekConfig)
 
 
 class RetryConfig(BaseModel):

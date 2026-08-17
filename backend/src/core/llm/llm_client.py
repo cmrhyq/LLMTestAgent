@@ -10,6 +10,8 @@ from typing import Any, Literal, cast
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
+from langchain_deepseek import ChatDeepSeek
+from pydantic import SecretStr
 
 from src.core.config import AppConfig, get_config
 from src.core.logging import get_logger
@@ -43,6 +45,9 @@ def create_chat_model(config: AppConfig | None = None) -> BaseChatModel:
     elif provider == "qwen":
         logger.info("LLM提供商初始化: 通义千问", provider="qwen")
         return _create_qwen_model(config)
+    elif provider == "deepseek":
+        logger.info("LLM提供商初始化: Deepseek", provider="deepseek")
+        return _create_deepseek_model(config)
     else:
         logger.warning(f"未知的LLM提供商: {provider}，使用OpenAI作为默认", provider=provider)
         return _create_openai_model(config)
@@ -113,6 +118,18 @@ def _create_qwen_model(config: AppConfig) -> BaseChatModel:
         dashscope_api_key=qwen_config.api_key,  # type: ignore[call-arg]
         model=qwen_config.model,
         api_key=qwen_config.api_key
+    )
+
+
+def _create_deepseek_model(config: AppConfig) -> BaseChatModel:
+    deepseek_config = config.llm.deepseek
+    return ChatDeepSeek(
+        model=deepseek_config.model,
+        api_key=SecretStr(deepseek_config.api_key),
+        temperature=0,
+        max_tokens=None,
+        timeout=None,
+        max_retries=2,
     )
 
 
@@ -199,10 +216,10 @@ class LLMClient:
         return content
 
     def invoke_with_tools(
-        self,
-        messages: list[BaseMessage],
-        tools,
-        **kwargs,
+            self,
+            messages: list[BaseMessage],
+            tools,
+            **kwargs,
     ) -> BaseMessage:
         """使用已转换的消息发送带工具绑定的请求。"""
         model_with_tools = self._model.bind_tools(tools)
@@ -364,10 +381,10 @@ class LLMClient:
     # 流式接口：工具绑定（返回含 tool_call_chunks 的消息块）
     # -----------------------------------------------------------------------
     def invoke_with_tools_stream(
-        self,
-        messages: list[BaseMessage],
-        tools,
-        **kwargs,
+            self,
+            messages: list[BaseMessage],
+            tools,
+            **kwargs,
     ) -> Iterator[BaseMessage]:
         """流式发送带工具绑定的请求，产出含工具调用信息的消息块。
 
@@ -390,10 +407,10 @@ class LLMClient:
         yield from model_with_tools.stream(messages, **kwargs)
 
     async def ainvoke_with_tools_stream(
-        self,
-        messages: list[BaseMessage],
-        tools,
-        **kwargs,
+            self,
+            messages: list[BaseMessage],
+            tools,
+            **kwargs,
     ) -> AsyncIterator[BaseMessage]:
         """异步流式发送带工具绑定的请求，产出含工具调用信息的消息块。
 
@@ -419,10 +436,10 @@ class LLMClient:
     # 流式接口：事件流（细粒度可观测性）
     # -----------------------------------------------------------------------
     async def astream_events(
-        self,
-        messages: list[dict[str, str]] | list[BaseMessage],
-        version: Literal["v1", "v2"] = "v2",
-        **kwargs,
+            self,
+            messages: list[dict[str, str]] | list[BaseMessage],
+            version: Literal["v1", "v2"] = "v2",
+            **kwargs,
     ) -> AsyncIterator[dict[str, Any]]:
         """异步流式产出细粒度事件，用于 Agent / 链路的深度观测。
 
