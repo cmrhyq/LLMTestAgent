@@ -1,4 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Plus,
   Send,
@@ -15,9 +17,11 @@ import {
 import { toast } from "sonner";
 
 import { useUploadOpenAPI } from "@/hooks/use-workflows.ts";
+import { useConversationMessages } from "@/hooks/use-conversations.ts";
 import { useStreamingMarkdown } from "@/hooks/use-streaming-markdown.ts";
 import { streamChat } from "@/lib/stream.ts";
 import { MarkdownRenderer } from "@/components/markdown";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,38 +39,139 @@ const MODES = [
   { icon: <ListTodo />, value: "Plan", description: "计划模式：生成测试计划，确认后执行测试" },
 ] as const;
 
+interface UserBubbleProps {
+  content: string;
+}
+
+function UserBubble({ content }: UserBubbleProps) {
+  return (
+    <div className="flex justify-end">
+      <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl bg-primary px-4 py-2 text-sm text-primary-foreground">
+        {content}
+      </div>
+    </div>
+  );
+}
+
+interface AssistantBubbleProps {
+  content: string;
+  isStreaming?: boolean;
+}
+
+function AssistantBubble({ content, isStreaming = false }: AssistantBubbleProps) {
+  return (
+    <div className="flex justify-start">
+      <div className="w-full min-w-0">
+        <MarkdownRenderer content={content} isStreaming={isStreaming} />
+      </div>
+    </div>
+  );
+}
+
+function StreamingAssistantMessage({
+  rawText,
+  isStreaming,
+}: {
+  rawText: string;
+  isStreaming: boolean;
+}) {
+  const { displayText } = useStreamingMarkdown({ rawText, isStreaming });
+  if (isStreaming && rawText.length === 0) {
+    return (
+      <div className="flex items-center gap-3 text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin text-accent" />
+        <span>正在处理…</span>
+      </div>
+    );
+  }
+  return <AssistantBubble content={displayText} isStreaming={isStreaming} />;
+}
+
 export default function SecurityChatPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const conversationId = searchParams.get("conversation_id");
+  const projectId = searchParams.get("project_id");
+  const queryClient = useQueryClient();
+
   const [instruction, setInstruction] = useState("");
   const [mode, setMode] = useState("Ask");
   const [file, setFile] = useState<File | null>(null);
   const [uploadedPath, setUploadedPath] = useState<string | null>(null);
+
+  const [pendingUser, setPendingUser] = useState<string | null>(null);
   const [answer, setAnswer] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-  const [hasStarted, setHasStarted] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const { mutate: uploadFile, isPending: isUploading } = useUploadOpenAPI();
-  const { displayText } = useStreamingMarkdown({ rawText: answer, isStreaming });
+  const { data: messagesData, isLoading: messagesLoading } =
+    useConversationMessages(conversationId);
+  const serverMessages = messagesData?.items ?? [];
+
+  // 切换会话时清空进行中的本地 overlay（渲染期依据上一次会话 ID 重置，避免在 effect 中 setState）
+  const [trackedConversationId, setTrackedConversationId] = useState(conversationId);
+  if (conversationId !== trackedConversationId) {
+    setTrackedConversationId(conversationId);
+    setPendingUser(null);
+    setAnswer("");
+  }
+
+  // 有新内容时滚动到底部
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [serverMessages.length, pendingUser, answer]);
 
   const handleSubmit = async () => {
     if (!instruction.trim() || isStreaming || isUploading) return;
 
     const prompt = instruction.trim();
     setInstruction("");
+    setPendingUser(prompt);
     setAnswer("");
-    setHasStarted(true);
     setIsStreaming(true);
 
+    let newConversationId: string | null = null;
+
     try {
-      await streamChat({ instruction: prompt, api_doc_path: uploadedPath }, (chunk) => {
-        setAnswer((prev) => prev + chunk);
-      });
+      await streamChat(
+        {
+          instruction: prompt,
+          api_doc_path: uploadedPath,
+          conversation_id: conversationId ?? undefined,
+          mode,
+          project_id: projectId ?? undefined,
+        },
+        (chunk) => setAnswer((prev) => prev + chunk),
+        {
+          onConversationId: (id) => {
+            newConversationId = id;
+          },
+        }
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : "请求失败";
       toast.error(message);
       setAnswer((prev) => prev || `请求失败：${message}`);
     } finally {
       setIsStreaming(false);
+
+      if (!conversationId && newConversationId) {
+        // 新建会话：刷新会话列表并把新会话 ID 写回 URL
+        // 后端在连接关闭前已落库 user/assistant 消息，切换后重新拉取即可显示完整对话
+        await queryClient.invalidateQueries({ queryKey: ["conversations"] });
+        setSearchParams({ conversation_id: newConversationId }, { replace: true });
+      } else if (conversationId) {
+        // 存量会话：刷新消息与会话列表后清空 overlay
+        await queryClient.invalidateQueries({
+          queryKey: ["conversation-messages", conversationId],
+        });
+        queryClient.invalidateQueries({ queryKey: ["conversations"] });
+        setPendingUser(null);
+        setAnswer("");
+      }
+      // 其余情况（请求在建立会话前失败）：保留 overlay 展示错误信息
     }
   };
 
@@ -109,26 +214,41 @@ export default function SecurityChatPage() {
     setUploadedPath(null);
   };
 
-  const showWaiting = isStreaming && answer.length === 0;
+  const hasMessages = serverMessages.length > 0 || pendingUser !== null || isStreaming;
+  const showWelcome = !hasMessages && !messagesLoading;
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex flex-1 items-center justify-center overflow-y-auto">
-        {hasStarted ? (
-          <div className="mx-auto flex w-full max-w-3xl flex-col self-start px-4 py-6">
-            {showWaiting ? (
-              <div className="flex items-center gap-3 text-muted-foreground">
-                <Loader2 className="h-5 w-5 animate-spin text-accent" />
-                <span>正在处理…</span>
-              </div>
-            ) : (
-              <MarkdownRenderer content={displayText} isStreaming={isStreaming} />
-            )}
+      <div ref={scrollRef} className="flex flex-1 flex-col overflow-y-auto">
+        {showWelcome ? (
+          <div className="flex flex-1 items-center justify-center">
+            <div className="text-center">
+              <h1 className="text-3xl font-medium text-foreground">你想测试什么？</h1>
+              <p className="mt-2 text-muted-foreground">输入自然语言指令，开始 API 测试</p>
+            </div>
           </div>
         ) : (
-          <div className="text-center">
-            <h1 className="text-3xl font-medium text-foreground">你想测试什么？</h1>
-            <p className="mt-2 text-muted-foreground">输入自然语言指令，开始 API 测试</p>
+          <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-6">
+            {messagesLoading && (
+              <div className="flex items-center gap-3 text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin text-accent" />
+                <span>加载会话历史…</span>
+              </div>
+            )}
+
+            {serverMessages.map((msg) =>
+              msg.role === "user" ? (
+                <UserBubble key={msg.id} content={msg.content} />
+              ) : (
+                <AssistantBubble key={msg.id} content={msg.content} />
+              )
+            )}
+
+            {pendingUser !== null && <UserBubble content={pendingUser} />}
+
+            {(isStreaming || (pendingUser !== null && answer.length > 0)) && (
+              <StreamingAssistantMessage rawText={answer} isStreaming={isStreaming} />
+            )}
           </div>
         )}
       </div>
@@ -162,7 +282,9 @@ export default function SecurityChatPage() {
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground shadow-xs transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground shadow-xs transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                      )}
                     >
                       {mode}
                       <ChevronDown className="h-3.5 w-3.5" />

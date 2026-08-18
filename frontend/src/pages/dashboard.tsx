@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Folder, Globe, CheckCircle, MoreHorizontal, Play } from "lucide-react";
+import { Folder, Globe, CheckCircle, MoreHorizontal, MessageSquare } from "lucide-react";
 
 import { useProjects, useDeleteProject } from "@/hooks/use-projects";
 import { useTestRuns } from "@/hooks/use-test-runs";
@@ -167,9 +167,9 @@ export default function DashboardPage() {
         <h2 className="mb-3 text-lg font-semibold text-foreground">快捷操作</h2>
         <div className="flex gap-3">
           <Button asChild variant="outline">
-            <Link to="/workflows/run">
-              <Play className="mr-2 h-4 w-4" />
-              新建测试
+            <Link to="/workflows/chat">
+              <MessageSquare className="mr-2 h-4 w-4" />
+              新建对话
             </Link>
           </Button>
         </div>

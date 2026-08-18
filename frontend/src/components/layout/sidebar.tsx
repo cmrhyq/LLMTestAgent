@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { LayoutDashboard, Play, FileText, MessageSquare, PanelLeftClose } from "lucide-react";
+import { LayoutDashboard, FileText, MessageSquare, PanelLeftClose } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NavLink } from "react-router";
 import { SpacesSection } from "@/components/layout/spaces-section";
@@ -70,20 +70,15 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <nav className="flex shrink-0 flex-col gap-0.5 px-3 pb-4">
           <NavItem to="/dashboard" icon={<LayoutDashboard className="h-4 w-4" />} label="仪表盘" />
 
-          <div className="mb-1 mt-5 px-2.5">
-            <span className="text-[11px] font-medium text-muted-foreground">工作流</span>
-          </div>
+          {/*<div className="mb-1 mt-5 px-2.5">*/}
+          {/*  <span className="text-[11px] font-medium text-muted-foreground">工作流</span>*/}
+          {/*</div>*/}
 
-          <NavItem to="/workflows/run" icon={<Play className="h-4 w-4" />} label="新建测试" />
           <NavItem
             to="/workflows/chat"
             icon={<MessageSquare className="h-4 w-4" />}
-            label="安全对话"
+            label="新建对话"
           />
-
-          <div className="mb-1 mt-5 px-2.5">
-            <span className="text-[11px] font-medium text-muted-foreground">结果</span>
-          </div>
 
           <NavItem to="/reports" icon={<FileText className="h-4 w-4" />} label="报告" />
         </nav>

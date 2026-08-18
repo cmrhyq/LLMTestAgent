@@ -1,13 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/lib/api";
-import type {
-  ParseOpenAPIResponse,
-  RunTestRequest,
-  RunTestResponse,
-  UploadOpenAPIResponse,
-  WorkflowStatus,
-} from "@/lib/types";
+import type { ParseOpenAPIResponse, UploadOpenAPIResponse, WorkflowStatus } from "@/lib/types";
 
 export function useParseOpenAPI() {
   const queryClient = useQueryClient();
@@ -44,24 +38,6 @@ export function useUploadOpenAPI() {
     },
     onError: (error) => {
       toast.error(error.message || "文档上传失败");
-    },
-  });
-}
-
-export function useRunTest() {
-  const queryClient = useQueryClient();
-
-  return useMutation<RunTestResponse, Error, RunTestRequest>({
-    mutationFn: async (payload) => {
-      const { data } = await api.post<RunTestResponse>("/workflows/run/test", payload);
-      return data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["test-runs"] });
-      toast.success(data.message || "测试提交成功");
-    },
-    onError: (error) => {
-      toast.error(error.message || "测试运行失败");
     },
   });
 }

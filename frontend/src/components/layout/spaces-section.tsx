@@ -1,12 +1,33 @@
 import { useState } from "react";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
-import { ChevronDown, Folder, PlusCircle } from "lucide-react";
-import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { ChevronDown, Folder, PlusCircle, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useProjects } from "@/hooks/use-projects";
-import { getMockSpaceItems } from "@/lib/mock/space-items";
+import {
+  useConversations,
+  useUpdateConversation,
+  useDeleteConversation,
+} from "@/hooks/use-conversations";
 import { formatRelativeTime } from "@/lib/format-relative-time";
 import { cn } from "@/lib/utils";
 import { Accordion, AccordionContent, AccordionItem } from "@/components/ui/accordion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import type { Conversation } from "@/lib/types";
 
 function SpacesSkeleton() {
   return (
@@ -18,13 +39,80 @@ function SpacesSkeleton() {
   );
 }
 
+interface RenameDialogProps {
+  conversation: Conversation | null;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (title: string) => void;
+}
+
+function RenameDialog({ conversation, onOpenChange, onSubmit }: RenameDialogProps) {
+  const [value, setValue] = useState("");
+
+  return (
+    <Dialog
+      open={conversation !== null}
+      onOpenChange={(open) => {
+        if (!open) onOpenChange(false);
+        else setValue(conversation?.title ?? "");
+      }}
+    >
+      <DialogContent
+        className="max-w-sm"
+        onOpenAutoFocus={() => setValue(conversation?.title ?? "")}
+      >
+        <DialogHeader>
+          <DialogTitle>重命名会话</DialogTitle>
+        </DialogHeader>
+        <Input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="输入会话标题"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && value.trim()) {
+              onSubmit(value.trim());
+            }
+          }}
+        />
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            取消
+          </Button>
+          <Button disabled={!value.trim()} onClick={() => onSubmit(value.trim())}>
+            保存
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 interface ProjectAccordionItemProps {
   projectId: string | number;
   projectName: string;
 }
 
 function ProjectAccordionItem({ projectId, projectName }: ProjectAccordionItemProps) {
-  const items = getMockSpaceItems(projectId);
+  const navigate = useNavigate();
+  const { data, isLoading } = useConversations({
+    project_id: projectId,
+    status: 1,
+    page_size: 100,
+  });
+  const updateConversation = useUpdateConversation();
+  const deleteConversation = useDeleteConversation();
+
+  const [renameTarget, setRenameTarget] = useState<Conversation | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Conversation | null>(null);
+
+  const conversations = data?.items ?? [];
+
+  const handleNewConversation = () => {
+    navigate(`/workflows/chat?project_id=${projectId}`);
+  };
+
+  const handleOpen = (id: string | number) => {
+    navigate(`/workflows/chat?conversation_id=${id}`);
+  };
 
   return (
     <AccordionItem value={String(projectId)} className="border-none">
@@ -48,7 +136,7 @@ function ProjectAccordionItem({ projectId, projectName }: ProjectAccordionItemPr
               className="rounded p-0.5 text-muted-foreground hover:bg-background hover:text-foreground"
               onClick={(e) => {
                 e.stopPropagation();
-                toast.info("新建对话功能即将上线");
+                handleNewConversation();
               }}
             >
               <PlusCircle className="h-3.5 w-3.5" />
@@ -57,23 +145,92 @@ function ProjectAccordionItem({ projectId, projectName }: ProjectAccordionItemPr
         </AccordionPrimitive.Trigger>
       </AccordionPrimitive.Header>
       <AccordionContent className="pb-1 pt-0">
-        <ul className="space-y-0.5 pl-6">
-          {items.map((item) => (
-            <li key={item.id}>
-              <button
-                type="button"
-                className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
-                onClick={() => toast.info("对话历史功能即将上线")}
-              >
-                <span className="min-w-0 flex-1 truncate">{item.title}</span>
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {formatRelativeTime(item.updatedAt)}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        {isLoading ? (
+          <div className="space-y-1 pl-6 pr-2 py-1">
+            {[1, 2].map((i) => (
+              <div key={i} className="h-6 animate-pulse rounded bg-muted" />
+            ))}
+          </div>
+        ) : conversations.length === 0 ? (
+          <p className="pl-6 pr-2 py-1 text-xs text-muted-foreground">暂无会话</p>
+        ) : (
+          <ul className="space-y-0.5 pl-6">
+            {conversations.map((item) => (
+              <li key={item.id} className="group/item">
+                <div className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-sm text-foreground/80 transition-colors hover:bg-muted hover:text-foreground">
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 truncate text-left"
+                    onClick={() => handleOpen(item.id)}
+                  >
+                    {item.title || "未命名会话"}
+                  </button>
+                  <span className="shrink-0 text-xs text-muted-foreground group-hover/item:hidden">
+                    {formatRelativeTime(item.last_message_at || item.updated_at)}
+                  </span>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label="会话操作"
+                        className="hidden shrink-0 rounded p-0.5 text-muted-foreground hover:bg-background hover:text-foreground group-hover/item:block"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreHorizontal className="h-3.5 w-3.5" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="shadow-popover">
+                      <DropdownMenuItem onClick={() => setRenameTarget(item)}>
+                        <Pencil className="h-3.5 w-3.5" />
+                        重命名
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => setDeleteTarget(item)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        删除
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </AccordionContent>
+
+      <RenameDialog
+        conversation={renameTarget}
+        onOpenChange={() => setRenameTarget(null)}
+        onSubmit={(title) => {
+          if (renameTarget) {
+            updateConversation.mutate({ id: renameTarget.id, payload: { title } });
+          }
+          setRenameTarget(null);
+        }}
+      />
+
+      <ConfirmDeleteDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteConversation.mutate(deleteTarget.id);
+            setDeleteTarget(null);
+          }
+        }}
+        title="删除会话"
+        description={
+          <span>
+            确定要删除会话 <strong>{deleteTarget?.title || "未命名会话"}</strong>{" "}
+            吗？该会话的所有消息将被永久删除。
+          </span>
+        }
+        confirmText="删除会话"
+      />
     </AccordionItem>
   );
 }

@@ -47,10 +47,7 @@ export const router = createBrowserRouter([
           },
           {
             path: "workflows/run",
-            lazy: async () => {
-              const { default: Component } = await import("./pages/run/workflow-run.tsx");
-              return { Component };
-            },
+            element: <Navigate to="/workflows/chat" replace />,
           },
           {
             path: "workflows/chat",

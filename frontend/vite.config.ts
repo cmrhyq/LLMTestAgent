@@ -26,14 +26,18 @@ export default defineConfig({
     target: "es2020",
     outDir: "dist",
     sourcemap: false,
-    minify: "esbuild",
+    minify: true,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ["react", "react-dom", "react-router-dom"],
-          query: ["@tanstack/react-query"],
-          ui: ["@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu", "@radix-ui/react-tabs"],
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (id.includes("@tanstack/react-query")) return "query";
+          if (id.includes("@radix-ui")) return "ui";
+          if (id.includes("/react-router") || id.includes("/react-dom/") || /\/react\//.test(id)) {
+            return "vendor";
+          }
+          return undefined;
         },
       },
     },

@@ -122,17 +122,6 @@ export interface TestRunDetail extends TestRun {
   test_results: TestResultBrief[];
 }
 
-export interface RunTestRequest {
-  instruction: string;
-  api_doc_path?: string | null;
-}
-
-export interface RunTestResponse {
-  run_id: string | number;
-  status: string;
-  message: string;
-}
-
 export interface ParseOpenAPIResponse {
   run_id: string | number | null;
   status: string;
@@ -203,4 +192,40 @@ export interface ReportDetail {
   generated_at: string;
   test_run: TestRun;
   test_results: TestResultDetail[];
+}
+
+export interface Conversation {
+  id: string | number;
+  project_id: string | number | null;
+  title: string;
+  mode: string;
+  status: number;
+  last_message_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConversationListResponse {
+  items: Conversation[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface Message {
+  id: string | number;
+  conversation_id: string | number;
+  role: "user" | "assistant" | "system";
+  content: string;
+  meta: string;
+  created_at: string;
+}
+
+export interface MessageListResponse {
+  items: Message[];
+  total: number;
+}
+
+export interface ConversationDetail extends Conversation {
+  messages: Message[];
 }
