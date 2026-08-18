@@ -466,7 +466,7 @@ class LLMClient:
         else:
             langchain_messages = convert_to_langchain_messages(messages)  # type: ignore[arg-type]
         async for event in self._model.astream_events(langchain_messages, version=version, **kwargs):
-            yield cast(dict[str, Any], event)
+            yield cast(dict[str, Any], cast(object, event))
 
     def get_model(self) -> BaseChatModel:
         return self._model
@@ -480,16 +480,30 @@ _chat_model: BaseChatModel | None = None
 _llm_client: LLMClient | None = None
 
 
-def get_chat_model(config: AppConfig | None = None) -> BaseChatModel:
-    """获取全局 ChatModel 单例。"""
+def get_chat_model(config: AppConfig | None = None) -> BaseChatModel | None:
+    """获取全局 ChatModel 单例。
+
+    Args:
+        config: 应用配置，如果为 None 则使用全局配置
+
+    Returns:
+        BaseChatModel 单例
+    """
     global _chat_model
     if _chat_model is None:
-        _chat_model = create_chat_model(config)
+        _chat_model = create_chat_model(config or get_config())
     return _chat_model
 
 
-def get_llm_client(config: AppConfig | None = None) -> LLMClient:
-    """获取全局 LLMClient 单例（兼容旧接口）。"""
+def get_llm_client(config: AppConfig | None = None) -> LLMClient | None:
+    """获取全局 LLMClient 单例（兼容旧接口）。
+
+    Args:
+        config: 应用配置，如果为 None 则使用全局配置
+
+    Returns:
+        LLMClient 单例
+    """
     global _llm_client
     if _llm_client is None:
         model = get_chat_model(config)
@@ -497,9 +511,16 @@ def get_llm_client(config: AppConfig | None = None) -> LLMClient:
     return _llm_client
 
 
-def init_llm_client(config: AppConfig | None = None) -> LLMClient:
-    """重新初始化全局 LLM 客户端。"""
+def init_llm_client(config: AppConfig | None = None) -> LLMClient | None:
+    """重新初始化全局 LLM 客户端。
+
+    Args:
+        config: 应用配置，如果为 None 则使用全局配置
+
+    Returns:
+        重新初始化后的 LLMClient 单例
+    """
     global _chat_model, _llm_client
-    _chat_model = create_chat_model(config)
+    _chat_model = create_chat_model(config or get_config())
     _llm_client = LLMClient(_chat_model)
     return _llm_client

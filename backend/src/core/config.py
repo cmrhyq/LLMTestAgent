@@ -1,7 +1,7 @@
 """
 配置管理模块
 
-负责加载和管理应用配置，支持从YAML文件和环境变量读取配置。
+负责加载和管理应用配置，仅从 YAML 文件读取配置。
 """
 
 import logging
@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -200,8 +199,6 @@ def load_config(config_path: str | Path | None = None) -> AppConfig:
     Returns:
         AppConfig: 应用配置对象
     """
-    load_dotenv()
-
     if config_path is None:
         project_root = Path(__file__).parent.parent.parent
         resolved_path = project_root / "config" / "config.yaml"
