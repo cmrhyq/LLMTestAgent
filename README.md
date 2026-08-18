@@ -283,24 +283,20 @@ Visit http://localhost:8000/docs for the Swagger interactive documentation after
 | Endpoints | `/api/v1/endpoints` | Endpoint definition CRUD |
 | Environments | `/api/v1/environments` | Environment config CRUD |
 | Test Runs | `/api/v1/test-runs` | Execution history query |
-| Workflows | `/api/v1/workflows` | Parse docs, trigger tests |
+| Workflows | `/api/v1/workflows` | Upload & parse OpenAPI docs |
+| Chat | `/api/v1/chat` | Natural-language testing (streaming) |
 
 ### Example Requests
 
 ```bash
-# Upload and parse an OpenAPI document
-curl -X POST http://localhost:8000/api/v1/workflows/parse-openapi \
+# Upload and parse an OpenAPI document (persists endpoints to the DB)
+curl -X POST http://localhost:8000/api/v1/workflows/parse/openapi \
   -F "file=@input/httpbin_service.json"
 
-# Trigger single-endpoint tests
-curl -X POST http://localhost:8000/api/v1/workflows/run-test \
+# Trigger tests via the chat interface (streaming, natural language)
+curl -N -X POST http://localhost:8000/api/v1/chat/stream \
   -H "Content-Type: application/json" \
   -d '{"instruction": "Run single-endpoint tests on all endpoints"}'
-
-# Trigger flow tests
-curl -X POST http://localhost:8000/api/v1/workflows/run-test \
-  -H "Content-Type: application/json" \
-  -d '{"instruction": "Run flow tests"}'
 ```
 
 ---

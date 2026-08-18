@@ -2,10 +2,29 @@
 
 | 属性 | 值 |
 |------|-----|
-| **状态** | Proposed |
-| **日期** | 2026-07-07（2026-07-10 修订） |
+| **状态** | 部分实现（Partially Implemented）：对话历史持久化（Phase 0.5）与单一对话入口已落地；Ask/Plan 语义能力与 Chroma（Phase 1–4）仍为提案 |
+| **日期** | 2026-07-07（2026-07-10 修订，2026-08-18 现状校准） |
 | **决策者** | LLMTestAgent 团队 |
-| **关联** | `doc/SystemFlowchart.md`, `doc/design/DatabaseDesign.md`, `backend/src/core/chroma/`, `frontend/src/components/layout/spaces-section.tsx`, `frontend/src/pages/run/` |
+| **关联** | `doc/design/SystemFlowchart.md`, `doc/design/DatabaseDesign.md`, `backend/src/core/chroma/`, `backend/src/api/v1/chat.py`, `backend/src/api/v1/conversation.py`, `frontend/src/components/layout/spaces-section.tsx`, `frontend/src/pages/run/security-chat.tsx` |
+
+---
+
+## 0. 实现现状（Status Snapshot，2026-08-18 校准）
+
+> 本 ADR 为分阶段方案。下表反映**当前代码实际状态**，请与后文的提案/阶段计划配合阅读。
+
+| 模块 | ADR 阶段 | 现状 |
+|------|----------|------|
+| 对话历史持久化（`conversation`/`message` 表、CRUD、`/chat/stream` 续聊、侧边栏真实数据） | Phase 0.5 | ✅ 已实现 |
+| 单一对话入口（删除 `workflow-run.tsx`/`useRunTest`，触发测试走 `POST /chat/stream`） | Phase 0（前端入口统一） | ✅ 已实现 |
+| 对话 `mode`（Ask/Plan）透传后端并落库 | Phase 1/2 前置 | 🟡 字段已打通、Ask 走通用问答；Plan 的生成/确认执行链路未实现 |
+| project 绑定 | Phase 0 | 🟡 `conversation` 含 `project_id`、`/chat/stream` 支持可选 `project_id`；但 API 未采用 `/projects/{id}/...` 前缀，Run 未强制限定 project |
+| 配置纯 YAML（已移除 `.env`/`${ENV}`） | —（供对照） | ✅ 已实现 |
+| Chroma 语义检索、Embedding、KnowledgeIndexer/Retriever | Phase 3–4 | ❌ 未实现（`ChromaManager` 已存在但未接入业务） |
+| Plan 生成/确认执行 API、`plan_node` | Phase 2 | ❌ 未实现 |
+| API 层与工作流双 `TestRun` ID 问题 | Phase 0 | ⚪ 制造该问题的 `POST /workflows/run/test` 已删除，历史路径不复存在（详见 risks-todo §2） |
+
+> **与 §2.2「API 设计」的实现差异**：实际落地为**非** project-scoped 路径——`/conversations`（CRUD）、`/conversations/{id}/messages`、`/chat/stream`（body 携带可选 `conversation_id`/`mode`/`project_id`，响应头回传 `X-Conversation-Id`），而非 ADR 原设想的 `/projects/{id}/conversations`、`/projects/{id}/chat/stream`。若后续要严格贯彻 P3「Project 为工作空间边界」，需再决定是否迁移到 project-scoped 路径。
 
 ---
 
@@ -27,10 +46,10 @@ LLMTestAgent 的核心流程为：
 |------|----------|----------|
 | 文档导入 | 上传 → 解析 → 入库 | 前端 `upload` 仅存文件；`parse` 为独立 API；三者未统一 |
 | 测试执行 | 基于已入库项目测「xxx 项目用户相关接口」 | 后端 Agent + DB Tools 具备能力，但缺少显式「当前工作空间」 |
-| Ask / Plan | 两种对话模式 | 前端 UI 已实现，`mode` 未传后端，无对应逻辑 |
-| 向量检索 | 语义检索增强问答与选接口 | `ChromaManager` 已实现，未接入业务，无 Embeddings 配置 |
-| 项目上下文 | 操作应绑定某一 Project | 对话/运行 API 无 `project_id`；`api_doc_path` 在 chat 中被忽略 |
-| 对话历史 | 每个 Project 下持久化 AI 对话，侧边栏可浏览/恢复 | 无 `conversation` / `message` 表；`/chat/stream` 无状态单轮；侧边栏 `SpacesSection` 使用 mock 数据 |
+| Ask / Plan | 两种对话模式 | 前端 UI 已实现，`mode` 已透传后端并落库；Ask 走通用问答，Plan 的生成/确认执行链路尚未实现 |
+| 向量检索 | 语义检索增强问答与选接口 | `ChromaManager` 已实现，仍未接入业务，无 Embeddings 配置 |
+| 项目上下文 | 操作应绑定某一 Project | `conversation` 已带 `project_id`、`/chat/stream` 支持可选 `project_id`；但 API 非 project-scoped，Run 未强制限定 project |
+| 对话历史 | 每个 Project 下持久化 AI 对话，侧边栏可浏览/恢复 | ✅ 已落地：`conversation`/`message` 表、CRUD、`/chat/stream` 续聊、`SpacesSection` 接入真实数据（详见 §0） |
 
 ### 1.3 新的产品方向
 
@@ -250,20 +269,20 @@ TestRun = 执行产物（与 conversation 可关联，不可替代）
 - [ ] Ask / Plan / Run API 均要求 `project_id`
 - [ ] 前端：从 project 详情或选择 project 后进入对话/运行页
 - [ ] Run 工作流默认限定在当前 `project_id`，减少 LLM 猜项目名
-- [ ] 修复 API 层与工作流层 `TestRun` 双 ID 问题，统一 `run_id` 归属
+- [x] ~~修复 API 层与工作流层 `TestRun` 双 ID 问题~~：制造该问题的 `POST /workflows/run/test` 已删除，历史路径不复存在；若 `/chat/stream` 未来接入测试执行需重新评估（见 risks-todo §2）
 
 **验收**：在某一 project 内导入文档 → 自然语言测「用户相关接口」→ 查看 run 详情数据一致。
 
-### Phase 0.5：对话历史持久化（必须先于 Ask 多轮与侧边栏）
+### Phase 0.5：对话历史持久化（必须先于 Ask 多轮与侧边栏）— ✅ 已实现（2026-08-18）
 
-- [ ] 新增 SQLite 表 `conversation`、`message`（及可选 `workflow_event`）
-- [ ] 新增 ORM / Schema / Repository / Service
-- [ ] `GET /projects/{id}/conversations`、`GET /conversations/{id}/messages`、`POST /projects/{id}/conversations`
-- [ ] 重构 `/chat/stream` 为 project-scoped，支持 `conversation_id` 续聊与消息落库
-- [ ] 前端 `SpacesSection` 接入真实 API，替换 `getMockSpaceItems`
-- [ ] 前端 `security-chat.tsx` 支持打开历史对话与多轮上下文
+- [x] 新增 SQLite 表 `conversation`、`message`（`workflow_event` 未做，仍可选）
+- [x] 新增 ORM / Schema / Repository / Service
+- [x] 会话 API：`/conversations`（CRUD）、`GET /conversations/{id}/messages`（**注**：实际未采用 `/projects/{id}/...` 前缀，见 §0 差异说明）
+- [x] `/chat/stream` 支持 `conversation_id` 续聊与消息落库（响应头 `X-Conversation-Id`；**未**改为 project-scoped）
+- [x] 前端 `SpacesSection` 接入真实 API，移除 mock
+- [x] 前端 `security-chat.tsx` 支持打开历史对话与多轮上下文
 
-**验收**：在某一 project 内发起 Ask 对话 → 刷新页面后历史可恢复 → 侧边栏显示该 project 下对话列表。
+**验收**：发起对话 → 刷新页面后历史可恢复 → 侧边栏显示对话列表（已达成；project 维度过滤待 Phase 0 收尾）。
 
 ### Phase 1：Ask 模式
 
@@ -300,6 +319,8 @@ TestRun = 执行产物（与 conversation 可关联，不可替代）
 ---
 
 ## 5. 代码变更范围（Scope of Changes）
+
+> **实现进度（2026-08-18）**：`conversation`/`message` 的 ORM、Schema、Repository、Service 与 `api/v1/conversation.py`、前端 `use-conversations.ts`/`Conversation`/`Message` 类型、`spaces-section.tsx` 真实数据接入均**已完成**；`chat.py` 已支持续聊与落库（但为非 project-scoped）。其余与 Chroma/Plan/`project_id` 强绑定相关的条目**仍为提案**。
 
 ### 5.1 新增模块
 
@@ -445,7 +466,7 @@ backend/src/api/v1/
 
 ## 8. 待决事项（Open Questions）
 
-> 可执行验证任务见：[001-risks-validation-todo.md](./001-risks-validation-todo.md)
+> 可执行验证任务见：[ADR_001_risks-validation-todo.md](./ADR_001_risks-validation-todo.md)
 
 1. OpenAPI 重复导入同一 project：覆盖 vs 合并 vs 新建 version？
 2. Plan 确认前是否允许用户编辑计划中的 endpoints 列表？
@@ -463,12 +484,13 @@ backend/src/api/v1/
 - 现有工作流：`backend/src/workflow.py`
 - OpenAPI 入库：`backend/src/graph/api_doc_storage.py`
 - Chroma 连接：`backend/src/core/chroma/connection.py`
-- 流式对话：`backend/src/api/v1/chat.py`
-- 前端模式 UI：`frontend/src/pages/run/workflow-run.tsx`, `security-chat.tsx`
-- 侧边栏空间列表：`frontend/src/components/layout/spaces-section.tsx`
-- Mock 对话数据（待替换）：`frontend/src/lib/mock/space-items.ts`
+- 流式对话（含续聊/落库）：`backend/src/api/v1/chat.py`
+- 会话 CRUD：`backend/src/api/v1/conversation.py`
+- 前端对话 UI：`frontend/src/pages/run/security-chat.tsx`（原 `workflow-run.tsx` 已删除）
+- 侧边栏空间列表（已接入真实 API）：`frontend/src/components/layout/spaces-section.tsx`
+- ~~Mock 对话数据：`frontend/src/lib/mock/space-items.ts`~~（已删除）
 - 数据库设计：`doc/design/DatabaseDesign.md`
-- 系统流程图：`doc/SystemFlowchart.md`
+- 系统流程图：`doc/design/SystemFlowchart.md`
 
 ---
 
@@ -478,3 +500,4 @@ backend/src/api/v1/
 |------|------|------|------|
 | 0.1 | 2026-07-07 | — | 初稿：整合 Chroma 评估、工作空间模型、Ask/Plan 设想与实施路线 |
 | 0.2 | 2026-07-10 | — | 补充对话历史持久化决策（P6、`conversation`/`message` 表、API、Phase 0.5、备选方案 7.5–7.7） |
+| 0.3 | 2026-08-18 | — | 现状校准：新增 §0 实现现状快照；标记 Phase 0.5 与单一对话入口已完成；说明实际会话/流式 API 为非 project-scoped 的实现差异；同步删除的 `workflow-run.tsx`/mock 引用与文档路径；`POST /workflows/run/test` 删除对双 `TestRun` ID 问题的影响 |

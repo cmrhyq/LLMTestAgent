@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/lib/api";
-import type { ParseOpenAPIResponse, UploadOpenAPIResponse, WorkflowStatus } from "@/lib/types";
+import type { ParseOpenAPIResponse, UploadOpenAPIResponse } from "@/lib/types";
 
 export function useParseOpenAPI() {
   const queryClient = useQueryClient();
@@ -38,24 +38,6 @@ export function useUploadOpenAPI() {
     },
     onError: (error) => {
       toast.error(error.message || "文档上传失败");
-    },
-  });
-}
-
-export function useWorkflowStatus(runId: string | number, enabled: boolean) {
-  return useQuery<WorkflowStatus>({
-    queryKey: ["workflow-status", runId],
-    queryFn: async () => {
-      const { data } = await api.get<WorkflowStatus>(`/workflows/status/${runId}`);
-      return data;
-    },
-    enabled: enabled && !!runId,
-    refetchInterval: (query) => {
-      const status = query.state.data?.status;
-      if (status === "running" || status === "pending") {
-        return 2000;
-      }
-      return false;
     },
   });
 }

@@ -1,8 +1,8 @@
 # ADR-001 风险验证与待决事项 Todo List
 
-> 关联文档：[001-project-workspace-ask-plan-chroma.md](./001-project-workspace-ask-plan-chroma.md)
-> 状态：Open
-> 更新：2026-07-07
+> 关联文档：[ADR_001_project-workspace-ask-plan-chroma.md](./ADR_001_project-workspace-ask-plan-chroma.md)
+> 状态：Open（部分项已随代码演进关闭）
+> 更新：2026-07-07（2026-08-18 现状校准）
 
 本文档汇总 ADR-001 方案中**尚未验证或尚未拍板**的事项，按优先级排列。
 每项需在 Phase 0 开工前或对应 Phase 启动前完成决策/验证。
@@ -29,17 +29,19 @@
 
 ### 2. 验证双 TestRun ID 问题
 
-- [ ] **端到端复现**：调用 `POST /workflows/run/test` → 等待完成 → 对比两个 ID
+> 更新：制造该问题的 `POST /workflows/run/test` 端点已删除（API 层预创建 run A 的路径不复存在），触发测试统一走 `POST /chat/stream`。以下复现步骤已失效，保留仅作历史记录；若 `/chat/stream` 未来接入测试执行并再次出现 API 层与工作流内各自创建 `TestRun` 的情况，需重新验证方案 A/B。
+
+- [x] ~~**端到端复现**：调用 `POST /workflows/run/test` → 等待完成 → 对比两个 ID~~（端点已删除，不再适用）
   - API 层返回的 `run_id`（`workflow.py` 创建）
   - 工作流内 `generate_*_cases_node` 创建的 `run_id`
-- [ ] **检查前端跳转的 `/runs/{id}` 是否包含真实 TestCase / TestResult**
-- [ ] **检查 API 层 `TestRun` 创建时缺少 `project_id` 是否导致 DB 异常**
-- [ ] **若问题成立，确定修复方案**
+- [x] ~~**检查前端跳转的 `/runs/{id}` 是否包含真实 TestCase / TestResult**~~（`workflow-run.tsx` 已删除，前端不再有该跳转）
+- [x] ~~**检查 API 层 `TestRun` 创建时缺少 `project_id` 是否导致 DB 异常**~~（API 层已不再预创建 `TestRun`）
+- [x] ~~**若问题成立，确定修复方案**~~（问题根因随端点删除消失）
   - 方案 A：API 只创建占位 run，工作流内复用同一 `run_id`
   - 方案 B：取消 API 预创建，由工作流创建后回写
-- [ ] **产出**：问题确认记录 + 修复任务纳入 Phase 0
+- [x] **产出**：`POST /workflows/run/test` 删除记录已写入 CHANGELOG 与主 ADR §0；本项关闭
 
-**不验证的风险**：Run/Plan 执行结果与 UI 展示可能长期不一致。
+**遗留风险**：若 `/chat/stream` 未来接入测试执行、再次出现 API 层与工作流内各自创建 `TestRun`，需重新按方案 A/B 评估。
 
 ---
 
@@ -107,11 +109,13 @@
 
 ## P3 — 产品化过程中逐步澄清
 
-### 7. Workspace 是否需对话历史持久化
+### 7. Workspace 是否需对话历史持久化 — ✅ 已关闭（2026-08-18）
 
-- [ ] **确认 Ask/Plan 是否需要跨会话记忆**（同 project 内）
-- [ ] **若需要，决定存储位置**（SQLite 新表 vs 仅前端 session）
-- [ ] **产出**：需求结论（要 / 不要 / 二期）
+- [x] **确认需要跨会话记忆**：已决「需要」
+- [x] **存储位置**：SQLite `conversation` + `message` 表（非仅前端 session）
+- [x] **产出**：已实现（ORM/Repository/Service/API + 前端接入），见主 ADR §0 与 §5
+
+> 说明：当前落地为**非** project-scoped 会话 API（`/conversations`、`/chat/stream`）；同 project 内的严格隔离/过滤仍待 Phase 0 收尾。
 
 ---
 
@@ -123,13 +127,13 @@
 
 ---
 
-### 9. 前端入口统一
+### 9. 前端入口统一 — 🟡 部分完成（2026-08-18）
 
-- [ ] **梳理当前三个入口的职责重叠**
-  - `workflow-run.tsx`
-  - `security-chat.tsx`
-  - `project-detail.tsx`
-- [ ] **决定目标形态**：是否以 `projects/:id` 为唯一工作空间入口
+- [x] **梳理入口职责重叠**：`workflow-run.tsx` 已删除（触发测试并入 `security-chat.tsx` 的 `/chat/stream`）
+  - ~~`workflow-run.tsx`~~（已删除）
+  - `security-chat.tsx`（对话/触发测试统一入口）
+  - `project-detail.tsx`（项目详情）
+- [ ] **决定目标形态**：是否以 `projects/:id` 为唯一工作空间入口（仍待定；会话 API 目前非 project-scoped）
 - [ ] **产出**：前端路由与页面合并方案
 
 ---
@@ -174,3 +178,4 @@ Phase 3 前（验证）
 | 版本 | 日期 | 说明 |
 |------|------|------|
 | 0.1 | 2026-07-07 | 初稿：汇总 ADR-001 方案中的不确定项与验证任务 |
+| 0.2 | 2026-08-18 | 现状校准：关闭 #2（`run/test` 删除）、#7（对话历史已实现）；#9 部分完成（`workflow-run.tsx` 删除）；修正关联文档链接 |

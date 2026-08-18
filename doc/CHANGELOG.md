@@ -24,7 +24,16 @@
   - 新增 `/conversations` CRUD API 与 `/conversations/{id}/messages`
   - `/chat/stream` 支持 `conversation_id`/`mode`、多轮上下文、消息落库、响应头 `X-Conversation-Id`
   - 前端 `SpacesSection` 接入真实会话（替换 mock），`security-chat.tsx` 改为多轮消息列表
-- **单一对话入口**：合并「新建测试」与「安全对话」为 `/workflows/chat`；删除 `workflow-run.tsx` 与 `useRunTest`；`/workflows/run` 重定向（后端 `/workflows/run/test` 接口保留）
+- **单一对话入口**：合并「新建测试」与「安全对话」为 `/workflows/chat`；删除 `workflow-run.tsx` 与 `useRunTest`；`/workflows/run` 重定向；触发测试统一走 `POST /chat/stream`
+
+### Changed
+
+- **配置改为纯 YAML**：移除 `python-dotenv` 与 `${ENV}` 变量替换，`load_config()` 只从 `config.yaml` 读取；密钥需明文写入本地配置（`config.yaml` 已在 `.gitignore`）
+- **LLM 单例接口**：`get_llm_client()` / `get_chat_model()` / `init_llm_client()` 恢复可选 `config` 参数（缺省回退全局配置），应用启动在 lifespan 中显式 `init_llm_client(config)`；新增 `deepseek` provider
+
+### Removed
+
+- **删除测试触发的旧接口**：移除后端 `POST /workflows/run/test` 与配套 `GET /workflows/status/{run_id}`（及 `BackgroundTasks`、`_running_tasks` 跟踪逻辑），以及前端死代码 `useWorkflowStatus` 与 `WorkflowStatus` 类型；触发测试统一由 `POST /chat/stream` 承担
 
 ### Proposed
 

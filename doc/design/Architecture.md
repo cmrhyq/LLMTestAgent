@@ -106,7 +106,7 @@ flowchart TB
 
 | 模块 | 关键类/函数 | 说明 |
 |------|-------------|------|
-| `config.py` | `AppConfig` + `get_config()`/`init_config()` | Pydantic 配置模型；YAML 加载 + `${ENV}` 解析 + `.env`；配置段：llm/execution/output/database/chroma/logging/langsmith/case_generation |
+| `config.py` | `AppConfig` + `get_config()`/`init_config()` | Pydantic 配置模型；仅从 YAML 加载（已移除 `${ENV}` / `.env`）；配置段：llm/execution/output/database/chroma/logging/langsmith/case_generation |
 | `database/connection.py` | `DatabaseManager`（线程安全单例） | SQLite 自动启用 `WAL` + 外键 + UTF-8；`get_session()` 上下文自动 commit/rollback |
 | `llm/llm_client.py` | `create_chat_model()` + `LLMClient` | 多 Provider 工厂 + 统一封装（同步/异步/流式/工具绑定/事件流） |
 | `chroma/connection.py` | `ChromaManager`（单例） | HttpClient + Token 认证、集合/文档 CRUD、LangChain VectorStore；**未接入业务** |
@@ -120,13 +120,13 @@ flowchart TB
 | `project.py` | `/projects` | POST `/` · GET `/` · GET `/{id}` · PUT `/{id}` · DELETE `/{id}`（级联） |
 | `endpoint.py` | `/endpoints` | POST `/` · POST `/batch` · GET `/` · GET `/{id}` · PUT `/{id}` · DELETE `/{id}` |
 | `environment.py` | `/environments` | POST `/` · GET `/` · GET `/{id}` · PUT `/{id}` · DELETE `/{id}` |
-| `workflow.py` | `/workflows` | POST `/upload/openapi` · POST `/parse/openapi` · POST `/run/test`（后台异步）· GET `/status/{run_id}` |
+| `workflow.py` | `/workflows` | POST `/upload/openapi` · POST `/parse/openapi` |
 | `test_run.py` | `/test/runs` | GET `/` · GET `/{run_id}`（含 cases + results） |
 | `report.py` | `/reports` | GET `/` · GET `/{id}` · GET `/{id}/download` |
 | `chat.py` | `/chat` | POST `/stream`（流式，安全审计前置，多轮上下文，消息落库） |
 | `conversation.py` | `/conversations` | POST `/` · GET `/` · GET `/{id}` · GET `/{id}/messages` · PUT `/{id}` · DELETE `/{id}` |
 
-> `workflow.py` 的 `POST /run/test` 用 `BackgroundTasks` 触发 `TestWorkflow.run()`，通过 `_running_tasks` + 锁跟踪，结果回写 `TestRun`；上传接口有路径遍历防护（`Path(filename).name`）。
+> `workflow.py` 仅负责 OpenAPI 文档的上传与解析（`/parse/openapi` 通过 `TestWorkflow.run()` 解析并入库）；上传接口有路径遍历防护（`Path(filename).name`）。触发测试已统一由 `chat.py` 的 `POST /chat/stream` 承担（自然语言 + 流式）。
 
 ---
 
@@ -304,7 +304,7 @@ flowchart LR
 
 ### 6.4 单一对话入口
 
-历史上存在「新建测试」(`workflow-run.tsx` → `useRunTest` → `POST /workflows/run/test`) 与「安全对话」两个入口。现已合并为单一入口 `/workflows/chat`：删除了 `workflow-run.tsx` 与 `useRunTest`，侧边栏/仪表盘入口与 `/workflows/run` 均指向对话页。后端 `POST /workflows/run/test` 接口保留（未来可复用），仅移除前端 UI 入口。
+历史上存在「新建测试」(`workflow-run.tsx` → `useRunTest` → `POST /workflows/run/test`) 与「安全对话」两个入口。现已合并为单一入口 `/workflows/chat`：删除了 `workflow-run.tsx` 与 `useRunTest`，侧边栏/仪表盘入口与 `/workflows/run` 均指向对话页。后端 `POST /workflows/run/test` 及配套的 `GET /status/{run_id}`（含 `BackgroundTasks`、`_running_tasks` 跟踪逻辑）已一并删除，触发测试统一走 `POST /chat/stream`。
 
 ---
 
@@ -320,6 +320,7 @@ flowchart LR
 | `bedrock` | `ChatBedrock` | boto3 客户端 |
 | `zhipu` | `ChatZhipuAI` | 智谱 |
 | `qwen` | `ChatTongyi` | 通义千问 |
+| `deepseek` | `ChatDeepSeek` | Deepseek（`langchain-deepseek`） |
 
 统一封装 `LLMClient` 提供：`chat`、`invoke_with_tools`、同步/异步流式（`chat_stream`/`achat_stream`）、原始消息块流、工具绑定流、事件流；全局单例 `get_llm_client()`。
 
@@ -334,10 +335,10 @@ flowchart LR
 
 ## 八、配置体系
 
-- 配置文件：`backend/config/config.yaml`，`load_config()` 加载并递归解析 `${ENV}` 变量 + `.env`。
+- 配置文件：`backend/config/config.yaml`，`load_config()` 仅从 YAML 读取配置（已移除 `.env` / `${ENV}` 变量替换）。
 - 配置段（`AppConfig`）：`llm`（provider + 各 provider 段）、`execution`（超时/重试/并发/依赖失败策略）、`output`（时间戳目录）、`database`、`chroma`、`logging`、`langsmith`（可观测性）、`case_generation`（场景列表）。
 
-> 安全提示：`config.yaml` 中的密钥（如 AWS access_key/secret_key、代理 api_key）应改为环境变量注入（`${ENV}` 已支持），避免明文入库；这属于安全审查的高优先级项。
+> 安全提示：纯 YAML 化后，`config.yaml` 中的密钥（如 AWS access_key/secret_key、代理 api_key）需以明文写入本地配置，务必确保 `config.yaml` 已在 `.gitignore` 中，避免明文入库；如需更安全的密钥注入方案（如运行时 secret 覆盖层），属于安全审查的高优先级项。
 
 ---
 
@@ -347,7 +348,7 @@ flowchart LR
 |------|------|
 | 大整数精度 | 后端 `SafeJSONResponse` 把雪花 ID 序列化为字符串；前端类型 ID 为 `string \| number` |
 | 并发执行隔离 | `DataCache.create_scoped(run_id)` 按运行隔离步骤间变量 |
-| 异步执行 | `POST /workflows/run/test` 走 `BackgroundTasks`，`GET /status/{run_id}` 轮询 |
+| 流式执行 | 测试经 `POST /chat/stream` 触发并以流式增量返回结果；前端用 `fetch + ReadableStream` 消费 |
 | 阻塞规避 | `/chat/stream` 把阻塞的安全审计放入线程池，避免阻塞事件循环 |
 | 级联删除 | 项目删除级联 environment/endpoint/conversation；test_run 相关子表 CASCADE |
 | 数据一致性 | SQLite 为 Source of Truth；Chroma（规划）仅作语义索引层 |

@@ -283,24 +283,20 @@ uv run uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 | 接口管理 | `/api/v1/endpoints` | 接口定义 CRUD |
 | 环境管理 | `/api/v1/environments` | 环境配置 CRUD |
 | 测试运行 | `/api/v1/test-runs` | 执行记录查询 |
-| 工作流 | `/api/v1/workflows` | 解析文档、触发测试 |
+| 工作流 | `/api/v1/workflows` | 上传、解析 OpenAPI 文档 |
+| 对话 | `/api/v1/chat` | 自然语言触发测试（流式） |
 
 ### 示例请求
 
 ```bash
-# 上传解析 OpenAPI 文档
-curl -X POST http://localhost:8000/api/v1/workflows/parse-openapi \
+# 上传并解析 OpenAPI 文档（接口定义入库）
+curl -X POST http://localhost:8000/api/v1/workflows/parse/openapi \
   -F "file=@input/httpbin_service.json"
 
-# 触发单接口测试
-curl -X POST http://localhost:8000/api/v1/workflows/run-test \
+# 通过对话接口触发测试（流式、自然语言）
+curl -N -X POST http://localhost:8000/api/v1/chat/stream \
   -H "Content-Type: application/json" \
   -d '{"instruction": "对所有接口执行单接口测试"}'
-
-# 触发流程测试
-curl -X POST http://localhost:8000/api/v1/workflows/run-test \
-  -H "Content-Type: application/json" \
-  -d '{"instruction": "执行流程测试"}'
 ```
 
 ---

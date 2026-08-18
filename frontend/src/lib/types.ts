@@ -136,18 +136,6 @@ export interface UploadOpenAPIResponse {
   message: string;
 }
 
-export interface WorkflowStatus {
-  run_id: string | number;
-  status: string;
-  total_cases: number;
-  passed_cases: number;
-  failed_cases: number;
-  pass_rate: number;
-  error_message: string;
-  started_at: string | null;
-  finished_at: string | null;
-}
-
 export interface Report {
   id: string | number;
   run_id: string | number;
