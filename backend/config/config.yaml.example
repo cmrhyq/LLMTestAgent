@@ -31,6 +31,11 @@ llm:
     api_key: ${DASHSCOPE_API_KEY}
     model: qwen-max
 
+  # Deepseek配置
+   deepseek:
+    api_key: test_key
+    model: 	deepseek-v4-flash
+
 # 测试执行配置
 execution:
   # 超时配置（秒）
