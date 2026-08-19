@@ -165,18 +165,14 @@ export default function ProjectDetailPage() {
       key: "total_duration",
       header: "耗时",
       render: (_, row) => (
-        <span className="text-sm text-muted-foreground">
-          {formatDuration(row.total_duration)}
-        </span>
+        <span className="text-sm text-muted-foreground">{formatDuration(row.total_duration)}</span>
       ),
     },
     {
       key: "created_at",
       header: "创建时间",
       render: (_, row) => (
-        <span className="text-sm text-muted-foreground">
-          {formatDate(row.created_at)}
-        </span>
+        <span className="text-sm text-muted-foreground">{formatDate(row.created_at)}</span>
       ),
     },
   ];

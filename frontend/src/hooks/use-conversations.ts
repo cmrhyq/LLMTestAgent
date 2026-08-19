@@ -3,11 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createCrudHooks } from "@/lib/create-crud-hooks";
 import api from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
-import type {
-  Conversation,
-  ConversationListResponse,
-  MessageListResponse,
-} from "@/lib/types";
+import type { Conversation, ConversationListResponse, MessageListResponse } from "@/lib/types";
 
 interface UseConversationsParams {
   project_id?: string | number;
@@ -64,9 +60,4 @@ export function useConversationMessages(id: string | number | null | undefined) 
   });
 }
 
-export {
-  useConversations,
-  useCreateConversation,
-  useUpdateConversation,
-  useDeleteConversation,
-};
+export { useConversations, useCreateConversation, useUpdateConversation, useDeleteConversation };

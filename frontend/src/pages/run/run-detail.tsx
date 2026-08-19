@@ -62,9 +62,7 @@ const columns: Column<CaseRow & Record<string, unknown>>[] = [
   {
     key: "response_time",
     header: "耗时",
-    render: (val) => (
-      <span className="tabular-nums">{formatResponseTime(val as number)}</span>
-    ),
+    render: (val) => <span className="tabular-nums">{formatResponseTime(val as number)}</span>,
   },
   {
     key: "assertion_passed",

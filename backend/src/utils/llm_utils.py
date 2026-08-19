@@ -5,7 +5,7 @@
 此处继续 re-export 这些函数。
 """
 
-from src.core.config import AppConfig, get_config
+from src.core.config import AppConfig
 from src.utils.db_bootstrap import ensure_db
 from src.utils.json_utils import (
     parse_llm_json_object,

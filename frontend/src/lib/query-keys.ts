@@ -16,8 +16,7 @@ export const queryKeys = {
   reports: createResourceKeys("reports"),
   conversations: {
     ...createResourceKeys("conversations"),
-    messages: (id: ResourceId | null | undefined) =>
-      ["conversations", "messages", id] as const,
+    messages: (id: ResourceId | null | undefined) => ["conversations", "messages", id] as const,
   },
 };
 
