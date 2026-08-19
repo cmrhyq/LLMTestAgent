@@ -77,9 +77,8 @@
 }
 
 .markdown-code-block {
-  @apply my-3 overflow-x-auto rounded-md p-3 text-xs leading-relaxed;
-  font-family:
-    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  @apply my-3 overflow-x-auto rounded-[2px] p-3 text-xs leading-relaxed;
+  font-family: var(--font-mono);
   color: var(--color-foreground);
   background: var(--color-background);
   border: 0.5px solid var(--color-border-subtle);
@@ -111,6 +110,15 @@
 
 .markdown-code-block--highlighted :where(.shiki) {
   background: var(--color-background) !important;
+}
+
+/* Shiki 双主题：亮色由内联 style 提供；暗色夜图切换为 --shiki-dark 变量 */
+html.dark .markdown-code-block--highlighted .shiki span {
+  color: var(--shiki-dark) !important;
+}
+
+html.dark .markdown-code-block--highlighted .shiki {
+  background-color: var(--color-background) !important;
 }
 
 .markdown-mermaid-block {

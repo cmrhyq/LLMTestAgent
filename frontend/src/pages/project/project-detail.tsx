@@ -78,13 +78,16 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-surface-accent">
+      <Card className="bg-surface-primary/50">
         <CardContent className="pt-6">
           <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-foreground">{project.name}</h1>
-              <div className="mt-2 flex items-center gap-3">
-                <span className="flex items-center gap-1 font-mono text-sm text-muted-foreground">
+            <div className="min-w-0">
+              <div className="annotation mb-1.5 text-primary">PROJECT_{project.id}</div>
+              <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">
+                {project.name}
+              </h1>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-border bg-card px-2 py-1 font-mono text-xs text-muted-foreground">
                   <Globe className="h-3.5 w-3.5" />
                   {project.base_url}
                 </span>

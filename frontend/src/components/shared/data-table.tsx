@@ -48,16 +48,16 @@ export function DataTable<T extends object>({
   const SKELETON_ROWS = 5;
 
   return (
-    <div className="w-full overflow-hidden rounded-xl border border-border bg-background shadow-xs">
+    <div className="w-full overflow-hidden rounded-[4px] border border-border bg-card shadow-xs">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/60">
+          <thead className="border-b border-border bg-muted/50">
             <tr>
               {columns.map((col) => (
                 <th
                   key={col.key}
                   className={cn(
-                    "px-4 py-3 text-left font-medium text-muted-foreground",
+                    "px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground",
                     col.className
                   )}
                 >
@@ -93,7 +93,7 @@ export function DataTable<T extends object>({
               data.map((row, rowIdx) => (
                 <tr
                   key={rowIdx.toString()}
-                  className="border-b border-border-subtle transition-colors hover:bg-muted last:border-b-0"
+                  className="border-b border-border-subtle transition-colors hover:bg-muted/50 last:border-b-0"
                 >
                   {columns.map((col) => {
                     const value = getNestedValue(row, col.key);
@@ -111,8 +111,8 @@ export function DataTable<T extends object>({
 
       {pagination && totalPages > 1 && (
         <div className="flex items-center justify-between border-t border-border px-4 py-3">
-          <span className="text-sm text-muted-foreground">
-            第 {pagination.page} / {totalPages} 页
+          <span className="font-mono text-xs text-muted-foreground">
+            PAGE {pagination.page} / {totalPages}
           </span>
           <div className="flex gap-2">
             <button
@@ -120,7 +120,7 @@ export function DataTable<T extends object>({
               disabled={pagination.page <= 1}
               onClick={() => pagination.onChange(pagination.page - 1)}
               className={cn(
-                "rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium shadow-xs transition-colors",
+                "rounded-sm border border-border bg-card px-3 py-1.5 text-sm font-medium transition-colors",
                 pagination.page <= 1 ? "cursor-not-allowed opacity-50" : "hover:bg-muted"
               )}
             >
@@ -131,7 +131,7 @@ export function DataTable<T extends object>({
               disabled={pagination.page >= totalPages}
               onClick={() => pagination.onChange(pagination.page + 1)}
               className={cn(
-                "rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium shadow-xs transition-colors",
+                "rounded-sm border border-border bg-card px-3 py-1.5 text-sm font-medium transition-colors",
                 pagination.page >= totalPages ? "cursor-not-allowed opacity-50" : "hover:bg-muted"
               )}
             >

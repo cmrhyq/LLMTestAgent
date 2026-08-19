@@ -18,7 +18,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip.tsx";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils";
 
 const MODES = [
@@ -71,17 +76,25 @@ export function ChatInput({
         className="hidden"
       />
 
-      <div className="rounded-xl border border-border bg-background px-3 py-2.5 shadow-card transition-shadow focus-within:border-accent/30 focus-within:shadow-elevated">
-        {/* 输入框 */}
-        <textarea
-          value={instruction}
-          onChange={onInstructionChange}
-          onKeyDown={onKeyDown}
-          placeholder="例如：帮我为登录接口设计一组测试用例"
-          rows={1}
-          disabled={isStreaming}
-          className="max-h-40 w-full resize-none bg-transparent px-1 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
-        />
+      <div className="rounded-[4px] border border-border bg-card px-3 py-2.5 shadow-xs transition-all duration-200 ease-out-expo focus-within:border-primary/50 focus-within:shadow-input">
+        {/* 输入框：mono 提示符 + 多行输入 */}
+        <div className="flex items-start gap-2">
+          <span
+            className="select-none pt-2 font-mono text-sm font-semibold text-primary"
+            aria-hidden="true"
+          >
+            ❯
+          </span>
+          <textarea
+            value={instruction}
+            onChange={onInstructionChange}
+            onKeyDown={onKeyDown}
+            placeholder="例如：帮我为登录接口设计一组测试用例"
+            rows={1}
+            disabled={isStreaming}
+            className="max-h-40 w-full resize-none bg-transparent px-0 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"
+          />
+        </div>
 
         {/* 工具栏 */}
         <div className="mt-1.5 flex items-center justify-between gap-2">
@@ -164,9 +177,13 @@ export function ChatInput({
             type="button"
             onClick={onSubmit}
             disabled={!instruction.trim() || isStreaming || isUploading}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors duration-200 ease-out-expo hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {isStreaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            {isStreaming ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </button>
         </div>
       </div>

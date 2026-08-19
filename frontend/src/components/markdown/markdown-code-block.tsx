@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { getShikiHighlighter, shouldHighlightLanguage, SHIKI_THEME } from "./shiki-highlighter.ts";
+import { getShikiHighlighter, shouldHighlightLanguage, SHIKI_THEMES } from "./shiki-highlighter.ts";
 
 interface MarkdownCodeBlockProps {
   code: string;
@@ -17,7 +17,7 @@ function PlainCodeBlock({ code, language }: { code: string; language: string }) 
 }
 
 /**
- * 代码块：流式期间渲染 plain pre/code；流结束后对编程语言用 Shiki 高亮。
+ * 代码块：流式期间渲染 plain pre/code；流结束后对编程语言用 Shiki 高亮（双主题）。
  * text/ASCII 图始终用 plain pre，保留换行与空格对齐。
  */
 export function MarkdownCodeBlock({ code, language, isStreaming }: MarkdownCodeBlockProps) {
@@ -40,9 +40,9 @@ function HighlightedCodeBlock({ code, language }: { code: string; language: stri
       .then((highlighter) => {
         let html: string;
         try {
-          html = highlighter.codeToHtml(code, { lang: language, theme: SHIKI_THEME });
+          html = highlighter.codeToHtml(code, { lang: language, themes: SHIKI_THEMES });
         } catch {
-          html = highlighter.codeToHtml(code, { lang: "text", theme: SHIKI_THEME });
+          html = highlighter.codeToHtml(code, { lang: "text", themes: SHIKI_THEMES });
         }
         if (!cancelled) {
           setHighlightedHtml(html);

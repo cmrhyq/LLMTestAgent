@@ -1,6 +1,13 @@
 import { createHighlighter, type Highlighter } from "shiki";
 
-const SHIKI_THEME = "github-light";
+/** 双主题：亮色图纸 github-light / 暗色夜图 github-dark，配合 --shiki-dark 变量切换。 */
+const SHIKI_THEMES = {
+  light: "github-light",
+  dark: "github-dark",
+} as const;
+
+const SHIKI_THEME_LIST = [SHIKI_THEMES.light, SHIKI_THEMES.dark] as const;
+
 const SHIKI_LANGS = [
   "json",
   "bash",
@@ -23,15 +30,15 @@ export function shouldHighlightLanguage(language: string): boolean {
 
 let highlighterPromise: Promise<Highlighter> | null = null;
 
-/** Shiki 高亮器单例，避免每个代码块重复加载 wasm / 主题。 */
+/** Shiki 高亮器单例，一次加载双主题，避免每个代码块重复加载 wasm / 主题。 */
 export function getShikiHighlighter(): Promise<Highlighter> {
   if (!highlighterPromise) {
     highlighterPromise = createHighlighter({
-      themes: [SHIKI_THEME],
+      themes: [...SHIKI_THEME_LIST],
       langs: [...SHIKI_LANGS],
     });
   }
   return highlighterPromise;
 }
 
-export { SHIKI_THEME };
+export { SHIKI_THEMES };

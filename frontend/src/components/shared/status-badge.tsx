@@ -4,20 +4,22 @@ interface StatusBadgeProps {
   status: string | number;
 }
 
+/** 印章式状态徽章：描边 + mono 标注，pending 用虚线（草稿批注感）。 */
 const statusStyles: Record<string, string> = {
-  completed: "bg-success/10 text-success",
-  passed: "bg-success/10 text-success",
-  failed: "bg-destructive/10 text-destructive",
-  running: "bg-info/10 text-info animate-pulse",
-  pending: "bg-info/10 text-info",
-  skipped: "bg-warning/10 text-warning",
-  active: "bg-success/10 text-success",
-  inactive: "bg-muted text-muted-foreground",
-  deleted: "bg-muted text-muted-foreground",
-  deprecated: "bg-warning/10 text-warning",
+  completed: "border-success/50 bg-success/5 text-success",
+  passed: "border-success/50 bg-success/5 text-success",
+  failed: "border-destructive/50 bg-destructive/5 text-destructive",
+  error: "border-destructive/50 bg-destructive/5 text-destructive",
+  running: "border-info/50 bg-info/5 text-info animate-pulse",
+  pending: "border-dashed border-info/60 bg-transparent text-info",
+  skipped: "border-warning/50 bg-warning/5 text-warning",
+  active: "border-success/50 bg-success/5 text-success",
+  inactive: "border-border bg-muted text-muted-foreground",
+  deleted: "border-border bg-muted text-muted-foreground",
+  deprecated: "border-warning/50 bg-warning/5 text-warning",
 };
 
-const DEFAULT_STYLE = "bg-muted text-muted-foreground";
+const DEFAULT_STYLE = "border-border bg-muted text-muted-foreground";
 
 const STATUS_LABELS: Record<string, string> = {
   completed: "已完成",
@@ -42,14 +44,20 @@ const NUMERIC_STATUS: Record<number, string> = {
 };
 
 export function StatusBadge({ status }: StatusBadgeProps) {
-  const normalized = (typeof status === "number" ? NUMERIC_STATUS[status] ?? "" : status).toLowerCase();
+  const normalized = (
+    typeof status === "number" ? (NUMERIC_STATUS[status] ?? "") : status
+  ).toLowerCase();
   const style = statusStyles[normalized] ?? DEFAULT_STYLE;
   const label =
-    STATUS_LABELS[normalized] ?? (normalized ? normalized.charAt(0).toUpperCase() + normalized.slice(1) : String(status));
+    STATUS_LABELS[normalized] ??
+    (normalized ? normalized.charAt(0).toUpperCase() + normalized.slice(1) : String(status));
 
   return (
     <span
-      className={cn("inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium", style)}
+      className={cn(
+        "inline-flex items-center rounded-[2px] border px-1.5 py-0.5 font-mono text-[11px] font-medium",
+        style
+      )}
     >
       {label}
     </span>

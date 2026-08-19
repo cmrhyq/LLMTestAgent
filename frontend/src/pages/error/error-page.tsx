@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouteError, isRouteErrorResponse } from "react-router-dom";
-import { AlertTriangle, RefreshCw, LayoutDashboard } from "lucide-react";
+import { RefreshCw, LayoutDashboard } from "lucide-react";
 
 import { Button } from "@/components/ui/button.tsx";
 import NotFoundPage from "./not-found.tsx";
@@ -41,15 +41,14 @@ export default function ErrorPage() {
 
   return (
     <div className="flex h-full min-h-[60vh] flex-col items-center justify-center gap-6 px-4 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
-        <AlertTriangle className="h-8 w-8 text-destructive" />
-      </div>
-
-      <div className="space-y-2">
+      <div className="space-y-3">
         {status !== undefined && (
-          <p className="text-6xl font-bold tracking-tight text-foreground">{status}</p>
+          <p className="font-display text-7xl font-semibold tracking-tight text-foreground">
+            {status}
+          </p>
         )}
-        <h1 className="text-xl font-semibold text-foreground">{title}</h1>
+        <div className="font-mono text-sm text-destructive">&gt; error: {title.toLowerCase()}</div>
+        <h1 className="text-lg font-semibold text-foreground">{title}</h1>
         <p className="mx-auto max-w-md text-sm text-muted-foreground">{message}</p>
       </div>
 

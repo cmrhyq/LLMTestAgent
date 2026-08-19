@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Compass, ArrowLeft, LayoutDashboard } from "lucide-react";
+import { ArrowLeft, LayoutDashboard } from "lucide-react";
 
 import { Button } from "@/components/ui/button.tsx";
 
@@ -8,13 +8,10 @@ export default function NotFoundPage() {
 
   return (
     <div className="flex h-full min-h-[60vh] flex-col items-center justify-center gap-6 px-4 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-        <Compass className="h-8 w-8 text-accent" />
-      </div>
-
-      <div className="space-y-2">
-        <p className="text-6xl font-bold tracking-tight text-foreground">404</p>
-        <h1 className="text-xl font-semibold text-foreground">页面未找到</h1>
+      <div className="space-y-3">
+        <p className="font-display text-7xl font-semibold tracking-tight text-foreground">404</p>
+        <div className="font-mono text-sm text-primary">&gt; route not found</div>
+        <h1 className="text-lg font-semibold text-foreground">页面未找到</h1>
         <p className="mx-auto max-w-md text-sm text-muted-foreground">
           你访问的页面不存在或可能已被移动。请检查网址，或返回到已知的页面。
         </p>

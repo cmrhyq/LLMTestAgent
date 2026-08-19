@@ -20,12 +20,14 @@ export function ResponseTimeStats({ results }: { results: TestResultDetail[] }) 
       {items.map((s) => (
         <Card key={s.label}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="font-mono text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               {s.label}响应
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xl font-bold tabular-nums">{formatResponseTime(s.value)}</p>
+            <p className="font-display text-2xl font-semibold tabular-nums tracking-tight">
+              {formatResponseTime(s.value)}
+            </p>
           </CardContent>
         </Card>
       ))}

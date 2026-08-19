@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileText, Download, Eye } from "lucide-react";
+import { Download, Eye } from "lucide-react";
 
 import { useReports, downloadReport } from "@/hooks/use-reports.ts";
 import { DataTable } from "@/components/shared/data-table.tsx";
+import { PageHeader } from "@/components/layout/page-header.tsx";
 import type { Column } from "@/components/shared/data-table.tsx";
 import type { Report } from "@/lib/types.ts";
 import { formatFileSize } from "@/lib/format";
@@ -20,7 +21,7 @@ const columns: Column<ReportRow>[] = [
     key: "format",
     header: "格式",
     render: (val) => (
-      <span className="inline-flex items-center rounded-md bg-info/10 px-2 py-0.5 text-xs font-medium uppercase text-info">
+      <span className="inline-flex items-center rounded-[2px] border border-info/50 bg-info/5 px-1.5 py-0.5 font-mono text-[11px] font-medium uppercase text-info">
         {val as string}
       </span>
     ),
@@ -29,13 +30,17 @@ const columns: Column<ReportRow>[] = [
     key: "file_size",
     header: "大小",
     render: (val) => (
-      <span className="tabular-nums text-muted-foreground">{formatFileSize(val as number)}</span>
+      <span className="font-mono text-xs tabular-nums text-muted-foreground">
+        {formatFileSize(val as number)}
+      </span>
     ),
   },
   {
     key: "generated_at",
     header: "生成时间",
-    render: (val) => <span className="text-muted-foreground">{val as string}</span>,
+    render: (val) => (
+      <span className="font-mono text-xs text-muted-foreground">{val as string}</span>
+    ),
   },
 ];
 
@@ -56,7 +61,7 @@ export default function ReportsPage() {
         <button
           type="button"
           onClick={() => navigate(`/reports/${row.id}`)}
-          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
+          className="inline-flex items-center gap-1 rounded-[2px] border border-border px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
         >
           <Eye className="h-3.5 w-3.5" />
           查看
@@ -64,7 +69,7 @@ export default function ReportsPage() {
         <button
           type="button"
           onClick={() => downloadReport(row.id)}
-          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
+          className="inline-flex items-center gap-1 rounded-[2px] border border-border px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
         >
           <Download className="h-3.5 w-3.5" />
           下载
@@ -75,10 +80,11 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <FileText className="h-6 w-6 text-accent" />
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">测试报告</h1>
-      </div>
+      <PageHeader
+        title="测试报告"
+        annotation="FIG.03 — REPORTS"
+        description="查看与下载已生成的测试报告。"
+      />
 
       <DataTable
         columns={[...columns, actionsColumn]}
