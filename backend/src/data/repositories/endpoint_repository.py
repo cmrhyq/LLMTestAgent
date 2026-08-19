@@ -1,6 +1,7 @@
 from sqlalchemy import and_, literal, select
 from sqlalchemy.orm import Session
 
+from src.data.enum.workflow import DataStatus
 from src.data.models.endpoint import Endpoint
 from src.data.repositories.base import BaseRepository
 
@@ -43,7 +44,7 @@ class EndpointRepository(BaseRepository[Endpoint]):
     def get_by_project(self, project_id: int, active_only: bool = True) -> list[Endpoint]:
         conditions = [Endpoint.project_id == project_id]
         if active_only:
-            conditions.append(Endpoint.status == 1)
+            conditions.append(Endpoint.status == DataStatus.ENABLE.value)
         stmt = select(Endpoint).where(and_(*conditions))
         return list(self._session.scalars(stmt).all())
 
@@ -63,7 +64,7 @@ class EndpointRepository(BaseRepository[Endpoint]):
         stmt = select(Endpoint).where(
             and_(
                 Endpoint.id.in_(endpoint_ids),
-                Endpoint.status == 1,
+                Endpoint.status == DataStatus.ENABLE.value,
             )
         )
         return list(self._session.scalars(stmt).all())

@@ -5,16 +5,23 @@
 兼容 Windows 和 Linux 系统。
 """
 
-import os
 import platform
-import subprocess
+from datetime import datetime
 from pathlib import Path
 
 from langchain_core.tools import tool
 
 _MAX_FILE_SIZE = 100 * 1024
 _MAX_OUTPUT_LENGTH = 10000
-_COMMAND_TIMEOUT = 30
+# 仓库工作区根（backend/src/graph/tools -> 上溯 4 级）
+_WORKSPACE_ROOT = Path(__file__).resolve().parents[4]
+
+
+def _ensure_within_workspace(path: Path) -> str | None:
+    """确保路径在仓库工作区内，越界时返回错误信息。"""
+    if not path.is_relative_to(_WORKSPACE_ROOT):
+        return f"错误: 路径超出工作区范围 - {path}"
+    return None
 
 
 @tool
@@ -27,6 +34,10 @@ def read_file(file_path: str, encoding: str = "utf-8") -> str:
     """
     try:
         path = Path(file_path).resolve()
+
+        workspace_error = _ensure_within_workspace(path)
+        if workspace_error:
+            return workspace_error
 
         if not path.exists():
             return f"错误: 文件不存在 - {path}"
@@ -62,6 +73,10 @@ def list_directory(dir_path: str, show_hidden: bool = False) -> str:
     try:
         path = Path(dir_path).resolve()
 
+        workspace_error = _ensure_within_workspace(path)
+        if workspace_error:
+            return workspace_error
+
         if not path.exists():
             return f"错误: 目录不存在 - {path}"
 
@@ -91,70 +106,6 @@ def list_directory(dir_path: str, show_hidden: bool = False) -> str:
         return f"错误: 无权限访问目录 - {dir_path}"
     except Exception as e:
         return f"错误: 列出目录失败 - {e}"
-
-
-@tool
-def run_command(command: str, working_directory: str | None = None, timeout: int = 30) -> str:
-    """在系统Shell中执行命令并返回输出。Windows下使用cmd/powershell，Linux下使用bash。超时默认30秒。
-
-    Args:
-        command: 要执行的Shell命令
-        working_directory: 命令执行的工作目录，默认为当前目录
-        timeout: 命令超时时间（秒），默认30秒
-    """
-    if timeout <= 0 or timeout > 120:
-        timeout = _COMMAND_TIMEOUT
-
-    cwd = None
-    if working_directory:
-        cwd_path = Path(working_directory).resolve()
-        if not cwd_path.exists():
-            return f"错误: 工作目录不存在 - {working_directory}"
-        if not cwd_path.is_dir():
-            return f"错误: 工作目录路径不是目录 - {working_directory}"
-        cwd = str(cwd_path)
-
-    system = platform.system()
-
-    if system == "Windows":
-        shell_cmd = ["powershell", "-NoProfile", "-Command", command]
-    else:
-        shell_cmd = ["/bin/bash", "-c", command]
-
-    try:
-        result = subprocess.run(
-            shell_cmd,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            cwd=cwd,
-            env=os.environ.copy(),
-        )
-
-        output_parts = []
-
-        if result.stdout:
-            stdout = result.stdout
-            if len(stdout) > _MAX_OUTPUT_LENGTH:
-                stdout = stdout[:_MAX_OUTPUT_LENGTH] + "\n...(输出被截断)"
-            output_parts.append(stdout)
-
-        if result.stderr:
-            stderr = result.stderr
-            if len(stderr) > _MAX_OUTPUT_LENGTH:
-                stderr = stderr[:_MAX_OUTPUT_LENGTH] + "\n...(错误输出被截断)"
-            output_parts.append(f"[STDERR]\n{stderr}")
-
-        output_parts.append(f"\n[退出码: {result.returncode}]")
-
-        return "\n".join(output_parts)
-
-    except subprocess.TimeoutExpired:
-        return f"错误: 命令执行超时（{timeout}秒）- {command}"
-    except FileNotFoundError:
-        return f"错误: Shell不可用 - 系统: {system}"
-    except Exception as e:
-        return f"错误: 命令执行失败 - {e}"
 
 
 @tool
@@ -208,6 +159,4 @@ def _format_size(size_bytes: int) -> str:
 
 def _format_timestamp(ts: float) -> str:
     """格式化时间戳。"""
-    from datetime import datetime
-
     return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")

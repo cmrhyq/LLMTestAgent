@@ -16,7 +16,7 @@ class ProjectBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, description="项目名称（唯一）")
     base_url: str = Field(..., description="基础URL地址")
     description: str | None = Field(default="", description="项目描述")
-    status: int = Field(default=1, description="状态: 1-启用, 0-禁用")
+    status: int = Field(default=1, description="状态(DataStatus): 1-启用, 2-禁用")
 
     @field_validator("base_url", mode="before")
     @classmethod
@@ -53,7 +53,7 @@ class ProjectUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=100, description="项目名称")
     base_url: str | None = Field(default=None, description="基础URL地址")
     description: str | None = Field(default=None, description="项目描述")
-    status: int | None = Field(default=None, description="状态: 1-启用, 0-禁用")
+    status: int | None = Field(default=None, description="状态(DataStatus): 1-启用, 2-禁用")
 
     @field_validator("base_url", mode="before")
     @classmethod

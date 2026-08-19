@@ -10,6 +10,7 @@ from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
 from src.core.logging import get_logger
+from src.data.enum.workflow import TestStatus
 from src.data.services.workflow_service import WorkflowService
 
 logger = get_logger(__name__)
@@ -21,7 +22,7 @@ class ParseOpenAPIRequest(BaseModel):
     """解析 OpenAPI 文档响应体。"""
 
     run_id: int | None = None
-    status: str = "completed"
+    status: str = TestStatus.COMPLETED.value
     message: str = ""
     endpoints_count: int = 0
 
@@ -62,7 +63,7 @@ async def parse_openapi(
     result = await run_in_threadpool(service.parse_openapi, file.filename or "", content)
 
     return ParseOpenAPIRequest(
-        status="completed",
+        status=TestStatus.COMPLETED.value,
         message=f"文档 {file.filename} 解析成功",
         endpoints_count=result["endpoint_count"],
     )

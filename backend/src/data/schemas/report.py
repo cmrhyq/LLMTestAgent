@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 
+from src.data.enum.workflow import TestStatus
 from src.data.schemas.common import PaginatedResponse
 
 
@@ -26,7 +27,7 @@ class TestRunBrief(BaseModel):
 
     id: int
     name: str = ""
-    status: str = "pending"
+    status: str = TestStatus.PENDING.value
     llm_provider: str = ""
     llm_model: str = ""
     total_cases: int = 0
