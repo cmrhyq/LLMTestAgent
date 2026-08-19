@@ -6,14 +6,9 @@ import { useReports, downloadReport } from "@/hooks/use-reports.ts";
 import { DataTable } from "@/components/shared/data-table.tsx";
 import type { Column } from "@/components/shared/data-table.tsx";
 import type { Report } from "@/lib/types.ts";
+import { formatFileSize } from "@/lib/format";
 
 type ReportRow = Report & Record<string, unknown>;
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 const columns: Column<ReportRow>[] = [
   {

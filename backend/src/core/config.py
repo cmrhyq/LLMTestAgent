@@ -58,7 +58,7 @@ class DeepseekConfig(BaseModel):
     """Deepseek配置"""
 
     api_key: str = Field(default="", description="DeepseekAPI密钥")
-    model: str = Field(default="qwen-max", description="模型名称")
+    model: str = Field(default="deepseek-v4-flash", description="模型名称")
 
 
 class LLMConfig(BaseModel):
@@ -167,15 +167,6 @@ class LangSmithConfig(BaseModel):
     endpoint: str = Field(default="https://api.smith.langchain.com", description="LangSmith 服务端点")
 
 
-class CaseGenerationConfig(BaseModel):
-    """用例生成配置"""
-
-    scenarios: list[str] = Field(
-        default=["positive", "negative", "boundary", "exception"],
-        description="要生成的测试场景类型",
-    )
-
-
 class AppConfig(BaseModel):
     """应用配置"""
 
@@ -186,7 +177,6 @@ class AppConfig(BaseModel):
     chroma: ChromaConfig = Field(default_factory=ChromaConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     langsmith: LangSmithConfig = Field(default_factory=LangSmithConfig)
-    case_generation: CaseGenerationConfig = Field(default_factory=CaseGenerationConfig)
 
 
 def load_config(config_path: str | Path | None = None) -> AppConfig:

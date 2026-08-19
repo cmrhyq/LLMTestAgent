@@ -1,6 +1,6 @@
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
-from sqlalchemy import func, select
+from sqlalchemy import ColumnElement, func, literal, select
 from sqlalchemy.orm import Session
 
 from src.data.models.base import Base
@@ -37,6 +37,18 @@ class BaseRepository(Generic[T]):
         self._session.flush()
         return merged
 
+    def update_fields(self, record_id: int, **fields: Any) -> T | None:
+        """按主键局部更新字段；值为 None 的项会被跳过。记录不存在时返回 None。"""
+        entity = self.get_by_id(record_id)
+        if entity is None:
+            return None
+        for key, value in fields.items():
+            if value is None:
+                continue
+            setattr(entity, key, value)
+        self._session.flush()
+        return entity
+
     def delete_by_id(self, record_id: int) -> bool:
         entity = self.get_by_id(record_id)
         if entity is None:
@@ -55,4 +67,56 @@ class BaseRepository(Generic[T]):
 
     def count(self) -> int:
         stmt = select(func.count()).select_from(self._model)
+        return self._session.scalar(stmt) or 0
+
+    def exists(self, record_id: int) -> bool:
+        """按主键判断记录是否存在，避免加载完整实体。"""
+        pk = getattr(self._model, "id")
+        stmt = select(literal(1)).where(pk == record_id).limit(1)
+        return self._session.scalar(stmt) is not None
+
+    def paginate(
+        self,
+        page: int = 1,
+        page_size: int = 20,
+        *filters: ColumnElement[bool],
+    ) -> tuple[list[T], int]:
+        """通用分页查询，返回 ``(items, total)``。"""
+        page = max(page, 1)
+        page_size = max(page_size, 1)
+        offset = (page - 1) * page_size
+
+        count_stmt = select(func.count()).select_from(self._model)
+        list_stmt = select(self._model)
+        if filters:
+            count_stmt = count_stmt.where(*filters)
+            list_stmt = list_stmt.where(*filters)
+
+        total = self._session.scalar(count_stmt) or 0
+        items = list(self._session.scalars(list_stmt.limit(page_size).offset(offset)).all())
+        return items, total
+
+
+class RunScopedRepositoryMixin(Generic[T]):
+    """为含 ``run_id`` 外键的表提供按执行批次查询的通用方法。
+
+    依赖宿主 Repository（``BaseRepository[T]`` 子类）提供的 ``_model`` 与
+    ``_session`` 属性，模型需包含 ``run_id`` 列。
+    """
+
+    _model: type[T]
+    _session: Session
+
+    def get_by_run(self, run_id: int) -> list[T]:
+        """返回指定批次下的全部记录。"""
+        stmt = select(self._model).where(getattr(self._model, "run_id") == run_id)
+        return list(self._session.scalars(stmt).all())
+
+    def count_by_run(self, run_id: int) -> int:
+        """统计指定批次下的记录数。"""
+        stmt = (
+            select(func.count())
+            .select_from(self._model)
+            .where(getattr(self._model, "run_id") == run_id)
+        )
         return self._session.scalar(stmt) or 0

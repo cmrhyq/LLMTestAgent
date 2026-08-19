@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 import type { ReportListResponse, ReportDetail } from "@/lib/types";
 
 interface UseReportsParams {
@@ -10,7 +12,7 @@ interface UseReportsParams {
 
 export function useReports(params?: UseReportsParams) {
   return useQuery<ReportListResponse>({
-    queryKey: ["reports", params],
+    queryKey: queryKeys.reports.list(params),
     queryFn: async () => {
       const { data } = await api.get<ReportListResponse>("/reports/", {
         params,
@@ -22,7 +24,7 @@ export function useReports(params?: UseReportsParams) {
 
 export function useReportDetail(id: string | number) {
   return useQuery<ReportDetail>({
-    queryKey: ["reports", id],
+    queryKey: queryKeys.reports.detail(id),
     queryFn: async () => {
       const { data } = await api.get<ReportDetail>(`/reports/${id}`);
       return data;

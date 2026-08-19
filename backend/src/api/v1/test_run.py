@@ -67,7 +67,7 @@ class TestResultBrief(BaseModel):
     test_case_id: int | None = None
     status: str = ""
     status_code: int | None = None
-    duration: float = 0.0
+    response_time: float = 0.0
     assertion_passed: int = 0
     assertion_failed: int = 0
     error_message: str = ""

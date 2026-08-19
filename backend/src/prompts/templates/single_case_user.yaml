@@ -12,7 +12,11 @@ prompt: |
   描述: {description}
 
   请生成以下类型的测试用例：
-  {scenario_types}
+  - 正常场景 (normal)
+  - 参数缺失场景 (param_missing)
+  - 参数类型错误场景 (param_type_error)
+  - 边界值场景 (boundary_value)
+  - 权限异常场景 (permission_error)
 
   要求：
   1. 正常场景用例优先级为P0

@@ -44,7 +44,7 @@ def parse_openapi_node(state: AgentState) -> dict:
             endpoint_count=result.endpoint_count,
         )
         return {
-            "selected_endpoints": result.endpoint_count,
+            "endpoint_count": result.endpoint_count,
             "current_step": "end",
         }
 

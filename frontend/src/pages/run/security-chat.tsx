@@ -20,6 +20,7 @@ import { useUploadOpenAPI } from "@/hooks/use-workflows.ts";
 import { useConversationMessages } from "@/hooks/use-conversations.ts";
 import { useStreamingMarkdown } from "@/hooks/use-streaming-markdown.ts";
 import { streamChat } from "@/lib/stream.ts";
+import { queryKeys } from "@/lib/query-keys";
 import { MarkdownRenderer } from "@/components/markdown";
 import { cn } from "@/lib/utils";
 import {
@@ -160,14 +161,14 @@ export default function SecurityChatPage() {
       if (!conversationId && newConversationId) {
         // 新建会话：刷新会话列表并把新会话 ID 写回 URL
         // 后端在连接关闭前已落库 user/assistant 消息，切换后重新拉取即可显示完整对话
-        await queryClient.invalidateQueries({ queryKey: ["conversations"] });
+        await queryClient.invalidateQueries({ queryKey: queryKeys.conversations.all });
         setSearchParams({ conversation_id: newConversationId }, { replace: true });
       } else if (conversationId) {
         // 存量会话：刷新消息与会话列表后清空 overlay
         await queryClient.invalidateQueries({
-          queryKey: ["conversation-messages", conversationId],
+          queryKey: queryKeys.conversations.messages(conversationId),
         });
-        queryClient.invalidateQueries({ queryKey: ["conversations"] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.conversations.all });
         setPendingUser(null);
         setAnswer("");
       }

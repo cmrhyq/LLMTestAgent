@@ -1,7 +1,14 @@
-import json
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
+
+from src.data.schemas.common import (
+    BatchDeleteRequest,
+    BatchUpdateStatusRequest,
+    PaginatedResponse,
+    parse_json_field,
+    strip_trailing_slash,
+)
 
 # ==================== 基础 Schema ====================
 
@@ -18,10 +25,8 @@ class EnvironmentBase(BaseModel):
 
     @field_validator("base_url", mode="before")
     @classmethod
-    def validate_base_url(cls, v: str) -> str:
-        if isinstance(v, str):
-            return v.rstrip("/")
-        return v
+    def validate_base_url(cls, v):
+        return strip_trailing_slash(v)
 
 
 # ==================== 创建 Schema ====================
@@ -65,19 +70,12 @@ class EnvironmentUpdate(BaseModel):
     @field_validator("base_url", mode="before")
     @classmethod
     def validate_base_url(cls, v):
-        if isinstance(v, str):
-            return v.rstrip("/")
-        return v
+        return strip_trailing_slash(v)
 
     @field_validator("variables", mode="before")
     @classmethod
     def parse_variables(cls, v):
-        if isinstance(v, str):
-            try:
-                return json.loads(v)
-            except (json.JSONDecodeError, TypeError):
-                return None
-        return v
+        return parse_json_field(v)
 
 
 # ==================== 响应 Schema ====================
@@ -105,13 +103,8 @@ class EnvironmentDetail(EnvironmentResponse):
 # ==================== 列表/分页 Schema ====================
 
 
-class EnvironmentListResponse(BaseModel):
+class EnvironmentListResponse(PaginatedResponse[EnvironmentResponse]):
     """Environment 列表响应"""
-
-    items: list[EnvironmentResponse] = Field(default=[], description="环境列表")
-    total: int = Field(default=0, description="总数")
-    page: int = Field(default=1, description="当前页码")
-    page_size: int = Field(default=20, description="每页数量")
 
 
 class EnvironmentQuery(BaseModel):
@@ -129,14 +122,9 @@ class EnvironmentQuery(BaseModel):
 # ==================== 批量操作 Schema ====================
 
 
-class EnvironmentBatchDelete(BaseModel):
+class EnvironmentBatchDelete(BatchDeleteRequest):
     """批量删除请求"""
 
-    ids: list[int] = Field(..., min_length=1, description="环境ID列表")
 
-
-class EnvironmentBatchUpdateStatus(BaseModel):
+class EnvironmentBatchUpdateStatus(BatchUpdateStatusRequest):
     """批量更新状态请求"""
-
-    ids: list[int] = Field(..., min_length=1, description="环境ID列表")
-    status: int = Field(..., description="目标状态: 1-启用, 0-禁用")

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 import type { ParseOpenAPIResponse, UploadOpenAPIResponse } from "@/lib/types";
 
 export function useParseOpenAPI() {
@@ -14,8 +15,8 @@ export function useParseOpenAPI() {
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["endpoints"] });
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.endpoints.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
       toast.success(data.message || "文档解析成功");
     },
     onError: (error) => {

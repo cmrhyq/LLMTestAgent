@@ -27,6 +27,7 @@ import { EndpointFormDialog } from "@/components/endpoint/endpoint-form-dialog.t
 import { EnvironmentFormDialog } from "@/components/environment/environment-form-dialog.tsx";
 import type { Column } from "@/components/shared/data-table.tsx";
 import type { Endpoint, Environment, TestRun } from "@/lib/types.ts";
+import { formatDate, formatDuration } from "@/lib/format";
 
 const PROJECT_STATUS_MAP: Record<number, string> = {
   0: "未启用",
@@ -165,7 +166,7 @@ export default function ProjectDetailPage() {
       header: "耗时",
       render: (_, row) => (
         <span className="text-sm text-muted-foreground">
-          {row.total_duration > 0 ? `${(row.total_duration / 1000).toFixed(1)}s` : "--"}
+          {formatDuration(row.total_duration)}
         </span>
       ),
     },
@@ -174,7 +175,7 @@ export default function ProjectDetailPage() {
       header: "创建时间",
       render: (_, row) => (
         <span className="text-sm text-muted-foreground">
-          {new Date(row.created_at).toLocaleDateString()}
+          {formatDate(row.created_at)}
         </span>
       ),
     },

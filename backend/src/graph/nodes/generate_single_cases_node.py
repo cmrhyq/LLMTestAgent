@@ -19,7 +19,6 @@ from src.data.repositories import EndpointRepository, ProjectRepository, TestCas
 from src.graph.nodes.utils import ensure_db, get_model_name, parse_llm_json_response, safe_json_loads
 from src.graph.state import AgentState
 from src.prompts.builders.case_builder import CasePromptBuilder
-from src.prompts.formatters.case_formatter import format_scenario_types
 
 logger = get_logger(__name__)
 
@@ -97,7 +96,6 @@ def generate_single_cases_node(state: AgentState) -> dict:
         run_id = test_run.id
 
         total_cases = 0
-        scenario_types_text = format_scenario_types(config.case_generation.scenarios)
 
         for endpoint in endpoints:
             try:
@@ -105,7 +103,6 @@ def generate_single_cases_node(state: AgentState) -> dict:
                     endpoint=endpoint,
                     base_url=base_url,
                     run_id=run_id,
-                    scenario_types_text=scenario_types_text,
                     prompt_builder=prompt_builder,
                     llm_client=llm_client,
                     test_case_repo=test_case_repo,
@@ -140,7 +137,6 @@ def _generate_cases_for_endpoint(
     endpoint: Endpoint,
     base_url: str,
     run_id: int,
-    scenario_types_text: str,
     prompt_builder: CasePromptBuilder,
     llm_client: Any,
     test_case_repo: TestCaseRepository,
@@ -167,7 +163,7 @@ def _generate_cases_for_endpoint(
     }
 
     system_prompt = prompt_builder.build_system_prompt()
-    user_prompt = prompt_builder.build_user_prompt(api_info, scenario_types_text)
+    user_prompt = prompt_builder.build_user_prompt(api_info)
 
     messages = [
         {"role": "system", "content": system_prompt},

@@ -108,7 +108,7 @@ async def parse_openapi(
         return ParseOpenAPIRequest(
             status="completed",
             message=f"文档 {file.filename} 解析成功",
-            endpoints_count=result.get("selected_endpoints", 0),
+            endpoints_count=result.get("endpoint_count", 0),
         )
     finally:
         tmp_path.unlink(missing_ok=True)

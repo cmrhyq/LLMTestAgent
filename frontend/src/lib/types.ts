@@ -110,7 +110,7 @@ export interface TestResultBrief {
   test_case_id: string | number | null;
   status: string;
   status_code: number | null;
-  duration: number;
+  response_time: number;
   assertion_passed: number;
   assertion_failed: number;
   error_message: string;

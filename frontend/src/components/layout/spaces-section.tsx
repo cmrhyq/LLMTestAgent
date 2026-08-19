@@ -8,7 +8,7 @@ import {
   useUpdateConversation,
   useDeleteConversation,
 } from "@/hooks/use-conversations";
-import { formatRelativeTime } from "@/lib/format-relative-time";
+import { formatRelativeTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Accordion, AccordionContent, AccordionItem } from "@/components/ui/accordion";
 import {

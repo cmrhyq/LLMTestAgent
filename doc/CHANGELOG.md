@@ -13,6 +13,7 @@
 
 ### Added
 
+- **剩余重构清单**（[design/Refactor-Remaining.md](./design/Refactor-Remaining.md)）：阶段 0/1 完成后，阶段 2–6 的未改动项（分层契约、工作流结构化、核心层拆分、前端整理、枚举与安全收尾），含文件证据与验收标准
 - **架构设计文档**（[design/Architecture.md](./design/Architecture.md)）：跨前后端的整体架构总览，反映当前真实实现
   - 顶层架构、后端分层、LangGraph 工作流、数据模型（含新增对话表）、对话历史子系统、前端架构、LLM/Prompt、配置体系
   - 对既有文档做现状校准：对话历史已实现、对话入口已合并为单一 `/workflows/chat`、Ask/Plan 现状、Chroma 仍未接入

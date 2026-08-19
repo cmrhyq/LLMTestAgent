@@ -1,7 +1,13 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+
+import { createCrudHooks } from "@/lib/create-crud-hooks";
 import api from "@/lib/api";
-import type { Conversation, ConversationListResponse, MessageListResponse } from "@/lib/types";
+import { queryKeys } from "@/lib/query-keys";
+import type {
+  Conversation,
+  ConversationListResponse,
+  MessageListResponse,
+} from "@/lib/types";
 
 interface UseConversationsParams {
   project_id?: string | number;
@@ -10,50 +16,10 @@ interface UseConversationsParams {
   page_size?: number;
 }
 
-export function useConversations(params?: UseConversationsParams) {
-  return useQuery<ConversationListResponse>({
-    queryKey: ["conversations", params],
-    queryFn: async () => {
-      const { data } = await api.get<ConversationListResponse>("/conversations/", {
-        params,
-      });
-      return data;
-    },
-  });
-}
-
-export function useConversationMessages(id: string | number | null | undefined) {
-  return useQuery<MessageListResponse>({
-    queryKey: ["conversation-messages", id],
-    queryFn: async () => {
-      const { data } = await api.get<MessageListResponse>(`/conversations/${id}/messages`);
-      return data;
-    },
-    enabled: !!id,
-  });
-}
-
 interface CreateConversationPayload {
   project_id?: string | number | null;
   title?: string;
   mode?: string;
-}
-
-export function useCreateConversation() {
-  const queryClient = useQueryClient();
-
-  return useMutation<Conversation, Error, CreateConversationPayload>({
-    mutationFn: async (payload) => {
-      const { data } = await api.post<Conversation>("/conversations/", payload);
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
-    },
-    onError: (error) => {
-      toast.error(error.message || "会话创建失败");
-    },
-  });
 }
 
 interface UpdateConversationPayload {
@@ -62,41 +28,45 @@ interface UpdateConversationPayload {
   status?: number;
 }
 
-export function useUpdateConversation() {
-  const queryClient = useQueryClient();
+const {
+  useList: useConversations,
+  useCreate: useCreateConversation,
+  useUpdate: useUpdateConversation,
+  useDelete: useDeleteConversation,
+} = createCrudHooks<
+  Conversation,
+  ConversationListResponse,
+  UseConversationsParams,
+  CreateConversationPayload,
+  UpdateConversationPayload
+>({
+  queryKeys: queryKeys.conversations,
+  basePath: "/conversations",
+  labels: {
+    createSuccess: "会话创建成功",
+    createError: "会话创建失败",
+    updateSuccess: "会话更新成功",
+    updateError: "会话更新失败",
+    deleteSuccess: "会话删除成功",
+    deleteError: "会话删除失败",
+  },
+  toastOnCreate: false,
+});
 
-  return useMutation<
-    Conversation,
-    Error,
-    { id: string | number; payload: UpdateConversationPayload }
-  >({
-    mutationFn: async ({ id, payload }) => {
-      const { data } = await api.put<Conversation>(`/conversations/${id}`, payload);
+export function useConversationMessages(id: string | number | null | undefined) {
+  return useQuery<MessageListResponse>({
+    queryKey: queryKeys.conversations.messages(id),
+    queryFn: async () => {
+      const { data } = await api.get<MessageListResponse>(`/conversations/${id}/messages`);
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
-      toast.success("会话更新成功");
-    },
-    onError: (error) => {
-      toast.error(error.message || "会话更新失败");
-    },
+    enabled: !!id,
   });
 }
 
-export function useDeleteConversation() {
-  const queryClient = useQueryClient();
-
-  return useMutation<void, Error, string | number>({
-    mutationFn: async (id) => {
-      await api.delete(`/conversations/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
-      toast.success("会话删除成功");
-    },
-    onError: (error) => {
-      toast.error(error.message || "会话删除失败");
-    },
-  });
-}
+export {
+  useConversations,
+  useCreateConversation,
+  useUpdateConversation,
+  useDeleteConversation,
+};

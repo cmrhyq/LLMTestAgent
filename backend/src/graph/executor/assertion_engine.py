@@ -14,6 +14,7 @@ import re
 from typing import Any
 
 from src.core.logging import get_logger
+from src.graph.executor.jsonpath import extract_jsonpath
 
 logger = get_logger(__name__)
 
@@ -149,59 +150,12 @@ class AssertionEngine:
             return response_time
 
         if path.startswith("$."):
-            return self._extract_jsonpath(response_body, path)
+            return extract_jsonpath(response_body, path)
 
         if path.startswith("$["):
-            return self._extract_jsonpath(response_body, path)
+            return extract_jsonpath(response_body, path)
 
-        return self._extract_jsonpath(response_body, f"$.{path}")
-
-    def _extract_jsonpath(self, data: Any, path: str) -> Any:
-        """简易 JSONPath 解析（支持 $.a.b.c 和 $.a[0].b 格式）。"""
-        if data is None:
-            return None
-
-        if path == "$":
-            return data
-
-        stripped = path.lstrip("$").lstrip(".")
-        if not stripped:
-            return data
-
-        tokens = self._tokenize_path(stripped)
-        current = data
-
-        for token in tokens:
-            if current is None:
-                return None
-
-            if token.isdigit():
-                idx = int(token)
-                if isinstance(current, list) and idx < len(current):
-                    current = current[idx]
-                else:
-                    return None
-            elif isinstance(current, dict):
-                current = current.get(token)
-            else:
-                return None
-
-        return current
-
-    @staticmethod
-    def _tokenize_path(path: str) -> list[str]:
-        """将 "a.b[0].c" 拆分为 ["a", "b", "0", "c"]。"""
-        tokens: list[str] = []
-        for segment in path.split("."):
-            if not segment:
-                continue
-            bracket_match = re.match(r"^(\w+)\[(\d+)\]$", segment)
-            if bracket_match:
-                tokens.append(bracket_match.group(1))
-                tokens.append(bracket_match.group(2))
-            else:
-                tokens.append(segment)
-        return tokens
+        return extract_jsonpath(response_body, f"$.{path}")
 
     def _compare(self, actual: Any, operator: str, expected: Any) -> bool:
         """执行比较运算。"""

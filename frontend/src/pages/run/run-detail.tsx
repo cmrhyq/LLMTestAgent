@@ -12,13 +12,14 @@ import { PassRateBar } from "@/components/shared/pass-rate-bar.tsx";
 import { DataTable } from "@/components/shared/data-table.tsx";
 import type { Column } from "@/components/shared/data-table.tsx";
 import type { TestCaseBrief, TestResultBrief } from "@/lib/types.ts";
+import { formatResponseTime } from "@/lib/format";
 
 interface CaseRow {
   case_name: string;
   method: string;
   url: string;
   status: string;
-  duration: number;
+  response_time: number;
   assertion_passed: number;
   assertion_total: number;
 }
@@ -38,7 +39,7 @@ function buildCaseRows(cases: TestCaseBrief[], results: TestResultBrief[]): Case
       method: tc.method,
       url: tc.url,
       status: result?.status ?? tc.status,
-      duration: result?.duration ?? 0,
+      response_time: result?.response_time ?? 0,
       assertion_passed: result?.assertion_passed ?? 0,
       assertion_total: result ? result.assertion_passed + result.assertion_failed : 0,
     };
@@ -59,12 +60,11 @@ const columns: Column<CaseRow & Record<string, unknown>>[] = [
     render: (_, row) => <StatusBadge status={row.status as string} />,
   },
   {
-    key: "duration",
+    key: "response_time",
     header: "耗时",
-    render: (val) => {
-      const seconds = ((val as number) / 1000).toFixed(1);
-      return <span className="tabular-nums">{seconds}s</span>;
-    },
+    render: (val) => (
+      <span className="tabular-nums">{formatResponseTime(val as number)}</span>
+    ),
   },
   {
     key: "assertion_passed",

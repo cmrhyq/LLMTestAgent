@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+
 import api from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 import type { TestRunListResponse, TestRunDetail } from "@/lib/types";
 
 interface UseTestRunsParams {
@@ -11,7 +13,7 @@ interface UseTestRunsParams {
 
 export function useTestRuns(params?: UseTestRunsParams) {
   return useQuery<TestRunListResponse>({
-    queryKey: ["test-runs", params],
+    queryKey: queryKeys.testRuns.list(params),
     queryFn: async () => {
       const { data } = await api.get<TestRunListResponse>("/test/runs/", {
         params,
@@ -23,7 +25,7 @@ export function useTestRuns(params?: UseTestRunsParams) {
 
 export function useTestRunDetail(id: string | number) {
   return useQuery<TestRunDetail>({
-    queryKey: ["test-runs", id],
+    queryKey: queryKeys.testRuns.detail(id),
     queryFn: async () => {
       const { data } = await api.get<TestRunDetail>(`/test/runs/${id}`);
       return data;

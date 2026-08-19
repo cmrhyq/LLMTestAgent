@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field
 
+from src.data.schemas.common import PaginatedResponse
+
 
 class TestRunResponse(BaseModel):
     """TestRun 响应体"""
@@ -37,13 +39,8 @@ class TestRunDetail(TestRunResponse):
     model_config = {"from_attributes": True}
 
 
-class TestRunListResponse(BaseModel):
+class TestRunListResponse(PaginatedResponse[TestRunResponse]):
     """TestRun 列表响应"""
-
-    items: list[TestRunResponse] = Field(default=[], description="执行批次列表")
-    total: int = Field(default=0, description="总数")
-    page: int = Field(default=1, description="当前页码")
-    page_size: int = Field(default=20, description="每页数量")
 
 
 class TestRunQuery(BaseModel):

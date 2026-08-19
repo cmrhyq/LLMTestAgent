@@ -1,3 +1,8 @@
+from src.data.schemas.common import (
+    BatchDeleteRequest,
+    BatchUpdateStatusRequest,
+    PaginatedResponse,
+)
 from src.data.schemas.conversation import (
     ConversationBase,
     ConversationCreate,
@@ -66,6 +71,9 @@ from src.data.schemas.test_run import (
 from src.data.schemas.test_summary import TestSummaryResponse
 
 __all__ = [
+    "PaginatedResponse",
+    "BatchDeleteRequest",
+    "BatchUpdateStatusRequest",
     "ProjectBase",
     "ProjectCreate",
     "ProjectUpdate",

@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field
 
+from src.data.schemas.common import PaginatedResponse
+
 
 class TestResultResponse(BaseModel):
     """TestResult 响应体"""
@@ -18,7 +20,7 @@ class TestResultResponse(BaseModel):
     response_status_code: int | None = Field(default=None, description="响应状态码")
     response_headers: str = Field(default="{}", description="响应头 JSON")
     response_body: str | None = Field(default=None, description="响应体")
-    response_time: float = Field(default=0.0, description="响应耗时 (秒)")
+    response_time: float = Field(default=0.0, description="响应耗时 (毫秒)")
     error_message: str = Field(default="", description="错误信息")
     retry_count: int = Field(default=0, description="重试次数")
     started_at: str | None = Field(default=None, description="开始时间")
@@ -28,13 +30,8 @@ class TestResultResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class TestResultListResponse(BaseModel):
+class TestResultListResponse(PaginatedResponse[TestResultResponse]):
     """TestResult 列表响应"""
-
-    items: list[TestResultResponse] = Field(default=[], description="结果列表")
-    total: int = Field(default=0, description="总数")
-    page: int = Field(default=1, description="当前页码")
-    page_size: int = Field(default=20, description="每页数量")
 
 
 class TestResultQuery(BaseModel):

@@ -16,11 +16,11 @@ cache_rules JSON 格式约定:
 """
 
 import copy
-import re
 from typing import Any
 
 from src.core.cache.data_cache import DataCache
 from src.core.logging import get_logger
+from src.graph.executor.jsonpath import extract_jsonpath
 
 logger = get_logger(__name__)
 
@@ -105,7 +105,7 @@ class CacheResolver:
             if not source_path or not cache_key:
                 continue
 
-            value = self._extract_by_jsonpath(response_body, source_path)
+            value = extract_jsonpath(response_body, source_path)
             if value is not None:
                 self.cache.set(cache_key, value)
                 logger.debug(
@@ -184,44 +184,3 @@ class CacheResolver:
             current = current[key]
 
         current[keys[-1]] = value
-
-    @staticmethod
-    def _extract_by_jsonpath(data: Any, path: str) -> Any:
-        """简易 JSONPath 提取（支持 $.a.b.c 和 $.a[0].b 格式）。"""
-        if data is None:
-            return None
-
-        if path == "$":
-            return data
-
-        stripped = path.lstrip("$").lstrip(".")
-        if not stripped:
-            return data
-
-        tokens: list[str] = []
-        for segment in stripped.split("."):
-            if not segment:
-                continue
-            bracket_match = re.match(r"^(\w+)\[(\d+)\]$", segment)
-            if bracket_match:
-                tokens.append(bracket_match.group(1))
-                tokens.append(bracket_match.group(2))
-            else:
-                tokens.append(segment)
-
-        current = data
-        for token in tokens:
-            if current is None:
-                return None
-            if token.isdigit():
-                idx = int(token)
-                if isinstance(current, list) and idx < len(current):
-                    current = current[idx]
-                else:
-                    return None
-            elif isinstance(current, dict):
-                current = current.get(token)
-            else:
-                return None
-
-        return current

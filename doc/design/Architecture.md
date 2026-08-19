@@ -2,7 +2,7 @@
 
 > 版本：v0.3（对应当前代码实现，2026-08）
 > 定位：本文是对 **当前真实实现** 的整体架构说明，跨越前端、后端、数据层、工作流引擎与外部依赖。
-> 与其他文档关系：本文为总览；细节见 [ADR-001](../adr/ADR_001_project-workspace-ask-plan-chroma.md)（工作空间/Ask·Plan/Chroma 决策）、[数据库设计](DatabaseDesign.md)、[ER 图](ER.md)、[系统流程图](SystemFlowchart.md)、[页面设计准则](UI-Design-Guidelines.md)。
+> 与其他文档关系：本文为总览；细节见 [ADR-001](../adr/ADR_001_project-workspace-ask-plan-chroma.md)（工作空间/Ask·Plan/Chroma 决策）、[数据库设计](DatabaseDesign.md)、[ER 图](ER.md)、[系统流程图](SystemFlowchart.md)、[页面设计准则](UI-Design-Guidelines.md)、[剩余重构清单](Refactor-Remaining.md)（阶段 2–6）。
 
 ---
 

@@ -4,7 +4,6 @@
 前序步骤失败时，后续依赖步骤标记为 skipped。
 """
 
-import json
 from datetime import datetime
 from typing import Any
 
@@ -16,7 +15,7 @@ from src.data.models.test_case import TestCase
 from src.data.models.test_result import TestResult
 from src.data.repositories import TestCaseRepository, TestRunRepository
 from src.graph.executor.test_executor import TestExecutor
-from src.graph.nodes.utils import ensure_db
+from src.graph.nodes.utils import ensure_db, safe_json_loads
 from src.graph.state import AgentState
 
 logger = get_logger(__name__)
@@ -75,7 +74,7 @@ def execute_flow_tests_node(state: AgentState) -> dict:
         failed_cache_keys: set[str] = set()
 
         for test_case in test_cases:
-            cache_rules = _parse_cache_rules(test_case.cache_rules)
+            cache_rules = safe_json_loads(test_case.cache_rules, None)
 
             if _has_dependency_on_failed(cache_rules, failed_cache_keys):
                 logger.info(
@@ -160,16 +159,6 @@ def _extract_step_order(test_case: TestCase) -> int:
         if part.isdigit():
             return int(part)
     return 0
-
-
-def _parse_cache_rules(cache_rules_str: str | None) -> dict[str, Any] | None:
-    """安全解析 cache_rules JSON。"""
-    if not cache_rules_str:
-        return None
-    try:
-        return json.loads(cache_rules_str)
-    except (json.JSONDecodeError, TypeError):
-        return None
 
 
 def _has_dependency_on_failed(

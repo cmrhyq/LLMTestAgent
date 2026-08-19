@@ -1,5 +1,12 @@
 from pydantic import BaseModel, Field, field_validator
 
+from src.data.schemas.common import (
+    BatchDeleteRequest,
+    BatchUpdateStatusRequest,
+    PaginatedResponse,
+    strip_trailing_slash,
+)
+
 # ==================== 基础 Schema ====================
 
 
@@ -13,11 +20,8 @@ class ProjectBase(BaseModel):
 
     @field_validator("base_url", mode="before")
     @classmethod
-    def validate_base_url(cls, v: str) -> str:
-        """去除末尾斜杠，保持统一格式"""
-        if isinstance(v, str):
-            return v.rstrip("/")
-        return v
+    def validate_base_url(cls, v):
+        return strip_trailing_slash(v)
 
 
 # ==================== 创建 Schema ====================
@@ -54,9 +58,7 @@ class ProjectUpdate(BaseModel):
     @field_validator("base_url", mode="before")
     @classmethod
     def validate_base_url(cls, v):
-        if isinstance(v, str):
-            return v.rstrip("/")
-        return v
+        return strip_trailing_slash(v)
 
 
 # ==================== 响应 Schema ====================
@@ -84,13 +86,8 @@ class ProjectDetail(ProjectResponse):
 # ==================== 列表/分页 Schema ====================
 
 
-class ProjectListResponse(BaseModel):
+class ProjectListResponse(PaginatedResponse[ProjectResponse]):
     """Project 列表响应"""
-
-    items: list[ProjectResponse] = Field(default=[], description="项目列表")
-    total: int = Field(default=0, description="总数")
-    page: int = Field(default=1, description="当前页码")
-    page_size: int = Field(default=20, description="每页数量")
 
 
 class ProjectQuery(BaseModel):
@@ -106,14 +103,9 @@ class ProjectQuery(BaseModel):
 # ==================== 批量操作 Schema ====================
 
 
-class ProjectBatchDelete(BaseModel):
+class ProjectBatchDelete(BatchDeleteRequest):
     """批量删除请求"""
 
-    ids: list[int] = Field(..., min_length=1, description="项目ID列表")
 
-
-class ProjectBatchUpdateStatus(BaseModel):
+class ProjectBatchUpdateStatus(BatchUpdateStatusRequest):
     """批量更新状态请求"""
-
-    ids: list[int] = Field(..., min_length=1, description="项目ID列表")
-    status: int = Field(..., description="目标状态: 1-启用, 0-禁用")

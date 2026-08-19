@@ -176,6 +176,7 @@ class TestWorkflow:
             "user_intent": "",
             "test_mode": "",
             "selected_endpoints": [],
+            "endpoint_count": 0,
             "test_results": [],
             "test_summary": {},
             "run_id": 0,

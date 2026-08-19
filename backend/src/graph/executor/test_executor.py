@@ -25,6 +25,7 @@ from src.data.models.test_result import TestResult
 from src.graph.executor.assertion_engine import AssertionEngine
 from src.graph.executor.cache_resolver import CacheResolver
 from src.utils.http.request import HttpRequest, split_url
+from src.utils.json_utils import safe_json_loads
 
 logger = get_logger(__name__)
 
@@ -67,11 +68,11 @@ class TestExecutor:
             url=test_case.url,
         )
 
-        headers = self._parse_json_field(test_case.headers, {})
-        body = self._parse_json_field(test_case.body, None)
-        params = self._parse_json_field(test_case.params, None)
-        cache_rules = self._parse_json_field(test_case.cache_rules, None)
-        assert_rules: list[str] = self._parse_json_field(test_case.assert_rules, [])
+        headers = safe_json_loads(test_case.headers, {})
+        body = safe_json_loads(test_case.body, None)
+        params = safe_json_loads(test_case.params, None)
+        cache_rules = safe_json_loads(test_case.cache_rules, None)
+        assert_rules: list[str] = safe_json_loads(test_case.assert_rules, [])
 
         if (
             cache_rules
@@ -237,16 +238,6 @@ class TestExecutor:
 
         session.add(result)
         return result
-
-    @staticmethod
-    def _parse_json_field(value: str | None, default: Any) -> Any:
-        """安全解析 JSON 字符串字段。"""
-        if value is None:
-            return default
-        try:
-            return json.loads(value)
-        except (json.JSONDecodeError, TypeError):
-            return default
 
     @staticmethod
     def _safe_serialize(data: Any) -> str | None:

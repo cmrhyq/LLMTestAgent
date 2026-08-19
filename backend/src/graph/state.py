@@ -21,6 +21,7 @@ class AgentState(MessagesState):
     user_intent: str
     test_mode: str
     selected_endpoints: list[dict[str, Any]]
+    endpoint_count: int
     test_results: list[dict[str, Any]]
     test_summary: dict[str, Any]
     run_id: int

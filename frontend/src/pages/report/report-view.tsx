@@ -10,16 +10,8 @@ import { StatusBadge } from "@/components/shared/status-badge.tsx";
 import { HttpMethodBadge } from "@/components/shared/http-method-badge.tsx";
 import { PassRateBar } from "@/components/shared/pass-rate-bar.tsx";
 import type { TestResultDetail } from "@/lib/types.ts";
+import { formatJson, formatResponseTime } from "@/lib/format";
 import { cn } from "@/lib/utils.ts";
-
-function formatJson(raw: string | null): string {
-  if (!raw) return "";
-  try {
-    return JSON.stringify(JSON.parse(raw), null, 2);
-  } catch {
-    return raw;
-  }
-}
 
 function ResponseTimeStats({ results }: { results: TestResultDetail[] }) {
   const times = results.map((r) => r.response_time).filter((t) => t > 0);
@@ -86,7 +78,7 @@ function ExpandableRow({ result }: { result: TestResultDetail }) {
           <span className="tabular-nums">{result.response_status_code ?? "—"}</span>
         </td>
         <td className="px-4 py-3">
-          <span className="tabular-nums">{result.response_time.toFixed(1)} ms</span>
+          <span className="tabular-nums">{formatResponseTime(result.response_time)}</span>
         </td>
       </tr>
       {expanded && (

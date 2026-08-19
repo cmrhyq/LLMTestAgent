@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 
+from src.data.schemas.common import PaginatedResponse
 from src.data.schemas.message import MessageResponse
 
 
@@ -55,10 +56,5 @@ class ConversationDetail(ConversationResponse):
     model_config = {"from_attributes": True}
 
 
-class ConversationListResponse(BaseModel):
+class ConversationListResponse(PaginatedResponse[ConversationResponse]):
     """Conversation 列表响应"""
-
-    items: list[ConversationResponse] = Field(default=[], description="会话列表")
-    total: int = Field(default=0, description="总数")
-    page: int = Field(default=1, description="当前页码")
-    page_size: int = Field(default=20, description="每页数量")

@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { Column } from "@/components/shared/data-table";
 import type { Project } from "@/lib/types";
+import { formatDate } from "@/lib/format";
 
 const STATUS_MAP: Record<number, string> = {
   0: "未启用",
@@ -40,15 +41,15 @@ export default function DashboardPage() {
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
 
   const stats = useMemo(() => {
-    const projects = projectsData?.items ?? [];
     const runs = testRunsData?.items ?? [];
+    const totalProjects = projectsData?.total ?? 0;
     const totalEndpoints = endpointsData?.total ?? 0;
 
     const avgPassRate =
       runs.length > 0 ? Math.round(runs.reduce((sum, r) => sum + r.pass_rate, 0) / runs.length) : 0;
 
     return {
-      totalProjects: projects.length,
+      totalProjects,
       totalEndpoints,
       avgPassRate,
     };
@@ -92,7 +93,7 @@ export default function DashboardPage() {
       header: "创建时间",
       render: (_, row) => (
         <span className="text-sm text-muted-foreground">
-          {new Date(row.created_at).toLocaleDateString()}
+          {formatDate(row.created_at)}
         </span>
       ),
     },

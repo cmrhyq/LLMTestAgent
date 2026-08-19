@@ -1,8 +1,12 @@
-import json
-
 from pydantic import BaseModel, Field, field_validator
 
 from src.data.enum.workflow import HttpMethod
+from src.data.schemas.common import (
+    BatchDeleteRequest,
+    BatchUpdateStatusRequest,
+    PaginatedResponse,
+    parse_json_field,
+)
 
 # ==================== 基础 Schema ====================
 
@@ -80,35 +84,10 @@ class EndpointUpdate(BaseModel):
     deprecated: int | None = Field(default=None, description="是否已废弃")
     status: int | None = Field(default=None, description="状态")
 
-    @field_validator("tags", mode="before")
-    @classmethod
-    def parse_tags(cls, v):
-        if isinstance(v, str):
-            try:
-                return json.loads(v)
-            except (json.JSONDecodeError, TypeError):
-                return None
-        return v
-
-    @field_validator("params", "headers", "body", mode="before")
+    @field_validator("tags", "params", "headers", "body", "responses", "security", mode="before")
     @classmethod
     def parse_json_fields(cls, v):
-        if isinstance(v, str):
-            try:
-                return json.loads(v)
-            except (json.JSONDecodeError, TypeError):
-                return None
-        return v
-
-    @field_validator("responses", "security", mode="before")
-    @classmethod
-    def parse_list_fields(cls, v):
-        if isinstance(v, str):
-            try:
-                return json.loads(v)
-            except (json.JSONDecodeError, TypeError):
-                return None
-        return v
+        return parse_json_field(v)
 
 
 # ==================== 响应 Schema ====================
@@ -137,13 +116,8 @@ class EndpointDetail(EndpointResponse):
 # ==================== 列表/分页 Schema ====================
 
 
-class EndpointListResponse(BaseModel):
+class EndpointListResponse(PaginatedResponse[EndpointResponse]):
     """Endpoint 列表响应"""
-
-    items: list[EndpointResponse] = Field(default=[], description="Endpoint 列表")
-    total: int = Field(default=0, description="总数")
-    page: int = Field(default=1, description="当前页码")
-    page_size: int = Field(default=20, description="每页数量")
 
 
 class EndpointQuery(BaseModel):
@@ -161,14 +135,9 @@ class EndpointQuery(BaseModel):
 # ==================== 批量操作 Schema ====================
 
 
-class EndpointBatchDelete(BaseModel):
+class EndpointBatchDelete(BatchDeleteRequest):
     """批量删除请求"""
 
-    ids: list[int] = Field(..., min_length=1, description="Endpoint ID 列表")
 
-
-class EndpointBatchUpdateStatus(BaseModel):
+class EndpointBatchUpdateStatus(BatchUpdateStatusRequest):
     """批量更新状态请求"""
-
-    ids: list[int] = Field(..., min_length=1, description="Endpoint ID 列表")
-    status: int = Field(..., description="目标状态: 1-启用, 0-禁用")
