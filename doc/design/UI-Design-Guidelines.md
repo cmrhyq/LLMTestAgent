@@ -1,293 +1,357 @@
-# LLMTestAgent 页面设计准则
+# LLMTestAgent 页面设计准则（工业蓝图 · Blueprint）
 
-> 版本：v0.0.1（对应当前前端实现）
-> 技术栈：Tailwind CSS v4 + shadcn/ui
+> 版本：v0.1.0（对应当前前端实现）
+> 技术栈：Tailwind CSS v4 + shadcn/ui + React 19
+> 设计语言：**工业蓝图（Blueprint）** —— 像一张"活的工程图纸"
 > 令牌来源：[`frontend/src/index.css`](../../frontend/src/index.css)、[`frontend/tailwind.config.ts`](../../frontend/tailwind.config.ts)
+> 设计上下文：项目根目录 [`.impeccable.md`](../../.impeccable.md)
 
 ---
 
 ## 一、设计目标
 
-整体风格参考现代 IDE / 工具类产品（如 Cursor）：**白底、轻灰侧栏、细边框、低对比阴影、留白充足**。界面应感觉干净、专业、不喧宾夺主，让测试数据与工作流内容成为视觉焦点。
+LLMTestAgent 是一台 **AI 驱动的 API 测试精密工具**。界面气质对标**工程图纸 / 蓝图 / 技术标注**：浅蓝纸底、工程蓝墨线、等宽标注、印章式徽章——精密、克制、有强烈辨识度，与市面上千篇一律的暗色 AI 界面区隔。
 
 核心原则：
 
-1. **层次靠边框与阴影，不靠大面积色块** — 容器以 1px 浅灰边框 + 轻阴影区分，避免整块深灰背景。
-2. **中性色为主，语义色点缀** — 页面 90% 为白/灰；绿、蓝、红仅用于状态、链接、主操作。
-3. **语义化令牌优先** — 使用 `bg-background`、`text-muted-foreground` 等令牌；页面层避免硬编码 `#ebebeb` 等（Sidebar 导航的 `blue-50` / `blue-100` 为既定例外）。
-4. **组件复用优先** — 新页面应组合 `components/ui/*` 与 `components/shared/*`，而非重复写样式。
+1. **墨线分层，而非阴影堆叠** — 容器用 1px 工程蓝墨线（`border`）+ 极轻阴影区分，不靠深色色块。
+2. **图纸网格** — 全站背景带极淡 16px 工程网格，hero 区使用 24px 网格纹理（`.bg-blueprint-grid`）。
+3. **等宽标注** — 表头、面包屑、编号、统计读数使用 mono 字体 + 大写 + 宽字距（`.annotation`），营造图纸标注感。
+4. **语义化令牌优先** — 使用 `bg-background`、`text-muted-foreground` 等令牌；页面层禁止硬编码色值。
+5. **组件复用优先** — 新页面组合 `components/ui/*` 与 `components/shared/*`，不重复写样式。
 
 ---
 
 ## 二、色彩体系
 
-### 2.1 中性色（Light 模式）
+所有色值以 **oklch** 定义（构建时自动降级输出 hex / P3 / lab 三套，见 §12）。亮色图纸为默认，暗色「夜图」通过 `html.dark` 覆盖。
 
-| 令牌 | 色值 | 用途 |
-|------|------|------|
-| `background` | `#FFFFFF` | 页面主背景、主内容区 |
-| `sidebar` | `#F7F7F5` | 侧边栏背景 |
-| `card` / `popover` / `input` | `#FFFFFF` | 卡片、弹层、输入框 |
-| `foreground` | `#1A1A1A` | 标题、正文主色 |
-| `muted` | `#F5F5F5` | hover 背景、Tabs 轨道、次要容器 |
-| `secondary` | `#EBEBEB` | 略深 hover、secondary 按钮 |
-| `muted-foreground` | `#737373` | 说明文字、表头、占位符 |
-| `border` | `#E8E8E8` | 容器边框、分隔线 |
-| `border-subtle` | `#F0F0F0` | 表格行分隔等更弱的分割 |
+### 2.1 亮色图纸（默认）
 
-### 2.2 语义色（产品逻辑）
+| 令牌 | oklch 值 | 用途 |
+|------|----------|------|
+| `background` | `0.955 0.012 235` | 页面主背景（浅蓝图纸） |
+| `sidebar` | `0.93 0.015 235` | 侧边栏背景（比主区略深） |
+| `card` / `popover` / `input` | `0.985 0.006 230` | 卡片、弹层、输入框（描图纸感） |
+| `foreground` | `0.30 0.05 250` | 标题、正文（墨蓝） |
+| `muted` | `0.93 0.012 235` | hover 背景、次要容器 |
+| `secondary` | `0.90 0.015 235` | 略深 hover、secondary 按钮 |
+| `muted-foreground` | `0.53 0.05 245` | 说明文字、表头、占位符 |
+| `border` | `0.78 0.035 240` | 容器边框、分隔线（工程蓝墨线） |
+| `border-subtle` | `0.87 0.022 240` | 表格行分隔等更弱的分割 |
 
-| 令牌 | 色值 | 用途 |
-|------|------|------|
-| `primary` | `#1A7F37` | 主按钮、启用状态、成功类强调 |
-| `accent` | `#0969DA` | 链接、信息类强调、focus 环 |
-| `destructive` | `#CF222E` | 删除、错误、危险操作 |
-| `success` | `#1A7F37` | 通过、GET 等方法 Badge |
-| `warning` | `#9A6700` | 警告、PUT 等方法 Badge |
-| `info` | `#0969DA` | 信息提示、POST 等方法 Badge |
+### 2.2 暗色夜图（`html.dark`）
 
-### 2.3 表面 tint（`surface-*`）
+| 令牌 | oklch 值 | 说明 |
+|------|----------|------|
+| `background` | `0.18 0.025 250` | 深海军蓝（非纯黑） |
+| `card` | `0.22 0.028 250` | 略亮于背景 |
+| `sidebar` | `0.15 0.02 250` | 比背景更深 |
+| `foreground` | `0.90 0.02 230` | 浅蓝白（非纯白） |
+| `primary` | `0.72 0.12 240` | 提亮的工程蓝 |
+| `border` | `0.34 0.04 245` | 暗色墨线 |
+| `success` / `warning` / `info` | 提亮档（`0.72 0.11 150` / `0.76 0.13 80` / `0.70 0.10 240`） | 保证对比度 |
 
-用于统计卡图标背景等小面积点缀，**不可用作整页或大区块背景**：
+### 2.3 语义色（产品逻辑）
 
-- `surface-primary` / `surface-accent` / `surface-success` / `surface-warning`
-- Light 模式：`color-mix(..., 10%, transparent)`
+| 令牌 | 亮色 oklch | 用途 |
+|------|-----------|------|
+| `primary` | `0.50 0.13 255` | 主按钮、激活态、链接、focus 环（**工程蓝**） |
+| `accent` | `0.50 0.13 255` | 同 primary（品牌即强调） |
+| `destructive` | `0.52 0.17 25` | 删除、失败（修订红） |
+| `success` | `0.55 0.11 150` | 通过、批准（印章绿） |
+| `warning` | `0.62 0.13 75` | 警告、跳过（铅笔琥珀） |
+| `info` | `0.55 0.10 250` | 信息、运行中（蓝） |
 
-### 2.4 用色禁忌
+### 2.4 HTTP 方法色（`--color-method-*`）
 
-- 禁止将 `card`、`muted`、`secondary` 设为相同色值导致层次消失。
-- 禁止在页面中硬编码 `teal-500`、`emerald-500` 等 Tailwind 默认色；统一用语义令牌。
-- 禁止在主内容区使用 `bg-blue-50` 等 tint 作为容器背景。
+| 方法 | 语义 | 方法 | 语义 |
+|------|------|------|------|
+| `GET` | 印章绿（success） | `DELETE` | 修订红（destructive） |
+| `POST` | 蓝（info） | `PATCH` | 弱紫 |
+| `PUT` | 琥珀（warning） | 未知 | `border-border` 灰 |
 
-**例外：** Sidebar 导航项的选中 / hover 态保留淡蓝 tint（见 [5.2 Sidebar 规范](#52-sidebar-规范)），便于在侧栏内快速识别当前路由。
+### 2.5 表面 tint（`surface-*`）
+
+`color-mix(in oklab, <色> 8%, transparent)` 生成，用于导航激活背景、hero 卡底、图标底等**小面积点缀**，不可整页使用。
+
+### 2.6 用色禁忌
+
+- 禁止纯黑 `#000` / 纯白 `#fff`、GitHub 蓝灰暗色、AI-slop（青+深色、紫蓝渐变、霓虹）。
+- 禁止硬编码 Tailwind 默认色（`emerald-500` 等）；统一语义令牌。
+- 禁止用 `card`、`muted`、`secondary` 同值导致层次消失。
+- 阴影透明度保持 ≤8%，避免"重阴影 + 深底"。
 
 ---
 
 ## 三、字体与排版
 
-### 3.1 字体族
+### 3.1 字体族（Google Fonts）
+
+| 令牌 | 字体 | 用途 |
+|------|------|------|
+| `--font-sans` | **Inter** | 正文 UI，中文回退 Noto Sans SC |
+| `--font-mono` | **IBM Plex Mono** | 标注、表头、编号、代码、URL、统计读数 |
+| `--font-display` | **Space Grotesk** | 页面大标题、统计大数字 |
 
 ```css
--apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif
+--font-sans: "Inter", -apple-system, "Segoe UI", "Noto Sans SC", "PingFang SC", sans-serif;
+--font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+--font-display: "Space Grotesk", "Inter", sans-serif;
 ```
 
 ### 3.2 层级规范
 
 | 元素 | 类名建议 | 说明 |
 |------|----------|------|
-| 页面标题 | `text-2xl font-semibold tracking-tight` | 如「仪表盘」 |
-| 区块标题 | `text-lg font-semibold` | 如「项目」「快捷操作」 |
-| 卡片标题 | `text-sm font-medium text-muted-foreground` | 统计指标名称 |
+| 页面标题 | `font-display text-2xl font-semibold tracking-tight` | 如「仪表盘」 |
+| 页头注解 | `.annotation`（`font-mono text-[11px] uppercase tracking-[0.1em]`） | 如 `FIG.01 — OVERVIEW`、`PROJECT_12` |
+| 区块标题 | `font-display text-lg font-semibold` | 如「项目」 |
+| 表头 | `font-mono text-[11px] uppercase tracking-wider text-muted-foreground` | DataTable 内置 |
+| 统计读数 | `font-display text-3xl font-semibold tabular-nums` | 读数带大数字 |
+| 等宽数据 | `font-mono text-xs` | URL、时间、文件大小、编号 |
 | 正文 | `text-sm` | 默认内容 |
 | 辅助说明 | `text-sm text-muted-foreground` | 副标题、描述 |
-| 侧栏分组 | `text-[11px] font-medium text-muted-foreground` | 「工作流」「结果」 |
-| 等宽数据 | `font-mono text-xs` | URL、代码片段 |
 
 ### 3.3 字重
 
-- 默认以 **Regular / Medium** 为主；`font-bold` 仅用于关键数字（如统计值可用 `font-semibold`）。
-- 避免同一视口内过多粗体，保持轻量感。
+- 以 Regular / Medium 为主；标题用 `font-semibold`（display 字体）。
+- 数字一律 `tabular-nums` 保证等宽对齐。
 
 ---
 
 ## 四、圆角、边框与阴影
 
-### 4.1 圆角
+### 4.1 圆角（图纸工具感：锐利）
 
 | 令牌 | 值 | 适用 |
 |------|-----|------|
-| `rounded-sm` | 6px | 小元素 |
-| `rounded-md` / `rounded-lg` | 8–10px | 按钮、导航项 |
-| `rounded-xl` | 12px | 卡片、表格容器、Composer 输入框 |
-| `rounded-full` | 50% | 胶囊工具按钮、圆形 FAB |
+| `rounded-sm` | 0 | 印章徽章、小元素 |
+| `rounded-md` | 2px | 按钮、输入框 |
+| `rounded-lg` | 4px | 卡片、表格容器、Composer |
+| `rounded-xl` | 6px | 弹层等稍大元素 |
+| `rounded-full` | 50% | 仅发送按钮、色点 |
 
 ### 4.2 边框
 
-- 标准容器：`border border-border`（1px，`#E8E8E8`）。
-- 不再使用粗边框（2px+）或高对比色边框作为主要分隔手段。
+- 标准容器：`border border-border`（1px 墨线）。
 - 表格行：`border-border-subtle`；区块顶/底：`border-border`。
+- **虚线**：`border-dashed` 用于"草稿/待定"语义（如 pending 状态徽章）。
 
 ### 4.3 阴影
 
-定义于 `tailwind.config.ts`，按 elevation 选用：
+定义于 `index.css` 的 `--shadow-*`（亮/暗双套），按 elevation 选用：
 
 | 类名 | 场景 |
 |------|------|
-| `shadow-xs` | 卡片、outline 按钮、输入框默认态 |
-| `shadow-card` | Composer 输入区、需轻微浮起的面板 |
-| `shadow-elevated` | 侧栏展开 FAB、Composer focus 态 |
-| `shadow-popover` | Dropdown、Tooltip 弹层 |
-| `shadow-input` | Input / Textarea focus 态（蓝色光晕） |
+| `shadow-xs` / `shadow-card` | 卡片、按钮、输入框默认态 |
+| `shadow-elevated` | 侧栏展开 FAB |
+| `shadow-popover` | Dropdown、Tooltip 弹层（带 1px 墨线环） |
+| `shadow-input` | Input / Textarea focus 态（工程蓝光环） |
 
-**原则：** 阴影透明度低（2%–8%），blur 偏大；避免「重阴影 + 深灰底」叠加。
+**原则：** 蓝图以墨线为主、阴影为辅——阴影透明度极低（≤8%），禁止大面积阴影。
 
 ---
 
-## 五、布局结构
+## 五、签名元素（Signature Elements）
 
-### 5.1 应用骨架
+这些是让界面"一眼是蓝图"的记忆点，新增页面时应沿用：
+
+1. **图纸网格** — `body` 自带 16px 极淡网格（主色 4% 透明度）；hero 卡用 `.bg-blueprint-grid`（24px，5%）铺底。
+2. **等宽标注** — `.annotation` 类（mono 大写宽字距）：页头 `FIG.xx — TITLE`、项目卡 `PROJECT_{id}`、顶栏 `~/页面名` 面包屑。
+3. **印章式徽章** — 状态与 HTTP 方法均为**描边印章**：`rounded-[2px] border border-{color}/50 bg-{color}/5 font-mono text-[11px] uppercase`；`pending` 用虚线边框（草稿批注感）。
+4. **图纸角标** — hero 卡四角十字墨线（`CornerMarks`，见 `dashboard.tsx`）。
+5. **读数带** — 统计区不用"卡片套卡片"，改为**横排读数带**：`divide-x divide-border-subtle` 竖墨线分隔 + `font-display` 大数字 + mono 色点标签（见 `dashboard.tsx`、`run-detail.tsx`、`report-view.tsx`）。
+6. **终端提示符** — Composer 输入框带 mono `❯` 前缀；AI 空态欢迎页 `> _`。
+7. **Agent 输出流** — 左侧 2px 工程蓝墨线 + mono `AGENT` 标注 + 虚线分隔（`message-bubbles.tsx`）。
+8. **刻度进度条** — 通过率条为 3–6px 高圆角条，填充带垂直刻度线纹理（`pass-rate-bar.tsx`）。
+
+---
+
+## 六、布局结构
+
+### 6.1 应用骨架
 
 ```
-┌─────────────┬──────────────────────────────┐
-│  Sidebar    │  Main (bg-background, p-6)   │
-│  250px      │                              │
-│  bg-sidebar │  <Outlet /> 页面内容          │
-│  border-r   │                              │
-└─────────────┴──────────────────────────────┘
+┌─────────────┬──────────────────────────────────┐
+│  Sidebar    │  TopBar (40px sticky, ~/面包屑 + 主题切换 + 版本) │
+│  250px      ├──────────────────────────────────┤
+│  bg-sidebar │  Main (bg-background, p-6 lg:p-8) │
+│  border-r   │  <Outlet /> 页面内容              │
+└─────────────┴──────────────────────────────────┘
 ```
 
-- 无顶部 Header Nav；品牌与折叠控制均在 Sidebar 内。
-- Sidebar 收起宽度为 0，带 300ms 宽度过渡；左上角圆形按钮展开。
-- 主内容区统一 `p-6`，页面内区块间距 `space-y-8`。
+- 顶栏（`top-bar.tsx`）：`~/页面名` mono 面包屑 + `ThemeToggle` + 版本号，`backdrop-blur` 半透明。
+- 主内容区统一 `p-6 lg:p-8`，路由切换带 fade + slide 过渡（300ms `ease-out-expo`）。
+- Sidebar 收起宽度 0，300ms 过渡；展开按钮 `rounded-sm` 直角风格。
 
-### 5.2 Sidebar 规范
+### 6.2 Sidebar 规范（`sidebar.tsx`）
 
-- 背景：`bg-sidebar`
-- 右边框：`border-r border-border`
-- 品牌区：Logo + 产品名 + 版本号（`text-[10px] text-muted-foreground`）
-- 导航项（`NavLink`）— **侧栏内唯一允许使用淡蓝 tint 的区域**：
+- 背景：`bg-sidebar`；右边框：`border-r border-border`。
+- 品牌区：**空心工程蓝方块** logo（`border-2 border-primary`）+ `font-display` 产品名 + mono 版本号。
+- 导航项（`NavLink`）：
   - 默认：`border-l-2 border-transparent text-muted-foreground`
-  - Hover：`hover:bg-blue-100 hover:text-foreground`
-  - 选中：`border-l-2 border-accent bg-blue-50 font-medium text-foreground`
-  - 布局：`rounded-md px-3 py-1.5 gap-2 text-sm`
-- 图标：`lucide-react`，尺寸 `h-4 w-4`
+  - Hover：`hover:bg-muted hover:text-foreground`
+  - 选中：`border-l-2 border-primary bg-surface-primary font-medium text-foreground`
+  - 右侧 mono 编号（`01` / `02` / `03`）
+  - 布局：`rounded-sm px-3 py-1.5 gap-2 text-sm`
+- 导航分组上方有 mono 注解 `NAV_01`。
 
-### 5.3 页面内容区
-
-- 典型结构：页面标题 → 统计/快捷区 → 主列表/表单。
-- 列表页优先使用 `DataTable`；表单页使用 `Card` 包裹。
-- 对话/工作流页 Composer 居中，`max-w-3xl`。
-
----
-
-## 六、组件使用准则
-
-### 6.1 Card
+### 6.3 页头（`page-header.tsx`）
 
 ```tsx
-// 默认：白底 + 细边框 + 轻阴影
-<Card>...</Card>
-// 类：rounded-xl border border-border bg-card shadow-xs
+<PageHeader
+  title="仪表盘"
+  annotation="FIG.01 — OVERVIEW"   // 可选 mono 注解
+  description="API 测试项目概览。"
+  actions={<Button ...>...</Button>}  // 可选右侧操作区
+/>
 ```
 
-- 统计卡可在图标区使用 `bg-surface-*` 小色块，Card 本身保持白底。
-- 不要去掉边框仅靠阴影，也不要使用深灰 `bg-card` 铺满主内容区。
+---
 
-### 6.2 Button
+## 七、组件使用准则
+
+### 7.1 Card
+
+```tsx
+// 类：rounded-[4px] border border-border bg-card shadow-xs
+<Card>...</Card>
+```
+
+- hero 卡可在卡片上用 `bg-surface-primary/50` + `.bg-blueprint-grid` + `CornerMarks`。
+- 不要去掉边框仅靠阴影，不要深灰铺底。
+
+### 7.2 Button
 
 | Variant | 场景 |
 |---------|------|
-| `default` | 主操作（运行测试、提交）— 绿色 `primary` |
-| `outline` | 次要操作 — 白底 + 边框 + `shadow-xs` |
+| `default` | 主操作 — 工程蓝底白字 + `border border-primary`，hover `brightness-110` |
+| `outline` | 次要操作 — 白底 + 墨线边框 |
 | `ghost` | 表格行内、工具栏图标按钮 |
 | `secondary` | 低强调填充按钮 |
-| `destructive` | 删除确认 |
-| `link` | 行内文字链（优先用 `<Link className="text-accent">`） |
+| `destructive` | 删除确认（修订红） |
+| `link` | 行内文字链 |
 
-- 默认高度 `h-8`；圆角 `rounded-lg`。
-- 工具栏内小按钮可用 `rounded-full` 胶囊形态（见 Composer）。
+- 圆角 `rounded-[2px]`；高度 `h-8`；过渡 `duration-200 ease-out-expo`。
 
-### 6.3 Input / Textarea
+### 7.3 Input / Textarea
 
-- `rounded-lg border border-border bg-input shadow-xs`
-- Focus：`focus-visible:border-accent/40 focus-visible:shadow-input`
-- 不使用 focus 时的大幅 ring 或深色边框跳变。
+- `rounded-[2px] border border-border bg-input shadow-xs`
+- Focus：`focus-visible:border-primary/60 focus-visible:shadow-input`
+- URL / 代码类字段可用 `font-mono`（如 base_url 以 mono chip 呈现）。
 
-### 6.4 DataTable
+### 7.4 DataTable（`data-table.tsx`）
 
-- 容器：`rounded-xl border border-border bg-background shadow-xs`
-- 表头：`bg-muted/60` + `border-b border-border`
-- 行 hover：`hover:bg-muted`；行分隔：`border-border-subtle`
-- 分页按钮：`rounded-lg border border-border shadow-xs`
+- 容器：`rounded-[4px] border border-border bg-card shadow-xs`
+- 表头：`bg-muted/50` + mono 11px 大写宽字距
+- 行 hover：`hover:bg-muted/50`；行分隔：`border-border-subtle`
+- 分页脚：mono `PAGE x / y` + `rounded-sm` 墨线按钮
 
-### 6.5 Composer（工作流 / 安全对话）
-
-参考 Cursor 中央输入框：
+### 7.5 Composer（AI 对话输入）
 
 ```tsx
-<div className="rounded-xl border border-border bg-background px-3 py-2.5 shadow-card
-                focus-within:border-accent/30 focus-within:shadow-elevated">
+<div className="rounded-[4px] border border-border bg-card px-3 py-2.5 shadow-xs
+                focus-within:border-primary/50 focus-within:shadow-input">
+  <span className="font-mono text-sm font-semibold text-primary">❯</span>
   <textarea className="bg-transparent ..." />
-  {/* 工具栏：rounded-full 胶囊按钮 */}
+  {/* 工具栏：rounded-full 胶囊按钮 + 发送圆形按钮 */}
 </div>
 ```
 
-- 工具按钮：`rounded-full border border-border bg-background shadow-xs hover:bg-muted`
-- 附件标签：`rounded-full bg-muted`
+### 7.6 徽章与状态
 
-### 6.6 Badge 与状态
+- 状态：`StatusBadge` — 描边印章式；`running` 带 pulse；`pending` 虚线。
+- HTTP 方法：`HttpMethodBadge` — 描边印章式，色来自 `--color-method-*`。
+- 项目启用状态：shadcn `Badge`（`default` 启用 / `secondary` 未启用）。
 
-- HTTP 方法、测试状态使用 `HttpMethodBadge` / `StatusBadge`，语义色背景 10% 透明度级别。
-- 项目状态等业务 Badge 使用 shadcn `Badge`：`default`（启用）/ `secondary`（未启用）。
+### 7.7 Tabs
 
-### 6.7 链接
+下划线式：`border-b border-border` 列表 + 激活项 `border-b-2 border-primary` + mono 大写宽字距标签。
 
-- 全局 `<a>` 默认 `color: accent`；表格内链接：`font-medium text-accent hover:text-accent/80`
-- 导航链接使用 `NavLink`，**不要** 依赖全局下划线样式。
+### 7.8 链接
+
+- 全局 `<a>` 默认 `color: accent`；表格内链接 `font-medium text-accent hover:text-accent/80`。
+- 导航使用 `NavLink`，不依赖全局下划线。
 
 ---
 
-## 七、间距与密度
+## 八、间距与密度
 
 | 场景 | 建议 |
 |------|------|
-| 页面级垂直间距 | `space-y-8` |
+| 页面级垂直间距 | `space-y-6` / `gap-8` |
+| 读数带内边距 | `px-6 py-5` |
 | 卡片网格 | `grid gap-4 md:grid-cols-3` |
-| 卡片内边距 | `p-6`（CardHeader / CardContent 默认） |
 | 侧栏导航项 | `px-3 py-1.5`，项间距 `gap-0.5` |
-| 分组标题上间距 | `mt-5 mb-1` |
+| 表格单元格 | `px-4 py-3` |
 
-保持「可呼吸」—— 组件内部 padding 充足，避免元素贴边。
-
----
-
-## 八、图标与交互
-
-- 图标库：**Lucide React**，线型图标，默认 `h-4 w-4`。
-- Hover：背景变为 `bg-muted`，文字 `text-foreground`；过渡 `transition-colors`。
-- 禁用：`disabled:opacity-50 disabled:cursor-not-allowed`。
-- 折叠动画：Sidebar 宽度 `duration-300 ease-in-out`；内容透明度 `duration-200`。
+保持"可呼吸"——图纸标注式排版需要充足留白，避免元素贴边。
 
 ---
 
-## 九、暗色模式
+## 九、主题切换（亮色图纸 ⇄ 暗色夜图）
 
-- 令牌在 `.dark` 下于 `index.css` 统一覆盖，组件无需写双份颜色。
-- 新增页面/组件时**只使用语义类名**，暗色模式自动生效。
-- 暗色下 `sidebar` 为 `#12161C`，仍保持「侧栏略深、主区更深」的层次，而非纯黑一片。
+1. **默认亮色**：`localStorage["lta-theme"]` 缺省 `light`；`index.html` 内联防闪烁脚本在 React 挂载前设置 `html.dark` 类与初始背景色。
+2. **切换**：`use-theme.ts` 同步 `documentElement.classList.toggle("dark", ...)` + localStorage；顶栏 `ThemeToggle`（Sun/Moon）。
+3. **联动**：
+   - sonner Toaster 绑定 `theme`（`main.tsx`）。
+   - Shiki 代码高亮：双主题输出 `--shiki-dark` CSS 变量，`html.dark .shiki span { color: var(--shiki-dark) !important }` 切换（见 `markdown.css`）。
+   - Mermaid：`markdown-mermaid-block.tsx` 依据 `useTheme` 选 `neutral` / `dark`，以 theme 为 key 重渲染。
+4. `color-scheme` 同步设置，保证原生控件跟随。
 
 ---
 
-## 十、新页面检查清单
+## 十、暗色夜图要点
 
-新增或改版页面时，请确认：
+- 令牌在 `html.dark` 下于 `index.css` 统一覆盖，组件只需语义类名。
+- 网格纹理颜色随 `--color-primary` 变化，暗色下自动提亮。
+- 夜图底色为**深海军蓝**（非纯黑），保持「侧栏略深、主区略浅」的层次。
 
-- [ ] 未硬编码 Tailwind 调色板色（侧栏 NavLink 的 `blue-50` / `blue-100` 除外）
-- [ ] 容器使用 `border-border` + 适当 `shadow-*`，而非纯 `border-0` 或纯深灰底
-- [ ] 标题、说明文字层级符合第三节规范
-- [ ] 主操作使用 `Button default`，次要使用 `outline` / `ghost`
+---
+
+## 十一、新页面检查清单
+
+- [ ] 未硬编码 Tailwind 调色板色或 hex 色值（全部使用语义令牌）
+- [ ] 容器使用 `border-border` + 轻 `shadow-*`，圆角遵循 0/2/4/6px 阶梯
+- [ ] 页头使用 `PageHeader`（含 `annotation` 注解），标题 `font-display`
+- [ ] 统计区使用「读数带」而非卡片套卡片
+- [ ] 状态 / HTTP 方法使用印章式徽章（`StatusBadge` / `HttpMethodBadge`）
+- [ ] 数字使用 `tabular-nums` + mono / display 字体
 - [ ] 列表使用 `DataTable`，未重复实现表格样式
-- [ ] 链接与状态色使用 `accent` / `primary` / `destructive` / `success` 语义令牌
-- [ ] 侧栏相关改动不破坏 250px 宽度与折叠行为
-- [ ] 通过 `npm run type-check`
+- [ ] 链接与状态色使用语义令牌（`accent` / `primary` / `destructive` / `success`）
+- [ ] 新文本沿用 mono 大写标注规范（`.annotation`）
+- [ ] 亮色图纸与暗色夜图两种模式下均验证可读性
+- [ ] 通过 `tsc --noEmit` 与 `npm run build`
 
 ---
 
-## 十一、相关文件索引
+## 十二、技术说明
+
+- **令牌架构**：`index.css` 用「纯 CSS 变量（`--background` 等）+ `@theme inline` 映射 `--color-background: var(--background)`」模式；Lightning CSS 构建时会自动为 oklch 生成 hex / `display-p3` / `lab` 三套 `@supports` 兜底（勿在 `html.dark` / `:root` 内直接写 `--color-*` 覆盖，会被构建管线重排丢弃）。
+- **动效**：统一 `ease-out-expo`（`cubic-bezier(0.16,1,0.3,1)`），时长 150 / 200 / 300ms；流式光标为 1px 闪烁竖线（`animate-cursor-blink`，step-end）。
+- **字体加载**：Google Fonts（Inter / IBM Plex Mono / Space Grotesk），如需内网可换 `@fontsource-variable/*` 自托管。
+
+---
+
+## 十三、相关文件索引
 
 | 类型 | 路径 |
 |------|------|
-| 色彩与主题令牌 | `frontend/src/index.css` |
-| 阴影 / 圆角结构令牌 | `frontend/tailwind.config.ts` |
-| 应用布局 | `frontend/src/components/layout/app-layout.tsx` |
-| 侧栏 | `frontend/src/components/layout/sidebar.tsx` |
+| 设计上下文 | `.impeccable.md` |
+| 色彩 / 字体 / 主题令牌 | `frontend/src/index.css` |
+| 阴影 / 动画结构令牌 | `frontend/tailwind.config.ts` |
+| 主题 hook | `frontend/src/hooks/use-theme.ts` |
+| 主题切换按钮 | `frontend/src/components/shared/theme-toggle.tsx` |
+| 应用布局 / 顶栏 / 侧栏 / 页头 | `frontend/src/components/layout/{app-layout,top-bar,sidebar,page-header}.tsx` |
+| 共享组件 | `frontend/src/components/shared/*` |
 | UI 基元 | `frontend/src/components/ui/*` |
-| 表格 | `frontend/src/components/shared/data-table.tsx` |
-| 参考页面 | `frontend/src/pages/dashboard.tsx` |
-| Composer 参考 | `frontend/src/pages/run/workflow-run.tsx` |
+| 对话组件 | `frontend/src/components/chat/*` |
+| Markdown 子系统 | `frontend/src/components/markdown/*`、`frontend/src/styles/markdown.css` |
+| 参考页面 | `frontend/src/pages/dashboard.tsx`（读数带 + 角标）、`frontend/src/pages/run/security-chat.tsx`（Composer + Agent 输出流） |
 
 ---
 
-## 十二、演进说明
+## 十四、演进说明
 
-本准则随前端实现迭代。若需调整全局风格，**优先改令牌层**（`index.css` + `tailwind.config.ts`），再改基元组件，最后才改个别页面。单次改版避免同时改动布局、配色、阴影三套体系，以便 review 与回退。
+本准则随前端实现迭代。调整全局风格时**优先改令牌层**（`index.css`），再改基元组件，最后才改个别页面；单次改版避免同时改动配色、圆角、布局三套体系，便于 review 与回退。
