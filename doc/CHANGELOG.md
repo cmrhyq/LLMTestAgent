@@ -26,6 +26,10 @@
   - `/chat/stream` 支持 `conversation_id`/`mode`、多轮上下文、消息落库、响应头 `X-Conversation-Id`
   - 前端 `SpacesSection` 接入真实会话（替换 mock），`security-chat.tsx` 改为多轮消息列表
 - **单一对话入口**：合并「新建测试」与「安全对话」为 `/workflows/chat`；删除 `workflow-run.tsx` 与 `useRunTest`；`/workflows/run` 重定向；触发测试统一走 `POST /chat/stream`
+- **fs_tools 安全决策（`run_command` 已禁用）**：
+  - 决策：`graph/tools/fs_tools.py` 的 `run_command`（任意 Shell 命令 + 继承 `os.environ`）从工具导出中移除并删除，LLM 不再可调用系统命令
+  - `read_file`/`list_directory`/`get_file_info` 增加仓库工作区（`_WORKSPACE_ROOT`）路径校验，越界拒绝
+  - 依据：Refactor-Remaining.md 阶段 6.3「三选一」中的**禁用**方案（无命令白名单与沙箱维护成本最低，当前工作流不依赖命令执行）
 
 ### Changed
 
