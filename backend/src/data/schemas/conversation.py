@@ -58,3 +58,13 @@ class ConversationDetail(ConversationResponse):
 
 class ConversationListResponse(PaginatedResponse[ConversationResponse]):
     """Conversation 列表响应"""
+
+
+class ChatStreamRequest(BaseModel):
+    """流式对话请求体。"""
+
+    instruction: str = Field(..., min_length=1, description="用户输入的 prompt")
+    api_doc_path: str | None = Field(default=None, description="可选的已上传 OpenAPI 文档路径")
+    conversation_id: int | None = Field(default=None, description="会话 ID；缺省时自动新建会话")
+    mode: str = Field(default="Ask", description="模式: Ask / Plan")
+    project_id: int | None = Field(default=None, description="新建会话时所属项目 ID（可选）")

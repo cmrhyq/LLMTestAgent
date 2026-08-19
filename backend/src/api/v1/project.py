@@ -1,6 +1,6 @@
 """项目管理路由。"""
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from src.api.deps import get_db
@@ -18,10 +18,7 @@ router = APIRouter(prefix="/projects", tags=["项目管理"])
 @router.post("/", response_model=ProjectResponse, status_code=201)
 def create_project(body: ProjectCreate, db: Session = Depends(get_db)):
     """创建项目。"""
-    try:
-        return ProjectService(db).create_project(body)
-    except ValueError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return ProjectService(db).create_project(body)
 
 
 @router.get("/", response_model=ProjectListResponse)
@@ -42,27 +39,16 @@ def list_projects(
 @router.get("/{project_id}", response_model=ProjectResponse)
 def get_project(project_id: int, db: Session = Depends(get_db)):
     """获取项目详情。"""
-    try:
-        return ProjectService(db).get_or_raise(project_id, "项目不存在")
-    except LookupError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return ProjectService(db).get_or_raise(project_id, "项目不存在")
 
 
 @router.put("/{project_id}", response_model=ProjectResponse)
 def update_project(project_id: int, body: ProjectUpdate, db: Session = Depends(get_db)):
     """更新项目。"""
-    try:
-        return ProjectService(db).update_project(project_id, body.model_dump(exclude_unset=True))
-    except ValueError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
-    except LookupError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return ProjectService(db).update_project(project_id, body.model_dump(exclude_unset=True))
 
 
 @router.delete("/{project_id}", status_code=204)
 def delete_project(project_id: int, db: Session = Depends(get_db)):
     """删除项目及其关联的环境、端点、测试运行等数据。"""
-    try:
-        ProjectService(db).delete_project(project_id)
-    except LookupError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    ProjectService(db).delete_project(project_id)

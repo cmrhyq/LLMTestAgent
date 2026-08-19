@@ -1,6 +1,6 @@
 """环境管理路由。"""
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from src.api.deps import get_db
@@ -18,10 +18,7 @@ router = APIRouter(prefix="/environments", tags=["环境管理"])
 @router.post("/", response_model=EnvironmentResponse, status_code=201)
 def create_environment(body: EnvironmentCreate, db: Session = Depends(get_db)):
     """创建环境配置。"""
-    try:
-        return EnvironmentService(db).create_environment(body)
-    except ValueError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return EnvironmentService(db).create_environment(body)
 
 
 @router.get("/", response_model=EnvironmentListResponse)
@@ -42,27 +39,16 @@ def list_environments(
 @router.get("/{env_id}", response_model=EnvironmentResponse)
 def get_environment(env_id: int, db: Session = Depends(get_db)):
     """获取环境详情。"""
-    try:
-        return EnvironmentService(db).get_or_raise(env_id, "环境不存在")
-    except LookupError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return EnvironmentService(db).get_or_raise(env_id, "环境不存在")
 
 
 @router.put("/{env_id}", response_model=EnvironmentResponse)
 def update_environment(env_id: int, body: EnvironmentUpdate, db: Session = Depends(get_db)):
     """更新环境配置。"""
-    try:
-        return EnvironmentService(db).update_environment(env_id, body.model_dump(exclude_unset=True))
-    except ValueError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
-    except LookupError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return EnvironmentService(db).update_environment(env_id, body.model_dump(exclude_unset=True))
 
 
 @router.delete("/{env_id}", status_code=204)
 def delete_environment(env_id: int, db: Session = Depends(get_db)):
     """删除环境。"""
-    try:
-        EnvironmentService(db).delete(env_id)
-    except LookupError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    EnvironmentService(db).delete(env_id)

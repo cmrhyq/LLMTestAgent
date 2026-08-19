@@ -3,6 +3,7 @@ import json
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
+from src.core.errors import ConflictError, ValidationError
 from src.core.logging import get_logger
 from src.data.models import Endpoint
 from src.data.repositories import EndpointRepository
@@ -18,9 +19,9 @@ class EndpointService(BaseService[Endpoint, EndpointRepository]):
 
     def create_one(self, data: EndpointCreate) -> Endpoint:
         if data.project_id is None:
-            raise ValueError("接口必须关联项目")
+            raise ValidationError("接口必须关联项目")
         if self.repo.check_duplicate(data.project_id, data.path, data.method):
-            raise ValueError(f"接口已存在: {data.method} {data.path}")
+            raise ConflictError(f"接口已存在: {data.method} {data.path}")
         values = data.model_dump()
         for field in ("tags", "params", "headers", "body", "responses", "security"):
             if isinstance(values.get(field), (list, dict)):
@@ -50,7 +51,7 @@ class EndpointService(BaseService[Endpoint, EndpointRepository]):
             new_method = str(fields.get("method", current.method)).upper()
             duplicates = self.repo.find_by_identity(current.project_id, new_path, new_method)
             if any(dup.id != endpoint_id for dup in duplicates):
-                raise ValueError(f"接口已存在: {new_method} {new_path}")
+                raise ConflictError(f"接口已存在: {new_method} {new_path}")
         for field in ("tags", "params", "headers", "body", "responses", "security"):
             if isinstance(fields.get(field), (list, dict)):
                 fields[field] = json.dumps(fields[field], ensure_ascii=False)

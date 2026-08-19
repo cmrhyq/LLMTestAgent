@@ -11,13 +11,14 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from src.api.v1.router import api_router
 from src.core.config import init_config
 from src.core.database.connection import init_database_from_config
+from src.core.errors import ConflictError, NotFoundError, ValidationError
 from src.core.llm.llm_client import init_llm_client
 from src.core.logging import get_logger
 from src.data.migration.migration import init_database_from_orm
@@ -92,6 +93,20 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix="/api/v1")
+
+
+def _business_error_handler(status_code: int):
+    """把业务异常映射为对应 HTTP 状态码的 JSON 响应。"""
+
+    def handler(request: Request, exc: Exception) -> JSONResponse:
+        return JSONResponse(status_code=status_code, content={"detail": str(exc)})
+
+    return handler
+
+
+app.add_exception_handler(NotFoundError, _business_error_handler(404))
+app.add_exception_handler(ConflictError, _business_error_handler(409))
+app.add_exception_handler(ValidationError, _business_error_handler(422))
 
 
 @app.get("/health", tags=["系统"])

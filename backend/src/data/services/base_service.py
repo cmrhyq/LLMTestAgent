@@ -4,6 +4,7 @@ from typing import Any, Generic, TypeVar
 
 from sqlalchemy.orm import Session
 
+from src.core.errors import NotFoundError
 from src.data.models.base import Base
 from src.data.repositories.base import BaseRepository
 
@@ -28,7 +29,7 @@ class BaseService(Generic[TModel, TRepo]):
     def get_or_raise(self, record_id: int, message: str = "记录不存在") -> TModel:
         entity = self.get(record_id)
         if entity is None:
-            raise LookupError(message)
+            raise NotFoundError(message)
         return entity
 
     def list(
@@ -46,9 +47,9 @@ class BaseService(Generic[TModel, TRepo]):
     def update(self, record_id: int, **fields: Any) -> TModel:
         updated = self.repo.update_fields(record_id, **fields)
         if updated is None:
-            raise LookupError("记录不存在")
+            raise NotFoundError("记录不存在")
         return updated
 
     def delete(self, record_id: int) -> None:
         if not self.repo.delete_by_id(record_id):
-            raise LookupError("记录不存在")
+            raise NotFoundError("记录不存在")

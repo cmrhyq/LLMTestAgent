@@ -1,6 +1,6 @@
 """测试运行查询路由。"""
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from src.api.deps import get_db
@@ -35,9 +35,7 @@ def list_test_runs(
 def get_test_run(run_id: int, db: Session = Depends(get_db)):
     """获取测试运行详情（含用例和结果）。"""
     service = TestRunService(db)
-    run = service.get(run_id)
-    if run is None:
-        raise HTTPException(status_code=404, detail="测试运行不存在")
+    run = service.get_or_raise(run_id, "测试运行不存在")
 
     cases = TestCaseService(db).get_cases_by_run(run_id)
     results = TestResultService(db).get_results_by_run(run_id)

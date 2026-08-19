@@ -18,9 +18,3 @@ class CasePromptBuilder(BasePromptBuilder):
         context = format_api_info_for_prompt(api_info)
         template = self.render(self.USER_TEMPLATE)
         return template.format(**context)
-
-
-def build_case_prompts(api_info: dict[str, Any]) -> tuple[str, str]:
-    """一次性返回 system/user prompt。"""
-    builder = CasePromptBuilder()
-    return builder.build_system_prompt(), builder.build_user_prompt(api_info)

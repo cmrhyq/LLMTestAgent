@@ -1,6 +1,6 @@
 """测试报告路由。"""
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
@@ -46,10 +46,7 @@ def list_reports(
 @router.get("/{report_id}", response_model=ReportDetailResponse)
 def get_report_detail(report_id: int, db: Session = Depends(get_db)):
     """获取报告详情（含测试运行统计和完整测试结果）。"""
-    try:
-        report, test_run, results = ReportService(db).get_detail(report_id)
-    except LookupError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    report, test_run, results = ReportService(db).get_detail(report_id)
 
     return ReportDetailResponse(
         id=report.id,
@@ -65,10 +62,7 @@ def get_report_detail(report_id: int, db: Session = Depends(get_db)):
 @router.get("/{report_id}/download")
 def download_report(report_id: int, db: Session = Depends(get_db)):
     """下载报告文件。"""
-    try:
-        report, file_path = ReportService(db).get_download_file(report_id)
-    except LookupError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    report, file_path = ReportService(db).get_download_file(report_id)
 
     filename = f"test_report_{report.run_id}.{report.format}"
     media_type = "text/html" if report.format == "html" else "application/octet-stream"

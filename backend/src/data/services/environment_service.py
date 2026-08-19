@@ -3,6 +3,7 @@ import json
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
+from src.core.errors import ConflictError
 from src.core.logging import get_logger
 from src.data.models import Environment
 from src.data.repositories import EnvironmentRepository
@@ -18,7 +19,7 @@ class EnvironmentService(BaseService[Environment, EnvironmentRepository]):
 
     def create_environment(self, data: EnvironmentCreate) -> Environment:
         if self.repo.get_by_project_and_name(data.project_id, data.name) is not None:
-            raise ValueError(f"环境已存在: {data.name}")
+            raise ConflictError(f"环境已存在: {data.name}")
         values = data.model_dump()
         if isinstance(values.get("variables"), dict):
             values["variables"] = json.dumps(values["variables"], ensure_ascii=False)
@@ -38,7 +39,7 @@ class EnvironmentService(BaseService[Environment, EnvironmentRepository]):
             current = self.get_or_raise(env_id, "环境不存在")
             existing = self.repo.get_by_project_and_name(current.project_id, fields["name"])
             if existing is not None and existing.id != env_id:
-                raise ValueError(f"环境已存在: {fields['name']}")
+                raise ConflictError(f"环境已存在: {fields['name']}")
         if isinstance(fields.get("variables"), dict):
             fields["variables"] = json.dumps(fields["variables"], ensure_ascii=False)
         return self.update(env_id, **fields)

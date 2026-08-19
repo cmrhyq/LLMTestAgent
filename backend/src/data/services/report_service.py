@@ -2,6 +2,7 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
+from src.core.errors import NotFoundError
 from src.core.logging import get_logger
 from src.data.models.report import Report
 from src.data.repositories import ReportRepository
@@ -52,18 +53,18 @@ class ReportService(BaseService[Report, ReportRepository]):
     def get_detail(self, report_id: int):
         report = self.get(report_id)
         if report is None:
-            raise LookupError("报告不存在")
+            raise NotFoundError("报告不存在")
         test_run = TestRunService(self._session).get(report.run_id)
         if test_run is None:
-            raise LookupError("关联的测试运行不存在")
+            raise NotFoundError("关联的测试运行不存在")
         results = TestResultService(self._session).get_results_by_run(report.run_id)
         return report, test_run, results
 
     def get_download_file(self, report_id: int) -> tuple[Report, Path]:
         report = self.get(report_id)
         if report is None:
-            raise LookupError("报告不存在")
+            raise NotFoundError("报告不存在")
         file_path = Path(report.file_path)
         if not file_path.exists():
-            raise LookupError("报告文件不存在")
+            raise NotFoundError("报告文件不存在")
         return report, file_path
