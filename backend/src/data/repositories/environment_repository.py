@@ -23,14 +23,3 @@ class EnvironmentRepository(BaseRepository[Environment]):
         """批量查询：一次 SQL 替代 N 次循环查询"""
         stmt = select(Environment).where(Environment.project_id.in_(project_ids), Environment.name.in_(names))
         return list(self._session.scalars(stmt).all())
-
-    def get_active_environments(self) -> list[Environment]:
-        stmt = select(Environment).where(Environment.status == 1)
-        return list(self._session.scalars(stmt).all())
-
-    def find_or_create(self, project_id: int, name: str, base_url: str, description: str = "") -> Environment:
-        existing = self.get_by_project_and_name(project_id, name)
-        if existing is not None:
-            return existing
-        env = Environment(project_id=project_id, name=name, base_url=base_url, description=description)
-        return self.add(env)

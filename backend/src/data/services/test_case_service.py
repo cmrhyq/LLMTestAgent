@@ -3,13 +3,14 @@ from sqlalchemy.orm import Session
 from src.core.logging import get_logger
 from src.data.models.test_case import TestCase
 from src.data.repositories import TestCaseRepository
+from src.data.services.base_service import BaseService
 
 logger = get_logger(__name__)
 
 
-class TestCaseService:
+class TestCaseService(BaseService[TestCase, TestCaseRepository]):
     def __init__(self, session: Session):
-        self.repo = TestCaseRepository(session)
+        super().__init__(session, TestCaseRepository(session))
 
     def get_cases_by_run(self, run_id: int) -> list[TestCase]:
         """获取某次执行的所有用例"""
@@ -26,3 +27,6 @@ class TestCaseService:
     def count_by_run(self, run_id: int) -> int:
         """统计某次执行的用例数"""
         return self.repo.count_by_run(run_id)
+
+    def add_case(self, case: TestCase) -> TestCase:
+        return self.create(case)

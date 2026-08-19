@@ -28,7 +28,11 @@ class Conversation(Base):
     updated_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
 
     project: Mapped[Project | None] = relationship(back_populates="conversations")
-    messages: Mapped[list[Message]] = relationship(back_populates="conversation", cascade="all, delete-orphan")
+    messages: Mapped[list[Message]] = relationship(
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+        order_by="Message.created_at, Message.id",
+    )
 
     __table_args__ = (
         CheckConstraint("mode IN ('Ask','Plan')", name="ck_conversation_mode"),

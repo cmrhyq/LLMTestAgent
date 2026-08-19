@@ -12,8 +12,8 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def _mock_logger():
-    """Mock logger 避免测试输出噪声。"""
-    import src.utils.llm_utils as module
+    """Mock logger 避免测试输出噪声（JSON 解析实现位于 src.utils.json_utils）。"""
+    import src.utils.json_utils as module
 
     with patch.object(module, "logger", MagicMock()):
         yield
@@ -234,15 +234,15 @@ class TestParseLlmJsonResponse:
 
 @pytest.mark.unit
 class TestEnsureDb:
-    """ensure_db 测试。"""
+    """ensure_db 测试（实现位于 src.utils.db_bootstrap，此处验证 re-export 路径）。"""
 
-    @patch("src.utils.llm_utils.get_config")
-    @patch("src.utils.llm_utils.get_db_manager")
+    @patch("src.utils.db_bootstrap.get_config")
+    @patch("src.utils.db_bootstrap.get_db_manager")
     def test_calls_initialize_when_not_initialized(self, mock_get_db, mock_get_cfg):
         from src.utils.llm_utils import ensure_db
 
         manager = MagicMock()
-        manager._initialized = False
+        manager.is_initialized = False
         mock_get_db.return_value = manager
 
         config = MagicMock()
@@ -265,13 +265,13 @@ class TestEnsureDb:
             pool_recycle=3600,
         )
 
-    @patch("src.utils.llm_utils.get_config")
-    @patch("src.utils.llm_utils.get_db_manager")
+    @patch("src.utils.db_bootstrap.get_config")
+    @patch("src.utils.db_bootstrap.get_db_manager")
     def test_skips_when_already_initialized(self, mock_get_db, mock_get_cfg):
         from src.utils.llm_utils import ensure_db
 
         manager = MagicMock()
-        manager._initialized = True
+        manager.is_initialized = True
         mock_get_db.return_value = manager
 
         ensure_db()

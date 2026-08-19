@@ -30,13 +30,41 @@ class TestRunResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class TestRunDetail(TestRunResponse):
-    """TestRun 详情响应（含关联统计）"""
+class TestCaseBrief(BaseModel):
+    """TestRun 详情中的用例摘要。"""
 
-    project_name: str | None = Field(default=None, description="项目名称")
-    environment_name: str | None = Field(default=None, description="环境名称")
+    id: int
+    case_name: str = ""
+    method: str = ""
+    url: str = ""
+    priority: str = ""
+    status: int | str = ""
+    created_at: str = ""
 
     model_config = {"from_attributes": True}
+
+
+class TestResultBrief(BaseModel):
+    """TestRun 详情中的结果摘要。"""
+
+    id: int
+    test_case_id: int | None = None
+    status: str = ""
+    status_code: int | None = None
+    response_time: float = 0.0
+    assertion_passed: int = 0
+    assertion_failed: int = 0
+    error_message: str = ""
+    created_at: str = ""
+
+    model_config = {"from_attributes": True}
+
+
+class TestRunDetail(TestRunResponse):
+    """TestRun 详情响应（含用例与结果列表）。"""
+
+    test_cases: list[TestCaseBrief] = Field(default=[])
+    test_results: list[TestResultBrief] = Field(default=[])
 
 
 class TestRunListResponse(PaginatedResponse[TestRunResponse]):

@@ -15,17 +15,6 @@ class ProjectRepository(BaseRepository[Project]):
         stmt = select(Project).where(Project.name == name)
         return self._session.scalar(stmt)
 
-    def get_active_projects(self) -> list[Project]:
-        stmt = select(Project).where(Project.status == 1)
-        return list(self._session.scalars(stmt).all())
-
-    def find_or_create(self, name: str, base_url: str, description: str = "") -> Project:
-        existing = self.get_by_name(name)
-        if existing is not None:
-            return existing
-        project = Project(name=name, base_url=base_url, description=description)
-        return self.add(project)
-
     def delete_cascade(self, project_id: int) -> bool:
         """级联删除项目及其关联的 environments、endpoints、test_runs 等数据。"""
         stmt = (

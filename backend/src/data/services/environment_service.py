@@ -1,16 +1,47 @@
+import json
+
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from src.core.logging import get_logger
 from src.data.models import Environment
 from src.data.repositories import EnvironmentRepository
 from src.data.schemas.environment import EnvironmentCreate
+from src.data.services.base_service import BaseService
 
 logger = get_logger(__name__)
 
 
-class EnvironmentService:
+class EnvironmentService(BaseService[Environment, EnvironmentRepository]):
     def __init__(self, session: Session):
-        self.repo = EnvironmentRepository(session)
+        super().__init__(session, EnvironmentRepository(session))
+
+    def create_environment(self, data: EnvironmentCreate) -> Environment:
+        if self.repo.get_by_project_and_name(data.project_id, data.name) is not None:
+            raise ValueError(f"环境已存在: {data.name}")
+        values = data.model_dump()
+        if isinstance(values.get("variables"), dict):
+            values["variables"] = json.dumps(values["variables"], ensure_ascii=False)
+        return self.create(Environment(**values))
+
+    def list_environments(self, project_id: int | None, keyword: str | None, page: int, page_size: int):
+        filters = []
+        if project_id is not None:
+            filters.append(Environment.project_id == project_id)
+        if keyword:
+            pattern = f"%{keyword}%"
+            filters.append(or_(Environment.name.ilike(pattern), Environment.description.ilike(pattern)))
+        return self.list(page, page_size, *filters)
+
+    def update_environment(self, env_id: int, fields: dict) -> Environment:
+        if "name" in fields:
+            current = self.get_or_raise(env_id, "环境不存在")
+            existing = self.repo.get_by_project_and_name(current.project_id, fields["name"])
+            if existing is not None and existing.id != env_id:
+                raise ValueError(f"环境已存在: {fields['name']}")
+        if isinstance(fields.get("variables"), dict):
+            fields["variables"] = json.dumps(fields["variables"], ensure_ascii=False)
+        return self.update(env_id, **fields)
 
     def _get_existing_keys(self, env_list: list[EnvironmentCreate]) -> set:
         """批量查询已存在的 (project_id, name) 组合"""

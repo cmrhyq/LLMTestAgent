@@ -1,9 +1,9 @@
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar, cast
 
 from sqlalchemy import ColumnElement, func, literal, select
 from sqlalchemy.orm import Session
 
-from src.data.models.base import Base
+from src.data.models.base import Base, local_now
 
 T = TypeVar("T", bound=Base)
 
@@ -46,6 +46,8 @@ class BaseRepository(Generic[T]):
             if value is None:
                 continue
             setattr(entity, key, value)
+        if hasattr(entity, "updated_at"):
+            entity.updated_at = local_now()
         self._session.flush()
         return entity
 
@@ -71,7 +73,7 @@ class BaseRepository(Generic[T]):
 
     def exists(self, record_id: int) -> bool:
         """按主键判断记录是否存在，避免加载完整实体。"""
-        pk = getattr(self._model, "id")
+        pk = cast(Any, self._model).id
         stmt = select(literal(1)).where(pk == record_id).limit(1)
         return self._session.scalar(stmt) is not None
 
@@ -80,8 +82,13 @@ class BaseRepository(Generic[T]):
         page: int = 1,
         page_size: int = 20,
         *filters: ColumnElement[bool],
+        order_by: Any = None,
     ) -> tuple[list[T], int]:
-        """通用分页查询，返回 ``(items, total)``。"""
+        """通用分页查询，返回 ``(items, total)``。
+
+        ``order_by`` 接受单个排序表达式或表达式列表（如
+        ``[Model.created_at.desc()]``）；默认不排序，保持调用方原行为。
+        """
         page = max(page, 1)
         page_size = max(page_size, 1)
         offset = (page - 1) * page_size
@@ -91,6 +98,11 @@ class BaseRepository(Generic[T]):
         if filters:
             count_stmt = count_stmt.where(*filters)
             list_stmt = list_stmt.where(*filters)
+        if order_by is not None:
+            if isinstance(order_by, (list, tuple)):
+                list_stmt = list_stmt.order_by(*order_by)
+            else:
+                list_stmt = list_stmt.order_by(order_by)
 
         total = self._session.scalar(count_stmt) or 0
         items = list(self._session.scalars(list_stmt.limit(page_size).offset(offset)).all())
@@ -109,14 +121,10 @@ class RunScopedRepositoryMixin(Generic[T]):
 
     def get_by_run(self, run_id: int) -> list[T]:
         """返回指定批次下的全部记录。"""
-        stmt = select(self._model).where(getattr(self._model, "run_id") == run_id)
+        stmt = select(self._model).where(cast(Any, self._model).run_id == run_id)
         return list(self._session.scalars(stmt).all())
 
     def count_by_run(self, run_id: int) -> int:
         """统计指定批次下的记录数。"""
-        stmt = (
-            select(func.count())
-            .select_from(self._model)
-            .where(getattr(self._model, "run_id") == run_id)
-        )
+        stmt = select(func.count()).select_from(self._model).where(cast(Any, self._model).run_id == run_id)
         return self._session.scalar(stmt) or 0

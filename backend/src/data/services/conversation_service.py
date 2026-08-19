@@ -5,17 +5,44 @@ from src.data.models.conversation import Conversation
 from src.data.models.message import Message
 from src.data.repositories import ConversationRepository, MessageRepository
 from src.data.schemas.conversation import ConversationCreate
+from src.data.services.base_service import BaseService
 
 _TITLE_MAX_LEN = 30
 
 
-class ConversationService:
+class ConversationService(BaseService[Conversation, ConversationRepository]):
     """会话业务逻辑：创建会话、追加消息并维护会话元数据。"""
 
     def __init__(self, session: Session) -> None:
         self._session = session
         self.conv_repo = ConversationRepository(session)
         self.msg_repo = MessageRepository(session)
+        super().__init__(session, self.conv_repo)
+
+    def list_conversations(self, project_id: int | None, status: int | None, page: int, page_size: int):
+        filters = []
+        if project_id is not None:
+            filters.append(Conversation.project_id == project_id)
+        if status is not None:
+            filters.append(Conversation.status == status)
+        return self.conv_repo.paginate(
+            page,
+            page_size,
+            *filters,
+            order_by=[Conversation.last_message_at.desc().nullslast(), Conversation.created_at.desc()],
+        )
+
+    def get_with_messages(self, conversation_id: int) -> Conversation | None:
+        return self.conv_repo.get_with_messages(conversation_id)
+
+    def list_messages(self, conversation_id: int) -> list[Message]:
+        return self.msg_repo.list_by_conversation(conversation_id)
+
+    def update_conversation(self, conversation_id: int, fields: dict) -> Conversation:
+        return self.update(conversation_id, **fields)
+
+    def delete_conversation(self, conversation_id: int) -> None:
+        self.delete(conversation_id)
 
     def create_conversation(self, data: ConversationCreate) -> Conversation:
         """创建新会话。"""

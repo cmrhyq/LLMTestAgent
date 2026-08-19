@@ -4,19 +4,21 @@
 前序步骤失败时，后续依赖步骤标记为 skipped。
 """
 
-from datetime import datetime
 from typing import Any
 
 from src.core.cache.data_cache import DataCache
 from src.core.config import get_config
 from src.core.database import get_db_manager
 from src.core.logging import get_logger
+from src.data.models.base import local_now
 from src.data.models.test_case import TestCase
 from src.data.models.test_result import TestResult
-from src.data.repositories import TestCaseRepository, TestRunRepository
+from src.data.services import TestCaseService, TestRunService
+from src.graph.constants import NodeName
 from src.graph.executor.test_executor import TestExecutor
-from src.graph.nodes.utils import ensure_db, safe_json_loads
 from src.graph.state import AgentState
+from src.utils.db_bootstrap import ensure_db
+from src.utils.json_utils import safe_json_loads
 
 logger = get_logger(__name__)
 
@@ -34,43 +36,40 @@ def execute_flow_tests_node(state: AgentState) -> dict:
         部分状态更新，包含 test_results_summary
     """
     run_id = state.get("run_id", 0)
-    logger.info(f"进入流程测试执行节点，run_id: {run_id}", node="execute_flow_tests", run_id=run_id)
+    logger.info(f"进入流程测试执行节点，run_id: {run_id}", node=NodeName.EXECUTE_FLOW_TESTS.value, run_id=run_id)
 
     if not run_id:
-        logger.warning("run_id为空，跳过执行", node="execute_flow_tests")
-        return {"test_results_summary": {}, "current_step": "error", "error_message": "run_id 为空"}
+        logger.warning("run_id为空，跳过执行", node=NodeName.EXECUTE_FLOW_TESTS.value)
+        return {"test_results_summary": {}, "next_node": NodeName.ERROR.value, "error_message": "run_id 为空"}
 
     config = get_config()
     scoped_cache = DataCache.create_scoped(f"run_{run_id}")
     executor = TestExecutor(config, cache=scoped_cache)
-
     ensure_db()
 
     with get_db_manager().get_session() as session:
-        test_case_repo = TestCaseRepository(session)
-        test_run_repo = TestRunRepository(session)
+        test_case_service = TestCaseService(session)
+        test_run_service = TestRunService(session)
 
-        test_run = test_run_repo.get_by_id(run_id)
+        test_run = test_run_service.get_run(run_id)
         if not test_run:
-            logger.error(f"TestRun不存在: run_id={run_id}", node="execute_flow_tests", run_id=run_id)
-            return {"test_results_summary": {}, "error_message": f"TestRun 不存在: {run_id}", "current_step": "error"}
+            logger.error(f"TestRun不存在: run_id={run_id}", node=NodeName.EXECUTE_FLOW_TESTS.value, run_id=run_id)
+            return {
+                "test_results_summary": {},
+                "error_message": f"TestRun 不存在: {run_id}",
+                "next_node": NodeName.ERROR.value,
+            }
 
-        test_cases: list[TestCase] = test_case_repo.get_by_run_and_status(run_id, 1)
-
+        test_cases: list[TestCase] = test_case_service.get_active_cases_by_run(run_id)
         if not test_cases:
-            logger.warning(f"无可执行的用例，run_id: {run_id}", node="execute_flow_tests", run_id=run_id)
-            test_run.status = "completed"
-            test_run.finished_at = datetime.now().isoformat()
-            return {"test_results_summary": {"total": 0}, "current_step": "generate_report"}
+            logger.warning(f"无可执行的用例，run_id: {run_id}", node=NodeName.EXECUTE_FLOW_TESTS.value, run_id=run_id)
+            test_run_service.update_status(run_id, "completed")
+            return {"test_results_summary": {"total": 0}, "next_node": NodeName.GENERATE_REPORT.value}
 
-        test_cases.sort(key=lambda tc: _extract_step_order(tc))
+        test_cases.sort(key=_extract_step_order)
+        test_run_service.update_status(run_id, "running")
 
-        test_run_repo.update_status(run_id, "running")
-
-        passed = 0
-        failed = 0
-        skipped = 0
-        error = 0
+        passed = failed = skipped = error = 0
         failed_cache_keys: set[str] = set()
 
         for test_case in test_cases:
@@ -79,7 +78,7 @@ def execute_flow_tests_node(state: AgentState) -> dict:
             if _has_dependency_on_failed(cache_rules, failed_cache_keys):
                 logger.info(
                     f"用例前置步骤失败，标记为skipped: {test_case.case_id}",
-                    node="execute_flow_tests",
+                    node=NodeName.EXECUTE_FLOW_TESTS.value,
                     case_id=test_case.case_id,
                 )
                 _record_skipped(test_case, run_id, session, "前置步骤失败，跳过执行")
@@ -90,7 +89,6 @@ def execute_flow_tests_node(state: AgentState) -> dict:
             try:
                 result = executor.execute_single(test_case, run_id, session)
                 session.flush()
-
                 if result.status == "passed":
                     passed += 1
                 elif result.status == "failed":
@@ -105,7 +103,7 @@ def execute_flow_tests_node(state: AgentState) -> dict:
             except Exception as e:
                 logger.error(
                     f"流程步骤执行异常: {test_case.case_id}, 错误: {e}",
-                    node="execute_flow_tests",
+                    node=NodeName.EXECUTE_FLOW_TESTS.value,
                     case_id=test_case.case_id,
                     error=str(e),
                 )
@@ -115,19 +113,7 @@ def execute_flow_tests_node(state: AgentState) -> dict:
         total = passed + failed + skipped + error
         denominator = total - skipped
         pass_rate = (passed / denominator * 100) if denominator > 0 else 0.0
-
-        test_run.status = "completed"
-        test_run.finished_at = datetime.now().isoformat()
-        test_run.passed_cases = passed
-        test_run.failed_cases = failed
-        test_run.skipped_cases = skipped
-        test_run.error_cases = error
-        test_run.pass_rate = round(pass_rate, 2)
-
-        if test_run.started_at and test_run.finished_at:
-            start = datetime.fromisoformat(test_run.started_at)
-            end = datetime.fromisoformat(test_run.finished_at)
-            test_run.total_duration = (end - start).total_seconds()
+        test_run_service.finalize_run(run_id, total, passed, failed, skipped, error, pass_rate)
 
     summary: dict[str, Any] = {
         "total": total,
@@ -140,7 +126,7 @@ def execute_flow_tests_node(state: AgentState) -> dict:
 
     logger.info(
         f"[execute_flow_tests] 流程测试执行完成 - 总数: {total}, 通过: {passed}, 失败: {failed}, 跳过: {skipped}, 错误: {error}, 通过率: {pass_rate:.2f}%",
-        node="execute_flow_tests",
+        node=NodeName.EXECUTE_FLOW_TESTS.value,
         total=total,
         passed=passed,
         failed=failed,
@@ -149,7 +135,7 @@ def execute_flow_tests_node(state: AgentState) -> dict:
         pass_rate=round(pass_rate, 2),
     )
 
-    return {"test_results_summary": summary, "current_step": "generate_report"}
+    return {"test_results_summary": summary, "next_node": NodeName.GENERATE_REPORT.value}
 
 
 def _extract_step_order(test_case: TestCase) -> int:
@@ -210,7 +196,7 @@ def _record_skipped(
         request_headers="{}",
         response_headers="{}",
         error_message=reason,
-        started_at=datetime.now().isoformat(),
-        finished_at=datetime.now().isoformat(),
+        started_at=local_now(),
+        finished_at=local_now(),
     )
     session.add(result)

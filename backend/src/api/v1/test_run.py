@@ -1,86 +1,19 @@
 """测试运行查询路由。"""
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from src.api.deps import get_db
-from src.data.repositories import TestRunRepository
+from src.data.schemas.test_run import (
+    TestCaseBrief,
+    TestResultBrief,
+    TestRunDetail,
+    TestRunListResponse,
+    TestRunResponse,
+)
+from src.data.services import TestCaseService, TestResultService, TestRunService
 
 router = APIRouter(prefix="/test/runs", tags=["测试运行"])
-
-
-class TestRunResponse(BaseModel):
-    """测试运行响应体。"""
-
-    id: int
-    project_id: int | None = None
-    environment_id: int | None = None
-    name: str = ""
-    status: str = "pending"
-    trigger_type: str = "manual"
-    llm_provider: str = ""
-    llm_model: str = ""
-    total_cases: int = 0
-    passed_cases: int = 0
-    failed_cases: int = 0
-    skipped_cases: int = 0
-    error_cases: int = 0
-    pass_rate: float = 0.0
-    started_at: str | None = None
-    finished_at: str | None = None
-    total_duration: float = 0.0
-    error_message: str = ""
-    created_at: str = ""
-    updated_at: str = ""
-
-    model_config = {"from_attributes": True}
-
-
-class TestRunListResponse(BaseModel):
-    """测试运行列表响应。"""
-
-    items: list[TestRunResponse] = Field(default=[])
-    total: int = 0
-    page: int = 1
-    page_size: int = 20
-
-
-class TestCaseBrief(BaseModel):
-    """测试用例摘要。"""
-
-    id: int
-    case_name: str = ""
-    method: str = ""
-    url: str = ""
-    priority: str = ""
-    status: int | str = ""
-    created_at: str = ""
-
-    model_config = {"from_attributes": True}
-
-
-class TestResultBrief(BaseModel):
-    """测试结果摘要。"""
-
-    id: int
-    test_case_id: int | None = None
-    status: str = ""
-    status_code: int | None = None
-    response_time: float = 0.0
-    assertion_passed: int = 0
-    assertion_failed: int = 0
-    error_message: str = ""
-    created_at: str = ""
-
-    model_config = {"from_attributes": True}
-
-
-class TestRunDetail(TestRunResponse):
-    """测试运行详情（含用例和结果）。"""
-
-    test_cases: list[TestCaseBrief] = Field(default=[])
-    test_results: list[TestResultBrief] = Field(default=[])
 
 
 @router.get("/", response_model=TestRunListResponse)
@@ -92,18 +25,7 @@ def list_test_runs(
     db: Session = Depends(get_db),
 ):
     """查询测试运行列表（分页）。"""
-    repo = TestRunRepository(db)
-
-    if project_id is not None:
-        all_runs = repo.get_by_project(project_id, limit=1000)
-    elif status is not None:
-        all_runs = repo.get_by_status(status)
-    else:
-        all_runs = repo.get_all(limit=1000, offset=0)
-
-    total = len(all_runs)
-    start = (page - 1) * page_size
-    items = all_runs[start : start + page_size]
+    items, total = TestRunService(db).list_runs(project_id, status, page, page_size)
     return TestRunListResponse(
         items=[TestRunResponse.model_validate(r) for r in items], total=total, page=page, page_size=page_size
     )
@@ -112,13 +34,13 @@ def list_test_runs(
 @router.get("/{run_id}", response_model=TestRunDetail)
 def get_test_run(run_id: int, db: Session = Depends(get_db)):
     """获取测试运行详情（含用例和结果）。"""
-    repo = TestRunRepository(db)
-    run = repo.get_by_id(run_id)
+    service = TestRunService(db)
+    run = service.get(run_id)
     if run is None:
         raise HTTPException(status_code=404, detail="测试运行不存在")
 
-    cases = run.test_cases if run.test_cases else []
-    results = run.test_results if run.test_results else []
+    cases = TestCaseService(db).get_cases_by_run(run_id)
+    results = TestResultService(db).get_results_by_run(run_id)
 
     return TestRunDetail(
         **{k: v for k, v in TestRunResponse.model_validate(run).model_dump().items()},

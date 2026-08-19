@@ -1,16 +1,68 @@
+import json
+
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from src.core.logging import get_logger
 from src.data.models import Endpoint
 from src.data.repositories import EndpointRepository
 from src.data.schemas.endpoint import EndpointCreate
+from src.data.services.base_service import BaseService
 
 logger = get_logger(__name__)
 
 
-class EndpointService:
+class EndpointService(BaseService[Endpoint, EndpointRepository]):
     def __init__(self, session: Session):
-        self.repo = EndpointRepository(session)
+        super().__init__(session, EndpointRepository(session))
+
+    def create_one(self, data: EndpointCreate) -> Endpoint:
+        if data.project_id is None:
+            raise ValueError("接口必须关联项目")
+        if self.repo.check_duplicate(data.project_id, data.path, data.method):
+            raise ValueError(f"接口已存在: {data.method} {data.path}")
+        values = data.model_dump()
+        for field in ("tags", "params", "headers", "body", "responses", "security"):
+            if isinstance(values.get(field), (list, dict)):
+                values[field] = json.dumps(values[field], ensure_ascii=False)
+        values["method"] = values["method"].upper()
+        return self.create(Endpoint(**values))
+
+    def list_endpoints(
+        self, project_id: int | None, method: str | None, keyword: str | None, page: int, page_size: int
+    ):
+        filters = []
+        if project_id is not None:
+            filters.append(Endpoint.project_id == project_id)
+        if method:
+            filters.append(Endpoint.method == method.upper())
+        if keyword:
+            pattern = f"%{keyword}%"
+            filters.append(
+                or_(Endpoint.name.ilike(pattern), Endpoint.path.ilike(pattern), Endpoint.summary.ilike(pattern))
+            )
+        return self.list(page, page_size, *filters)
+
+    def update_endpoint(self, endpoint_id: int, fields: dict) -> Endpoint:
+        if "path" in fields or "method" in fields:
+            current = self.get_or_raise(endpoint_id, "接口不存在")
+            new_path = fields.get("path", current.path)
+            new_method = str(fields.get("method", current.method)).upper()
+            duplicates = self.repo.find_by_identity(current.project_id, new_path, new_method)
+            if any(dup.id != endpoint_id for dup in duplicates):
+                raise ValueError(f"接口已存在: {new_method} {new_path}")
+        for field in ("tags", "params", "headers", "body", "responses", "security"):
+            if isinstance(fields.get(field), (list, dict)):
+                fields[field] = json.dumps(fields[field], ensure_ascii=False)
+        if fields.get("method"):
+            fields["method"] = str(fields["method"]).upper()
+        return self.update(endpoint_id, **fields)
+
+    def get_active_by_ids(self, endpoint_ids: list[int]) -> list[Endpoint]:
+        return self.repo.get_active_by_ids(endpoint_ids)
+
+    def list_active(self, project_id: int) -> list[Endpoint]:
+        return self.repo.get_by_project(project_id, active_only=True)
 
     def _get_existing_keys(self, endpoint_list: list[EndpointCreate]) -> set:
         """批量查询已存在的 (project_id, path, method) 组合"""

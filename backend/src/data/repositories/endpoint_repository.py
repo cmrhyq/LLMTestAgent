@@ -47,15 +47,16 @@ class EndpointRepository(BaseRepository[Endpoint]):
         stmt = select(Endpoint).where(and_(*conditions))
         return list(self._session.scalars(stmt).all())
 
-    def get_by_operation_id(self, project_id: int, operation_id: str, version: int = 1) -> Endpoint | None:
+    def find_by_identity(self, project_id: int, path: str, method: str) -> list[Endpoint]:
+        """按 (project_id, path, method) 查询全部匹配记录，供查重时排除自身。"""
         stmt = select(Endpoint).where(
             and_(
                 Endpoint.project_id == project_id,
-                Endpoint.operation_id == operation_id,
-                Endpoint.version == version,
+                Endpoint.path == path,
+                Endpoint.method == method.upper(),
             )
         )
-        return self._session.scalar(stmt)
+        return list(self._session.scalars(stmt).all())
 
     def get_active_by_ids(self, endpoint_ids: list[int]) -> list[Endpoint]:
         """按 ID 列表查询启用状态的接口"""
@@ -65,8 +66,4 @@ class EndpointRepository(BaseRepository[Endpoint]):
                 Endpoint.status == 1,
             )
         )
-        return list(self._session.scalars(stmt).all())
-
-    def get_by_method(self, project_id: int, method: str) -> list[Endpoint]:
-        stmt = select(Endpoint).where(and_(Endpoint.project_id == project_id, Endpoint.method == method))
         return list(self._session.scalars(stmt).all())

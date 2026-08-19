@@ -50,7 +50,13 @@ from src.data.schemas.project import (
     ProjectResponse,
     ProjectUpdate,
 )
-from src.data.schemas.report import ReportListResponse, ReportResponse
+from src.data.schemas.report import (
+    ReportDetailResponse,
+    ReportListResponse,
+    ReportResponse,
+    TestResultDetail,
+    TestRunBrief,
+)
 from src.data.schemas.test_case import (
     TestCaseDetail,
     TestCaseListResponse,
@@ -63,6 +69,8 @@ from src.data.schemas.test_result import (
     TestResultResponse,
 )
 from src.data.schemas.test_run import (
+    TestCaseBrief,
+    TestResultBrief,
     TestRunDetail,
     TestRunListResponse,
     TestRunQuery,
@@ -105,6 +113,8 @@ __all__ = [
     "TestRunDetail",
     "TestRunListResponse",
     "TestRunQuery",
+    "TestCaseBrief",
+    "TestResultBrief",
     "TestCaseResponse",
     "TestCaseDetail",
     "TestCaseListResponse",
@@ -115,6 +125,9 @@ __all__ = [
     "TestSummaryResponse",
     "ReportResponse",
     "ReportListResponse",
+    "ReportDetailResponse",
+    "TestRunBrief",
+    "TestResultDetail",
     "ConversationBase",
     "ConversationCreate",
     "ConversationUpdate",

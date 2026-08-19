@@ -3,13 +3,17 @@ from sqlalchemy.orm import Session
 from src.core.logging import get_logger
 from src.data.models.test_result import TestResult
 from src.data.repositories import TestResultRepository
+from src.data.services.base_service import BaseService
 
 logger = get_logger(__name__)
 
 
-class TestResultService:
+class TestResultService(BaseService[TestResult, TestResultRepository]):
     def __init__(self, session: Session):
-        self.repo = TestResultRepository(session)
+        super().__init__(session, TestResultRepository(session))
+
+    def get_results_by_status(self, run_id: int, status: str) -> list[TestResult]:
+        return self.repo.get_by_status(run_id, status)
 
     def get_results_by_run(self, run_id: int) -> list[TestResult]:
         """获取某次执行的所有结果"""

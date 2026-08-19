@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from src.api.deps import get_db
-from src.data.repositories import ConversationRepository, MessageRepository
 from src.data.schemas.conversation import (
     ConversationCreate,
     ConversationDetail,
@@ -35,14 +34,9 @@ def list_conversations(
     db: Session = Depends(get_db),
 ):
     """查询会话列表（分页）。"""
-    repo = ConversationRepository(db)
-    conversations = repo.list_by_project(project_id, status)
-
-    total = len(conversations)
-    start = (page - 1) * page_size
-    items = conversations[start : start + page_size]
+    conversations, total = ConversationService(db).list_conversations(project_id, status, page, page_size)
     return ConversationListResponse(
-        items=[ConversationResponse.model_validate(c) for c in items],
+        items=[ConversationResponse.model_validate(c) for c in conversations],
         total=total,
         page=page,
         page_size=page_size,
@@ -52,25 +46,22 @@ def list_conversations(
 @router.get("/{conversation_id}", response_model=ConversationDetail)
 def get_conversation(conversation_id: int, db: Session = Depends(get_db)):
     """获取会话详情（含消息列表）。"""
-    repo = ConversationRepository(db)
-    conversation = repo.get_with_messages(conversation_id)
+    service = ConversationService(db)
+    conversation = service.get_with_messages(conversation_id)
     if conversation is None:
         raise HTTPException(status_code=404, detail="会话不存在")
 
-    detail = ConversationDetail.model_validate(conversation)
-    detail.messages = sorted(detail.messages, key=lambda m: (m.created_at, m.id))
-    return detail
+    return ConversationDetail.model_validate(conversation)
 
 
 @router.get("/{conversation_id}/messages", response_model=MessageListResponse)
 def list_messages(conversation_id: int, db: Session = Depends(get_db)):
     """获取会话的消息列表（按时间升序）。"""
-    conv_repo = ConversationRepository(db)
-    if conv_repo.get_by_id(conversation_id) is None:
+    service = ConversationService(db)
+    if service.get(conversation_id) is None:
         raise HTTPException(status_code=404, detail="会话不存在")
 
-    msg_repo = MessageRepository(db)
-    messages = msg_repo.list_by_conversation(conversation_id)
+    messages = service.list_messages(conversation_id)
     return MessageListResponse(
         items=[MessageResponse.model_validate(m) for m in messages],
         total=len(messages),
@@ -80,22 +71,16 @@ def list_messages(conversation_id: int, db: Session = Depends(get_db)):
 @router.put("/{conversation_id}", response_model=ConversationResponse)
 def update_conversation(conversation_id: int, body: ConversationUpdate, db: Session = Depends(get_db)):
     """更新会话（重命名 / 改模式 / 改状态）。"""
-    repo = ConversationRepository(db)
-    conversation = repo.get_by_id(conversation_id)
-    if conversation is None:
-        raise HTTPException(status_code=404, detail="会话不存在")
-
-    update_data = body.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(conversation, field, value)
-    updated = repo.update_entity(conversation)
-    return updated
+    try:
+        return ConversationService(db).update_conversation(conversation_id, body.model_dump(exclude_unset=True))
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @router.delete("/{conversation_id}", status_code=204)
 def delete_conversation(conversation_id: int, db: Session = Depends(get_db)):
     """删除会话及其关联的消息。"""
-    repo = ConversationRepository(db)
-    success = repo.delete_by_id(conversation_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="会话不存在")
+    try:
+        ConversationService(db).delete_conversation(conversation_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc

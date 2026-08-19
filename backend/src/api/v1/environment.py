@@ -4,14 +4,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from src.api.deps import get_db
-from src.data.models.environment import Environment
-from src.data.repositories import EnvironmentRepository
 from src.data.schemas.environment import (
     EnvironmentCreate,
     EnvironmentListResponse,
     EnvironmentResponse,
     EnvironmentUpdate,
 )
+from src.data.services import EnvironmentService
 
 router = APIRouter(prefix="/environments", tags=["环境管理"])
 
@@ -19,13 +18,10 @@ router = APIRouter(prefix="/environments", tags=["环境管理"])
 @router.post("/", response_model=EnvironmentResponse, status_code=201)
 def create_environment(body: EnvironmentCreate, db: Session = Depends(get_db)):
     """创建环境配置。"""
-    repo = EnvironmentRepository(db)
-    existing = repo.get_by_project_and_name(body.project_id, body.name)
-    if existing is not None:
-        raise HTTPException(status_code=409, detail=f"环境已存在: {body.name}")
-    env = Environment(**body.model_dump())
-    created = repo.add(env)
-    return created
+    try:
+        return EnvironmentService(db).create_environment(body)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @router.get("/", response_model=EnvironmentListResponse)
@@ -37,19 +33,7 @@ def list_environments(
     db: Session = Depends(get_db),
 ):
     """查询环境列表（分页）。"""
-    repo = EnvironmentRepository(db)
-    all_envs = repo.get_all(limit=1000, offset=0)
-
-    filtered = all_envs
-    if project_id is not None:
-        filtered = [e for e in filtered if e.project_id == project_id]
-    if keyword:
-        kw = keyword.lower()
-        filtered = [e for e in filtered if kw in (e.name or "").lower() or kw in (e.description or "").lower()]
-
-    total = len(filtered)
-    start = (page - 1) * page_size
-    items = filtered[start : start + page_size]
+    items, total = EnvironmentService(db).list_environments(project_id, keyword, page, page_size)
     return EnvironmentListResponse(
         items=[EnvironmentResponse.model_validate(e) for e in items], total=total, page=page, page_size=page_size
     )
@@ -58,33 +42,27 @@ def list_environments(
 @router.get("/{env_id}", response_model=EnvironmentResponse)
 def get_environment(env_id: int, db: Session = Depends(get_db)):
     """获取环境详情。"""
-    repo = EnvironmentRepository(db)
-    env = repo.get_by_id(env_id)
-    if env is None:
-        raise HTTPException(status_code=404, detail="环境不存在")
-    return env
+    try:
+        return EnvironmentService(db).get_or_raise(env_id, "环境不存在")
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @router.put("/{env_id}", response_model=EnvironmentResponse)
 def update_environment(env_id: int, body: EnvironmentUpdate, db: Session = Depends(get_db)):
     """更新环境配置。"""
-    repo = EnvironmentRepository(db)
-    env = repo.get_by_id(env_id)
-    if env is None:
-        raise HTTPException(status_code=404, detail="环境不存在")
-
-    update_data = body.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        if value is not None:
-            setattr(env, field, value)
-    updated = repo.update_entity(env)
-    return updated
+    try:
+        return EnvironmentService(db).update_environment(env_id, body.model_dump(exclude_unset=True))
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @router.delete("/{env_id}", status_code=204)
 def delete_environment(env_id: int, db: Session = Depends(get_db)):
     """删除环境。"""
-    repo = EnvironmentRepository(db)
-    success = repo.delete_by_id(env_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="环境不存在")
+    try:
+        EnvironmentService(db).delete(env_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
