@@ -37,13 +37,13 @@ class EndpointBase(BaseModel):
 class EndpointCreate(EndpointBase):
     """创建 Endpoint 请求体"""
 
-    project_id: int | None = Field(default=None, description="所属项目ID")
+    space_id: int | None = Field(default=None, description="所属空间ID")
 
     model_config = {
         "json_schema_extra": {
             "examples": [
                 {
-                    "project_id": 1,
+                    "space_id": 1,
                     "operation_id": "getUserById",
                     "name": "获取用户详情",
                     "path": "/api/v1/users/{id}",
@@ -97,7 +97,7 @@ class EndpointResponse(EndpointBase):
     """Endpoint 响应体"""
 
     id: int = Field(..., description="Endpoint ID")
-    project_id: int = Field(..., description="所属项目ID")
+    space_id: int = Field(..., description="所属空间ID")
     version: int = Field(default=1, description="版本号")
     created_at: str = Field(..., description="创建时间")
     updated_at: str = Field(..., description="更新时间")
@@ -123,7 +123,7 @@ class EndpointListResponse(PaginatedResponse[EndpointResponse]):
 class EndpointQuery(BaseModel):
     """Endpoint 查询参数"""
 
-    project_id: int | None = Field(default=None, description="项目ID")
+    space_id: int | None = Field(default=None, description="空间ID")
     method: HttpMethod | None = Field(default=None, description="HTTP 方法筛选")
     status: int | None = Field(default=None, description="状态筛选")
     tags: str | None = Field(default=None, description="标签筛选")

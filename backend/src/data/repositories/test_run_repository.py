@@ -11,8 +11,8 @@ class TestRunRepository(BaseRepository[TestRun]):
     def __init__(self, session: Session) -> None:
         super().__init__(TestRun, session)
 
-    def get_by_project(self, project_id: int, limit: int = 50) -> list[TestRun]:
-        stmt = select(TestRun).where(TestRun.project_id == project_id).order_by(TestRun.created_at.desc()).limit(limit)
+    def get_by_space(self, space_id: int, limit: int = 50) -> list[TestRun]:
+        stmt = select(TestRun).where(TestRun.space_id == space_id).order_by(TestRun.created_at.desc()).limit(limit)
         return list(self._session.scalars(stmt).all())
 
     def get_by_ids(self, run_ids: list[int]) -> list[TestRun]:

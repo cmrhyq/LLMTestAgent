@@ -2,7 +2,7 @@ import type { Id, PaginatedResponse } from "./common";
 
 export interface Endpoint {
   id: Id;
-  project_id: Id;
+  space_id: Id;
   operation_id: string;
   name: string;
   path: string;

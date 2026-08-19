@@ -6,9 +6,9 @@ import pytest
 class TestPytestSetup:
     """验证 pytest 环境配置正确。"""
 
-    def test_project_root_exists(self, project_root):
-        assert project_root.exists()
-        assert (project_root / "pyproject.toml").exists()
+    def test_space_root_exists(self, space_root):
+        assert space_root.exists()
+        assert (space_root / "pyspace.toml").exists()
 
     def test_input_dir_exists(self, input_dir):
         assert input_dir.exists()

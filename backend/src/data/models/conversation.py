@@ -10,7 +10,7 @@ from src.utils.id import next_id
 
 if TYPE_CHECKING:
     from src.data.models.message import Message
-    from src.data.models.project import Project
+    from src.data.models.space import Space
 
 
 class Conversation(Base):
@@ -19,7 +19,7 @@ class Conversation(Base):
     __tablename__ = "conversation"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False, default=next_id)
-    project_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("project.id", ondelete="CASCADE"), default=None)
+    space_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("space.id", ondelete="CASCADE"), default=None)
     title: Mapped[str] = mapped_column(Text, nullable=False, default="")
     mode: Mapped[str] = mapped_column(Text, nullable=False, default="Ask")
     status: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
@@ -27,7 +27,7 @@ class Conversation(Base):
     created_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
     updated_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
 
-    project: Mapped[Project | None] = relationship(back_populates="conversations")
+    space: Mapped[Space | None] = relationship(back_populates="conversations")
     messages: Mapped[list[Message]] = relationship(
         back_populates="conversation",
         cascade="all, delete-orphan",
@@ -37,5 +37,5 @@ class Conversation(Base):
     __table_args__ = (
         CheckConstraint("mode IN ('Ask','Plan')", name="ck_conversation_mode"),
         CheckConstraint("status IN (0,1)", name="ck_conversation_status"),
-        Index("idx_conversation_project", "project_id"),
+        Index("idx_conversation_space", "space_id"),
     )

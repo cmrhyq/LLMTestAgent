@@ -9,7 +9,8 @@ const TITLES: Array<{ pattern: RegExp; title: string }> = [
   { pattern: /^\/reports\/[^/]+$/, title: "报告详情" },
   { pattern: /^\/reports$/, title: "测试报告" },
   { pattern: /^\/runs\/[^/]+$/, title: "测试运行" },
-  { pattern: /^\/projects\/[^/]+$/, title: "项目详情" },
+  { pattern: /^\/spaces$/, title: "测试空间" },
+  { pattern: /^\/spaces\/[^/]+$/, title: "空间详情" },
 ];
 
 /** 全站顶部工具条：图纸标注式面包屑 + 主题切换 + 版本号。 */

@@ -80,7 +80,7 @@ class ChatStreamService:
                 conversation_id = body.conversation_id
                 if conversation_id is None:
                     conversation = service.create_conversation(
-                        ConversationCreate(project_id=body.project_id, title="", mode=body.mode)
+                        ConversationCreate(space_id=body.space_id, title="", mode=body.mode)
                     )
                     conversation_id = conversation.id
                 service.append_message(conversation_id, role="user", content=body.instruction)

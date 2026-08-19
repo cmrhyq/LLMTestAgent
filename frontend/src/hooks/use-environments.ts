@@ -3,7 +3,7 @@ import { queryKeys } from "@/lib/query-keys";
 import type { Environment, EnvironmentListResponse } from "@/lib/types";
 
 interface UseEnvironmentsParams {
-  project_id?: string | number;
+  space_id?: string | number;
   keyword?: string;
   page?: number;
   page_size?: number;

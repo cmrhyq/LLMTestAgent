@@ -152,7 +152,7 @@ class DataCache:
         获取缓存中存储的键值对数量
 
         Returns:
-            int: 缓存中的项目数量
+            int: 缓存中的空间数量
         """
         with self._data_lock:
             return len(self._data)

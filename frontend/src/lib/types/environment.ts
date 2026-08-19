@@ -2,7 +2,7 @@ import type { Id, PaginatedResponse } from "./common";
 
 export interface Environment {
   id: Id;
-  project_id: Id;
+  space_id: Id;
   name: string;
   base_url: string;
   description: string;

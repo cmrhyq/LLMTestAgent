@@ -13,12 +13,12 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from src.core.llm.llm_client import get_chat_model
 from src.core.logging import get_logger
 from src.graph.state import AgentState
-from src.graph.tools.db_tools import get_project_endpoints, search_project
+from src.graph.tools.db_tools import get_space_endpoints, search_space
 from src.prompts.builders.select_endpoints_builder import SelectEndpointsBuilder
 
 logger = get_logger(__name__)
 
-AVAILABLE_TOOLS = [search_project, get_project_endpoints]
+AVAILABLE_TOOLS = [search_space, get_space_endpoints]
 
 
 def select_endpoints_agent_node(state: AgentState) -> dict:
@@ -150,15 +150,15 @@ def _build_endpoint_list(data: dict[str, Any]) -> list[dict[str, Any]]:
     if not endpoint_ids:
         return []
 
-    project_id = data.get("project_id")
-    project_name = data.get("project_name", "")
+    space_id = data.get("space_id")
+    space_name = data.get("space_name", "")
     reason = data.get("reason", "")
 
     return [
         {
             "endpoint_id": eid,
-            "project_id": project_id,
-            "project_name": project_name,
+            "space_id": space_id,
+            "space_name": space_name,
             "reason": reason,
         }
         for eid in endpoint_ids

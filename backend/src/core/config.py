@@ -163,7 +163,7 @@ class LangSmithConfig(BaseModel):
 
     enabled: bool = Field(default=False, description="是否启用 LangSmith 追踪")
     api_key: str = Field(default="", description="LangSmith API 密钥")
-    project: str = Field(default="LLMTestAgent", description="LangSmith 项目名称")
+    space: str = Field(default="LLMTestAgent", description="LangSmith 空间名称")
     endpoint: str = Field(default="https://api.smith.langchain.com", description="LangSmith 服务端点")
 
 
@@ -190,8 +190,8 @@ def load_config(config_path: str | Path | None = None) -> AppConfig:
         AppConfig: 应用配置对象
     """
     if config_path is None:
-        project_root = Path(__file__).parent.parent.parent
-        resolved_path = project_root / "config" / "config.yaml"
+        space_root = Path(__file__).parent.parent.parent
+        resolved_path = space_root / "config" / "config.yaml"
     else:
         resolved_path = Path(config_path)
 
@@ -241,14 +241,14 @@ def _setup_langsmith(config: AppConfig) -> None:
     if config.langsmith.enabled and config.langsmith.api_key:
         os.environ["LANGSMITH_TRACING"] = "true"
         os.environ["LANGSMITH_API_KEY"] = config.langsmith.api_key
-        os.environ["LANGSMITH_PROJECT"] = config.langsmith.project
+        os.environ["LANGSMITH_SPACE"] = config.langsmith.space
         if config.langsmith.endpoint:
             os.environ["LANGSMITH_ENDPOINT"] = config.langsmith.endpoint
-        logger.info("LangSmith 追踪已启用, project=%s", config.langsmith.project)
+        logger.info("LangSmith 追踪已启用, space=%s", config.langsmith.space)
     else:
         os.environ.pop("LANGSMITH_TRACING", None)
         os.environ.pop("LANGSMITH_API_KEY", None)
-        os.environ.pop("LANGSMITH_PROJECT", None)
+        os.environ.pop("LANGSMITH_SPACE", None)
         os.environ.pop("LANGSMITH_ENDPOINT", None)
         logger.info("LangSmith 追踪未启用")
 

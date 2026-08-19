@@ -3,7 +3,7 @@ export interface ChatStreamRequest {
   api_doc_path?: string | null;
   conversation_id?: string | number | null;
   mode?: string;
-  project_id?: string | number | null;
+  space_id?: string | number | null;
 }
 
 export interface StreamChatOptions {
@@ -22,7 +22,7 @@ export interface StreamChatOptions {
  * - 携带 conversation_id 时复用该会话；
  * - 缺省时后端自动新建会话，并把新会话 ID 通过响应头返回。
  *
- * @param payload 请求体（用户 prompt、模式、可选会话/项目/文档信息）
+ * @param payload 请求体（用户 prompt、模式、可选会话/空间/文档信息）
  * @param onChunk 每接收到一段文本增量时触发
  * @param options 可选项：AbortSignal 与会话 ID 回调
  */

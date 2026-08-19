@@ -3,7 +3,7 @@ import { queryKeys } from "@/lib/query-keys";
 import type { Endpoint, EndpointListResponse } from "@/lib/types";
 
 interface UseEndpointsParams {
-  project_id?: string | number;
+  space_id?: string | number;
   method?: string;
   keyword?: string;
   page?: number;

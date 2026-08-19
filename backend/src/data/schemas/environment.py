@@ -35,13 +35,13 @@ class EnvironmentBase(BaseModel):
 class EnvironmentCreate(EnvironmentBase):
     """创建 Environment 请求体"""
 
-    project_id: int = Field(..., description="所属项目ID")
+    space_id: int = Field(..., description="所属空间ID")
 
     model_config = {
         "json_schema_extra": {
             "examples": [
                 {
-                    "project_id": 1,
+                    "space_id": 1,
                     "name": "开发环境",
                     "base_url": "https://dev-api.example.com",
                     "description": "开发联调环境",
@@ -85,7 +85,7 @@ class EnvironmentResponse(EnvironmentBase):
     """Environment 响应体"""
 
     id: int = Field(..., description="环境ID")
-    project_id: int = Field(..., description="所属项目ID")
+    space_id: int = Field(..., description="所属空间ID")
     created_at: str = Field(..., description="创建时间")
     updated_at: str = Field(..., description="更新时间")
 
@@ -110,7 +110,7 @@ class EnvironmentListResponse(PaginatedResponse[EnvironmentResponse]):
 class EnvironmentQuery(BaseModel):
     """Environment 查询参数"""
 
-    project_id: int | None = Field(default=None, description="项目ID筛选")
+    space_id: int | None = Field(default=None, description="空间ID筛选")
     name: str | None = Field(default=None, description="环境名称模糊搜索")
     is_default: int | None = Field(default=None, description="是否默认环境筛选")
     status: int | None = Field(default=None, description="状态筛选")

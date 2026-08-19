@@ -18,9 +18,9 @@ class EndpointService(BaseService[Endpoint, EndpointRepository]):
         super().__init__(session, EndpointRepository(session))
 
     def create_one(self, data: EndpointCreate) -> Endpoint:
-        if data.project_id is None:
-            raise ValidationError("接口必须关联项目")
-        if self.repo.check_duplicate(data.project_id, data.path, data.method):
+        if data.space_id is None:
+            raise ValidationError("接口必须关联空间")
+        if self.repo.check_duplicate(data.space_id, data.path, data.method):
             raise ConflictError(f"接口已存在: {data.method} {data.path}")
         values = data.model_dump()
         for field in ("tags", "params", "headers", "body", "responses", "security"):
@@ -30,11 +30,11 @@ class EndpointService(BaseService[Endpoint, EndpointRepository]):
         return self.create(Endpoint(**values))
 
     def list_endpoints(
-        self, project_id: int | None, method: str | None, keyword: str | None, page: int, page_size: int
+        self, space_id: int | None, method: str | None, keyword: str | None, page: int, page_size: int
     ):
         filters = []
-        if project_id is not None:
-            filters.append(Endpoint.project_id == project_id)
+        if space_id is not None:
+            filters.append(Endpoint.space_id == space_id)
         if method:
             filters.append(Endpoint.method == method.upper())
         if keyword:
@@ -49,7 +49,7 @@ class EndpointService(BaseService[Endpoint, EndpointRepository]):
             current = self.get_or_raise(endpoint_id, "接口不存在")
             new_path = fields.get("path", current.path)
             new_method = str(fields.get("method", current.method)).upper()
-            duplicates = self.repo.find_by_identity(current.project_id, new_path, new_method)
+            duplicates = self.repo.find_by_identity(current.space_id, new_path, new_method)
             if any(dup.id != endpoint_id for dup in duplicates):
                 raise ConflictError(f"接口已存在: {new_method} {new_path}")
         for field in ("tags", "params", "headers", "body", "responses", "security"):
@@ -62,16 +62,16 @@ class EndpointService(BaseService[Endpoint, EndpointRepository]):
     def get_active_by_ids(self, endpoint_ids: list[int]) -> list[Endpoint]:
         return self.repo.get_active_by_ids(endpoint_ids)
 
-    def list_active(self, project_id: int) -> list[Endpoint]:
-        return self.repo.get_by_project(project_id, active_only=True)
+    def list_active(self, space_id: int) -> list[Endpoint]:
+        return self.repo.get_by_space(space_id, active_only=True)
 
     def _get_existing_keys(self, endpoint_list: list[EndpointCreate]) -> set:
-        """批量查询已存在的 (project_id, path, method) 组合"""
-        project_ids = {endpoint.project_id for endpoint in endpoint_list}
+        """批量查询已存在的 (space_id, path, method) 组合"""
+        space_ids = {endpoint.space_id for endpoint in endpoint_list}
         paths = {endpoint.path for endpoint in endpoint_list}
         methods = {endpoint.method for endpoint in endpoint_list}
-        existing = self.repo.bulk_query(project_ids, paths, methods)
-        return {(item.project_id, item.path, item.method) for item in existing}
+        existing = self.repo.bulk_query(space_ids, paths, methods)
+        return {(item.space_id, item.path, item.method) for item in existing}
 
     def create_endpoint(self, endpoints: list[EndpointCreate]) -> list[Endpoint]:
         if len(endpoints) == 0:
@@ -90,7 +90,7 @@ class EndpointService(BaseService[Endpoint, EndpointRepository]):
             new_data = [
                 endpoint.model_dump()
                 for endpoint in endpoints
-                if (endpoint.project_id, endpoint.path, endpoint.method) not in existing_keys
+                if (endpoint.space_id, endpoint.path, endpoint.method) not in existing_keys
             ]
             if not new_data:
                 logger.warning("所有接口已存在，跳过插入", action="create_endpoint")

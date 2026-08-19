@@ -18,17 +18,17 @@ const HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"
 interface EndpointFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  projectId: string | number;
+  spaceId: string | number;
   endpoint?: Endpoint | null;
 }
 
 interface EndpointFormContentProps {
-  projectId: string | number;
+  spaceId: string | number;
   endpoint?: Endpoint | null;
   onClose: () => void;
 }
 
-function EndpointFormContent({ projectId, endpoint, onClose }: EndpointFormContentProps) {
+function EndpointFormContent({ spaceId, endpoint, onClose }: EndpointFormContentProps) {
   const isEdit = !!endpoint;
 
   const [name, setName] = useState(endpoint?.name ?? "");
@@ -46,7 +46,7 @@ function EndpointFormContent({ projectId, endpoint, onClose }: EndpointFormConte
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const payload: Partial<Endpoint> = {
-      project_id: projectId,
+      space_id: spaceId,
       name,
       path,
       method,
@@ -197,7 +197,7 @@ function EndpointFormContent({ projectId, endpoint, onClose }: EndpointFormConte
 export function EndpointFormDialog({
   open,
   onOpenChange,
-  projectId,
+  spaceId,
   endpoint,
 }: EndpointFormDialogProps) {
   const isEdit = !!endpoint;
@@ -208,13 +208,13 @@ export function EndpointFormDialog({
         <DialogHeader>
           <DialogTitle>{isEdit ? "编辑接口" : "添加接口"}</DialogTitle>
           <DialogDescription>
-            {isEdit ? "更新接口详情。" : "为该项目添加一个新的 API 接口。"}
+            {isEdit ? "更新接口详情。" : "为该空间添加一个新的 API 接口。"}
           </DialogDescription>
         </DialogHeader>
         {open && (
           <EndpointFormContent
             key={endpoint?.id ?? "new"}
-            projectId={projectId}
+            spaceId={spaceId}
             endpoint={endpoint}
             onClose={() => onOpenChange(false)}
           />

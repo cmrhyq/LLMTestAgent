@@ -2,7 +2,7 @@ import { useState } from "react";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, Folder, PlusCircle, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import { useProjects } from "@/hooks/use-projects";
+import { useSpaces } from "@/hooks/use-spaces";
 import {
   useConversations,
   useUpdateConversation,
@@ -86,15 +86,15 @@ function RenameDialog({ conversation, onOpenChange, onSubmit }: RenameDialogProp
   );
 }
 
-interface ProjectAccordionItemProps {
-  projectId: string | number;
-  projectName: string;
+interface SpaceAccordionItemProps {
+  spaceId: string | number;
+  spaceName: string;
 }
 
-function ProjectAccordionItem({ projectId, projectName }: ProjectAccordionItemProps) {
+function SpaceAccordionItem({ spaceId, spaceName }: SpaceAccordionItemProps) {
   const navigate = useNavigate();
   const { data, isLoading } = useConversations({
-    project_id: projectId,
+    space_id: spaceId,
     status: 1,
     page_size: 100,
   });
@@ -107,7 +107,7 @@ function ProjectAccordionItem({ projectId, projectName }: ProjectAccordionItemPr
   const conversations = data?.items ?? [];
 
   const handleNewConversation = () => {
-    navigate(`/workflows/chat?project_id=${projectId}`);
+    navigate(`/workflows/chat?space_id=${spaceId}`);
   };
 
   const handleOpen = (id: string | number) => {
@@ -115,16 +115,16 @@ function ProjectAccordionItem({ projectId, projectName }: ProjectAccordionItemPr
   };
 
   return (
-    <AccordionItem value={String(projectId)} className="border-none">
+    <AccordionItem value={String(spaceId)} className="border-none">
       <AccordionPrimitive.Header className="flex">
         <AccordionPrimitive.Trigger
           className={cn(
-            "group flex flex-1 items-center gap-1 rounded-md px-2 py-1.5 text-sm font-medium transition-colors hover:bg-muted hover:no-underline [&[data-state=open]_.project-chevron]:rotate-180"
+            "group flex flex-1 items-center gap-1 rounded-md px-2 py-1.5 text-sm font-medium transition-colors hover:bg-muted hover:no-underline [&[data-state=open]_.space-chevron]:rotate-180"
           )}
         >
           <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span className="min-w-0 flex-1 truncate text-left text-foreground">{projectName}</span>
-          <ChevronDown className="project-chevron h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200" />
+          <span className="min-w-0 flex-1 truncate text-left text-foreground">{spaceName}</span>
+          <ChevronDown className="space-chevron h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200" />
           <span
             className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100"
             onClick={(e) => e.stopPropagation()}
@@ -237,10 +237,10 @@ function ProjectAccordionItem({ projectId, projectName }: ProjectAccordionItemPr
 
 export function SpacesSection() {
   const [sectionOpen, setSectionOpen] = useState(true);
-  const { data, isLoading, isError } = useProjects({ page_size: 100, status: 1 });
+  const { data, isLoading, isError } = useSpaces({ page_size: 100, status: 1 });
 
-  const projects = data?.items ?? [];
-  const total = data?.total ?? projects.length;
+  const spaces = data?.items ?? [];
+  const total = data?.total ?? spaces.length;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -265,19 +265,19 @@ export function SpacesSection() {
 
           {isError && <p className="px-2 py-2 text-xs text-destructive">加载空间列表失败</p>}
 
-          {!isLoading && !isError && projects.length === 0 && (
+          {!isLoading && !isError && spaces.length === 0 && (
             <p className="px-2 py-2 text-xs text-muted-foreground">
-              暂无空间，请先在仪表盘创建项目
+              暂无空间，请先在仪表盘创建空间
             </p>
           )}
 
-          {!isLoading && !isError && projects.length > 0 && (
+          {!isLoading && !isError && spaces.length > 0 && (
             <Accordion type="multiple" className="space-y-0.5">
-              {projects.map((project) => (
-                <ProjectAccordionItem
-                  key={project.id}
-                  projectId={project.id}
-                  projectName={project.name}
+              {spaces.map((space) => (
+                <SpaceAccordionItem
+                  key={space.id}
+                  spaceId={space.id}
+                  spaceName={space.name}
                 />
               ))}
             </Accordion>

@@ -15,11 +15,11 @@ class EnvironmentRepository(BaseRepository[Environment]):
         stmt = select(Environment).where(Environment.name == name)
         return self._session.scalar(stmt)
 
-    def get_by_project_and_name(self, project_id: int, name: str) -> Environment | None:
-        stmt = select(Environment).where(Environment.project_id == project_id, Environment.name == name)
+    def get_by_space_and_name(self, space_id: int, name: str) -> Environment | None:
+        stmt = select(Environment).where(Environment.space_id == space_id, Environment.name == name)
         return self._session.scalar(stmt)
 
-    def bulk_query(self, project_ids: set, names: set) -> list[Environment]:
+    def bulk_query(self, space_ids: set, names: set) -> list[Environment]:
         """批量查询：一次 SQL 替代 N 次循环查询"""
-        stmt = select(Environment).where(Environment.project_id.in_(project_ids), Environment.name.in_(names))
+        stmt = select(Environment).where(Environment.space_id.in_(space_ids), Environment.name.in_(names))
         return list(self._session.scalars(stmt).all())

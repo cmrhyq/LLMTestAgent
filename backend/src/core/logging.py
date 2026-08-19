@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 class StructLogConfig:
     """结构化日志配置类，提供日志相关的默认配置"""
 
-    # 日志目录（相对于项目根目录）
+    # 日志目录（相对于空间根目录）
     LOG_DIR: str = "logs"
 
     # 日志文件格式

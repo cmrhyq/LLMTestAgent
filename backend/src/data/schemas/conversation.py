@@ -7,7 +7,7 @@ from src.data.schemas.message import MessageResponse
 class ConversationBase(BaseModel):
     """Conversation 基础字段"""
 
-    project_id: int | None = Field(default=None, description="所属项目ID（可空）")
+    space_id: int | None = Field(default=None, description="所属空间ID（可空）")
     title: str = Field(default="", description="会话标题")
     mode: str = Field(default="Ask", description="模式: Ask / Plan")
 
@@ -19,7 +19,7 @@ class ConversationCreate(ConversationBase):
         "json_schema_extra": {
             "examples": [
                 {
-                    "project_id": None,
+                    "space_id": None,
                     "title": "",
                     "mode": "Ask",
                 }
@@ -67,4 +67,4 @@ class ChatStreamRequest(BaseModel):
     api_doc_path: str | None = Field(default=None, description="可选的已上传 OpenAPI 文档路径")
     conversation_id: int | None = Field(default=None, description="会话 ID；缺省时自动新建会话")
     mode: str = Field(default="Ask", description="模式: Ask / Plan")
-    project_id: int | None = Field(default=None, description="新建会话时所属项目 ID（可选）")
+    space_id: int | None = Field(default=None, description="新建会话时所属空间 ID（可选）")

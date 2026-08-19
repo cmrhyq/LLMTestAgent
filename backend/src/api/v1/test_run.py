@@ -18,14 +18,14 @@ router = APIRouter(prefix="/test/runs", tags=["测试运行"])
 
 @router.get("/", response_model=TestRunListResponse)
 def list_test_runs(
-    project_id: int | None = Query(default=None, description="项目ID筛选"),
+    space_id: int | None = Query(default=None, description="空间ID筛选"),
     status: str | None = Query(default=None, description="状态筛选"),
     page: int = Query(default=1, ge=1, description="页码"),
     page_size: int = Query(default=20, ge=1, le=100, description="每页数量"),
     db: Session = Depends(get_db),
 ):
     """查询测试运行列表（分页）。"""
-    items, total = TestRunService(db).list_runs(project_id, status, page, page_size)
+    items, total = TestRunService(db).list_runs(space_id, status, page, page_size)
     return TestRunListResponse(
         items=[TestRunResponse.model_validate(r) for r in items], total=total, page=page, page_size=page_size
     )

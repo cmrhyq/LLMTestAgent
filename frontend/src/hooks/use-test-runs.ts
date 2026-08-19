@@ -5,7 +5,7 @@ import { queryKeys } from "@/lib/query-keys";
 import type { TestRunListResponse, TestRunDetail } from "@/lib/types";
 
 interface UseTestRunsParams {
-  project_id?: string | number;
+  space_id?: string | number;
   status?: string;
   page?: number;
   page_size?: number;

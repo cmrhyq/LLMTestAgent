@@ -2,7 +2,7 @@ import type { Id, PaginatedResponse } from "./common";
 
 export interface TestRun {
   id: Id;
-  project_id: Id | null;
+  space_id: Id | null;
   environment_id: Id | null;
   name: string;
   status: string;

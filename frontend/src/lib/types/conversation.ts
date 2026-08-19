@@ -2,7 +2,7 @@ import type { Id, PaginatedResponse } from "./common";
 
 export interface Conversation {
   id: Id;
-  project_id: Id | null;
+  space_id: Id | null;
   title: string;
   mode: string;
   status: number;

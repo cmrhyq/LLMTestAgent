@@ -9,7 +9,7 @@ from src.data.models.base import Base, local_now
 from src.utils.id import next_id
 
 if TYPE_CHECKING:
-    from src.data.models.project import Project
+    from src.data.models.space import Space
     from src.data.models.test_run import TestRun
 
 
@@ -19,7 +19,7 @@ class Environment(Base):
     __tablename__ = "environment"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False, default=next_id)
-    project_id: Mapped[int] = mapped_column(Integer, ForeignKey("project.id", ondelete="CASCADE"), nullable=False)
+    space_id: Mapped[int] = mapped_column(Integer, ForeignKey("space.id", ondelete="CASCADE"), nullable=False)
     name: Mapped[str] = mapped_column(Text, nullable=False)
     base_url: Mapped[str] = mapped_column(Text, nullable=False)
     description: Mapped[str] = mapped_column(Text, default="")
@@ -29,7 +29,7 @@ class Environment(Base):
     created_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
     updated_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
 
-    project: Mapped[Project] = relationship(back_populates="environments")
+    space: Mapped[Space] = relationship(back_populates="environments")
     test_runs: Mapped[list[TestRun]] = relationship(back_populates="environment")
 
-    __table_args__ = (Index("idx_env_project", "project_id"),)
+    __table_args__ = (Index("idx_env_space", "space_id"),)

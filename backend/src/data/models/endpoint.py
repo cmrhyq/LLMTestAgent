@@ -9,7 +9,7 @@ from src.data.models.base import Base, local_now
 from src.utils.id import next_id
 
 if TYPE_CHECKING:
-    from src.data.models.project import Project
+    from src.data.models.space import Space
     from src.data.models.test_case import TestCase
 
 
@@ -19,7 +19,7 @@ class Endpoint(Base):
     __tablename__ = "endpoint"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False, default=next_id)
-    project_id: Mapped[int] = mapped_column(Integer, ForeignKey("project.id", ondelete="CASCADE"), nullable=False)
+    space_id: Mapped[int] = mapped_column(Integer, ForeignKey("space.id", ondelete="CASCADE"), nullable=False)
     operation_id: Mapped[str] = mapped_column(Text, nullable=False)
     name: Mapped[str] = mapped_column(Text, nullable=False)
     path: Mapped[str] = mapped_column(Text, nullable=False)
@@ -39,12 +39,12 @@ class Endpoint(Base):
     created_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
     updated_at: Mapped[str] = mapped_column(Text, nullable=False, default=local_now)
 
-    project: Mapped[Project] = relationship(back_populates="endpoints")
+    space: Mapped[Space] = relationship(back_populates="endpoints")
     test_cases: Mapped[list[TestCase]] = relationship(back_populates="endpoint")
 
     __table_args__ = (
         CheckConstraint("method IN ('GET','POST','PUT','DELETE','PATCH','HEAD','OPTIONS')", name="ck_api_method"),
-        UniqueConstraint("project_id", "path", "method", name="uq_project_path_method"),
-        Index("idx_endpoint_project", "project_id"),
+        UniqueConstraint("space_id", "path", "method", name="uq_space_path_method"),
+        Index("idx_endpoint_space", "space_id"),
         Index("idx_endpoint_operation_id", "operation_id"),
     )

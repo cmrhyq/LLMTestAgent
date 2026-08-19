@@ -19,10 +19,10 @@ class ConversationService(BaseService[Conversation, ConversationRepository]):
         self.msg_repo = MessageRepository(session)
         super().__init__(session, self.conv_repo)
 
-    def list_conversations(self, project_id: int | None, status: int | None, page: int, page_size: int):
+    def list_conversations(self, space_id: int | None, status: int | None, page: int, page_size: int):
         filters = []
-        if project_id is not None:
-            filters.append(Conversation.project_id == project_id)
+        if space_id is not None:
+            filters.append(Conversation.space_id == space_id)
         if status is not None:
             filters.append(Conversation.status == status)
         return self.conv_repo.paginate(
@@ -47,7 +47,7 @@ class ConversationService(BaseService[Conversation, ConversationRepository]):
     def create_conversation(self, data: ConversationCreate) -> Conversation:
         """创建新会话。"""
         conversation = Conversation(
-            project_id=data.project_id,
+            space_id=data.space_id,
             title=data.title or "",
             mode=data.mode or "Ask",
         )

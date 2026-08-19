@@ -9,12 +9,12 @@ import { queryKeys } from "@/lib/query-keys";
 
 export interface UseSecurityChatParams {
   conversationId: string | null;
-  projectId: string | null;
+  spaceId: string | null;
   /** 新建会话后回调（容器负责把新会话 ID 写回 URL）。 */
   onConversationCreated(conversationId: string): void;
 }
 
-export function useSecurityChat({ conversationId, projectId, onConversationCreated }: UseSecurityChatParams) {
+export function useSecurityChat({ conversationId, spaceId, onConversationCreated }: UseSecurityChatParams) {
   const queryClient = useQueryClient();
 
   const [instruction, setInstruction] = useState("");
@@ -59,7 +59,7 @@ export function useSecurityChat({ conversationId, projectId, onConversationCreat
           api_doc_path: uploadedPath,
           conversation_id: conversationId ?? undefined,
           mode,
-          project_id: projectId ?? undefined,
+          space_id: spaceId ?? undefined,
         },
         (chunk) => setAnswer((prev) => prev + chunk),
         {

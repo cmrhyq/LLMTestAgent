@@ -16,17 +16,17 @@ import type { Environment } from "@/lib/types";
 interface EnvironmentFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  projectId: string | number;
+  spaceId: string | number;
   environment?: Environment | null;
 }
 
 interface EnvironmentFormContentProps {
-  projectId: string | number;
+  spaceId: string | number;
   environment?: Environment | null;
   onClose: () => void;
 }
 
-function EnvironmentFormContent({ projectId, environment, onClose }: EnvironmentFormContentProps) {
+function EnvironmentFormContent({ spaceId, environment, onClose }: EnvironmentFormContentProps) {
   const isEdit = !!environment;
 
   const [name, setName] = useState(environment?.name ?? "");
@@ -41,7 +41,7 @@ function EnvironmentFormContent({ projectId, environment, onClose }: Environment
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const payload: Partial<Environment> = {
-      project_id: projectId,
+      space_id: spaceId,
       name,
       base_url: baseUrl,
       description,
@@ -142,7 +142,7 @@ function EnvironmentFormContent({ projectId, environment, onClose }: Environment
 export function EnvironmentFormDialog({
   open,
   onOpenChange,
-  projectId,
+  spaceId,
   environment,
 }: EnvironmentFormDialogProps) {
   const isEdit = !!environment;
@@ -153,13 +153,13 @@ export function EnvironmentFormDialog({
         <DialogHeader>
           <DialogTitle>{isEdit ? "编辑环境" : "添加环境"}</DialogTitle>
           <DialogDescription>
-            {isEdit ? "更新环境配置。" : "为该项目添加一个新环境。"}
+            {isEdit ? "更新环境配置。" : "为该空间添加一个新环境。"}
           </DialogDescription>
         </DialogHeader>
         {open && (
           <EnvironmentFormContent
             key={environment?.id ?? "new"}
-            projectId={projectId}
+            spaceId={spaceId}
             environment={environment}
             onClose={() => onOpenChange(false)}
           />

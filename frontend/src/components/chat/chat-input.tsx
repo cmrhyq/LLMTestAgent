@@ -89,7 +89,7 @@ export function ChatInput({
             value={instruction}
             onChange={onInstructionChange}
             onKeyDown={onKeyDown}
-            placeholder="例如：帮我为登录接口设计一组测试用例"
+            placeholder="今天帮你做些什么？例如：帮我为登录接口设计一组测试用例"
             rows={1}
             disabled={isStreaming}
             className="max-h-40 w-full resize-none bg-transparent px-0 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-60"

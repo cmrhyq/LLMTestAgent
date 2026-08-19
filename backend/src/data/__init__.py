@@ -1,7 +1,7 @@
 from src.data.models import (
     Endpoint,
     Environment,
-    Project,
+    Space,
     Report,
     TestCase,
     TestResult,
@@ -12,7 +12,7 @@ from src.data.repositories import (
     BaseRepository,
     EndpointRepository,
     EnvironmentRepository,
-    ProjectRepository,
+    SpaceRepository,
     ReportRepository,
     TestCaseRepository,
     TestResultRepository,
@@ -21,7 +21,7 @@ from src.data.repositories import (
 )
 
 __all__ = [
-    "Project",
+    "Space",
     "Environment",
     "Endpoint",
     "TestRun",
@@ -30,7 +30,7 @@ __all__ = [
     "TestSummary",
     "Report",
     "BaseRepository",
-    "ProjectRepository",
+    "SpaceRepository",
     "EnvironmentRepository",
     "EndpointRepository",
     "TestRunRepository",

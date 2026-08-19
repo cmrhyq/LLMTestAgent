@@ -26,14 +26,14 @@ def create_conversation(body: ConversationCreate, db: Session = Depends(get_db))
 
 @router.get("/", response_model=ConversationListResponse)
 def list_conversations(
-    project_id: int | None = Query(default=None, description="按项目筛选"),
+    space_id: int | None = Query(default=None, description="按空间筛选"),
     status: int | None = Query(default=1, description="状态筛选: 1-正常, 0-删除"),
     page: int = Query(default=1, ge=1, description="页码"),
     page_size: int = Query(default=20, ge=1, le=100, description="每页数量"),
     db: Session = Depends(get_db),
 ):
     """查询会话列表（分页）。"""
-    conversations, total = ConversationService(db).list_conversations(project_id, status, page, page_size)
+    conversations, total = ConversationService(db).list_conversations(space_id, status, page, page_size)
     return ConversationListResponse(
         items=[ConversationResponse.model_validate(c) for c in conversations],
         total=total,

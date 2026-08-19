@@ -1,6 +1,6 @@
 """OpenAPI 文档解析节点。
 
-解析 OpenAPI 文档并将项目、环境、端点信息持久化到数据库。
+解析 OpenAPI 文档并将空间、环境、端点信息持久化到数据库。
 """
 
 from pathlib import Path
@@ -41,7 +41,7 @@ def parse_openapi_node(state: AgentState) -> dict:
         logger.info(
             "OpenAPI文档解析存储完成",
             node=NodeName.PARSE_OPENAPI_DOC.value,
-            project_id=result.project_id,
+            space_id=result.space_id,
             endpoint_count=result.endpoint_count,
         )
         return {

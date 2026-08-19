@@ -6,14 +6,14 @@ import { queryKeys } from "@/lib/query-keys";
 import type { Conversation, ConversationListResponse, MessageListResponse } from "@/lib/types";
 
 interface UseConversationsParams {
-  project_id?: string | number;
+  space_id?: string | number;
   status?: number;
   page?: number;
   page_size?: number;
 }
 
 interface CreateConversationPayload {
-  project_id?: string | number | null;
+  space_id?: string | number | null;
   title?: string;
   mode?: string;
 }

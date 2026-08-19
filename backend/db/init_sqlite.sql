@@ -7,10 +7,10 @@ PRAGMA foreign_keys = ON;
 PRAGMA encoding = 'UTF-8';
 
 -- ============================================================================
--- 1. 项目表 (project)
---    管理多个被测服务，支持多项目隔离
+-- 1. 空间表 (space)
+--    管理多个被测服务，支持多空间隔离
 -- ============================================================================
-CREATE TABLE IF NOT EXISTS project
+CREATE TABLE IF NOT EXISTS space
 (
     id          INTEGER PRIMARY KEY,
     name        TEXT    NOT NULL UNIQUE,
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS project
     updated_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime'))
 );
 
-CREATE INDEX idx_project_name    ON project(name);
+CREATE INDEX idx_space_name    ON space(name);
 
 -- ============================================================================
 -- 2. 测试环境表 (environment)
@@ -30,7 +30,7 @@ CREATE INDEX idx_project_name    ON project(name);
 CREATE TABLE IF NOT EXISTS environment
 (
     id          INTEGER PRIMARY KEY,
-    project_id  INTEGER NOT NULL,
+    space_id  INTEGER NOT NULL,
     name        TEXT    NOT NULL,
     base_url    TEXT    NOT NULL,
     description TEXT             DEFAULT '',
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS environment
     updated_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime'))
 );
 
-CREATE INDEX idx_env_project ON environment (project_id);
+CREATE INDEX idx_env_space ON environment (space_id);
 
 -- ============================================================================
 -- 3. API 定义表 (endpoint)
@@ -50,7 +50,7 @@ CREATE INDEX idx_env_project ON environment (project_id);
 CREATE TABLE IF NOT EXISTS endpoint
 (
     id           INTEGER PRIMARY KEY,
-    project_id   INTEGER NOT NULL,
+    space_id   INTEGER NOT NULL,
     operation_id TEXT    NOT NULL, -- OpenAPI operationId
     name         TEXT    NOT NULL,
     path         TEXT    NOT NULL,
@@ -69,11 +69,11 @@ CREATE TABLE IF NOT EXISTS endpoint
     version      INTEGER NOT NULL DEFAULT 1,
     created_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')),
     updated_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')),
-    UNIQUE(project_id, path, method),
-    FOREIGN KEY (project_id) REFERENCES project (id) ON DELETE CASCADE
+    UNIQUE(space_id, path, method),
+    FOREIGN KEY (space_id) REFERENCES space (id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_endpoint_project ON endpoint (project_id);
+CREATE INDEX idx_endpoint_space ON endpoint (space_id);
 CREATE INDEX idx_endpoint_operation_id ON endpoint (operation_id);
 
 -- ============================================================================
@@ -83,7 +83,7 @@ CREATE INDEX idx_endpoint_operation_id ON endpoint (operation_id);
 CREATE TABLE IF NOT EXISTS test_run
 (
     id              INTEGER PRIMARY KEY,
-    project_id      INTEGER,
+    space_id      INTEGER,
     environment_id  INTEGER,
     name            TEXT             DEFAULT '',
     status          TEXT    NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'running', 'completed', 'failed', 'cancelled')),
@@ -105,11 +105,11 @@ CREATE TABLE IF NOT EXISTS test_run
     error_message   TEXT             DEFAULT '',
     created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')),
     updated_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')),
-    FOREIGN KEY (project_id) REFERENCES project (id) ON DELETE SET NULL,
+    FOREIGN KEY (space_id) REFERENCES space (id) ON DELETE SET NULL,
     FOREIGN KEY (environment_id) REFERENCES environment (id) ON DELETE SET NULL
 );
 
-CREATE INDEX idx_run_project ON test_run (project_id);
+CREATE INDEX idx_run_space ON test_run (space_id);
 CREATE INDEX idx_run_env ON test_run (environment_id);
 
 -- ============================================================================
@@ -241,11 +241,11 @@ CREATE INDEX idx_report_format ON report (format);
 -- ============================================================================
 -- 触发器：自动更新 updated_at 字段
 -- ============================================================================
-CREATE TRIGGER trg_project_updated
+CREATE TRIGGER trg_space_updated
     AFTER UPDATE
-    ON project
+    ON space
 BEGIN
-    UPDATE project
+    UPDATE space
     SET updated_at = strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')
     WHERE id = NEW.id;
 END;
@@ -290,11 +290,11 @@ END;
 -- 常用分析视图
 -- ============================================================================
 
--- 视图: 每次执行的概览（关联项目、环境、摘要）
+-- 视图: 每次执行的概览（关联空间、环境、摘要）
 CREATE VIEW IF NOT EXISTS v_run_overview AS
 SELECT tr.id      AS run_id,
-       p.name     AS project_name,
-       p.base_url AS project_base_url,
+       p.name     AS space_name,
+       p.base_url AS space_base_url,
        e.name     AS environment_name,
        tr.status  AS run_status,
        tr.trigger_type,
@@ -304,7 +304,7 @@ SELECT tr.id      AS run_id,
        tr.finished_at,
        tr.created_at
 FROM test_run tr
-         LEFT JOIN project p ON tr.project_id = p.id
+         LEFT JOIN space p ON tr.space_id = p.id
          LEFT JOIN environment e ON tr.environment_id = e.id;
 
 -- 视图: 接口维度聚合（按 API URL 分组统计通过率）
@@ -343,10 +343,10 @@ GROUP BY tc.scenario_type;
 -- ============================================================================
 -- 初始数据（ID 由应用层雪花算法生成，此处使用固定种子值）
 -- ============================================================================
-INSERT INTO project (id, name, base_url, description, status)
-VALUES (100000000000001, 'HTTP Bin Project', 'https://httpbin.org', '', 1);
+INSERT INTO space (id, name, base_url, description, status)
+VALUES (100000000000001, 'HTTP Bin Space', 'https://httpbin.org', '', 1);
 
-INSERT INTO environment (id, project_id, name, base_url, description, variables, is_default, status)
+INSERT INTO environment (id, space_id, name, base_url, description, variables, is_default, status)
 VALUES (200000000000001, 100000000000001, 'httpbin dev', 'https://httpbin.org', 'dev env', '{"name": "alan"}', 1, 1);
-INSERT INTO environment (id, project_id, name, base_url, description, variables, is_default, status)
+INSERT INTO environment (id, space_id, name, base_url, description, variables, is_default, status)
 VALUES (200000000000002, 100000000000001, 'httpbin prod', 'https://httpbin.org', 'prod env', '{"name": "anna"}', 2, 1);

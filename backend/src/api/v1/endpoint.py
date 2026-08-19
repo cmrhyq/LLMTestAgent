@@ -29,7 +29,7 @@ def batch_create_endpoints(body: list[EndpointCreate], db: Session = Depends(get
 
 @router.get("/", response_model=EndpointListResponse)
 def list_endpoints(
-    project_id: int | None = Query(default=None, description="项目ID筛选"),
+    space_id: int | None = Query(default=None, description="空间ID筛选"),
     method: str | None = Query(default=None, description="HTTP 方法筛选"),
     keyword: str | None = Query(default=None, description="关键字搜索"),
     page: int = Query(default=1, ge=1, description="页码"),
@@ -37,7 +37,7 @@ def list_endpoints(
     db: Session = Depends(get_db),
 ):
     """查询接口列表（分页）。"""
-    items, total = EndpointService(db).list_endpoints(project_id, method, keyword, page, page_size)
+    items, total = EndpointService(db).list_endpoints(space_id, method, keyword, page, page_size)
     return EndpointListResponse(
         items=[EndpointResponse.model_validate(e) for e in items], total=total, page=page, page_size=page_size
     )

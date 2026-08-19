@@ -7,7 +7,7 @@ class TestRunResponse(BaseModel):
     """TestRun 响应体"""
 
     id: int = Field(..., description="执行批次ID")
-    project_id: int | None = Field(default=None, description="所属项目ID")
+    space_id: int | None = Field(default=None, description="所属空间ID")
     environment_id: int | None = Field(default=None, description="关联环境ID")
     name: str = Field(default="", description="批次名称")
     status: str = Field(..., description="状态: pending/running/completed/failed/cancelled")
@@ -74,7 +74,7 @@ class TestRunListResponse(PaginatedResponse[TestRunResponse]):
 class TestRunQuery(BaseModel):
     """TestRun 查询参数"""
 
-    project_id: int | None = Field(default=None, description="项目ID筛选")
+    space_id: int | None = Field(default=None, description="空间ID筛选")
     status: str | None = Field(default=None, description="状态筛选")
     trigger_type: str | None = Field(default=None, description="触发类型筛选")
     page: int = Field(default=1, ge=1, description="页码")

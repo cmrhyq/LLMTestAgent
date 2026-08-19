@@ -1,6 +1,6 @@
 """JSON 解析公共工具。
 
-统一项目内的 JSON 字段解析与 LLM 响应 JSON 提取逻辑：
+统一空间内的 JSON 字段解析与 LLM 响应 JSON 提取逻辑：
 - ``robust_json_loads`` / ``safe_json_loads``：带 ``json_repair`` 兜底的安全解析
 - ``parse_llm_json_response`` / ``parse_llm_json_object``：从 LLM 文本中提取 JSON
 """

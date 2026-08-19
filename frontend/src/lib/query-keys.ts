@@ -9,7 +9,7 @@ function createResourceKeys<const TPrefix extends string>(prefix: TPrefix) {
 }
 
 export const queryKeys = {
-  projects: createResourceKeys("projects"),
+  spaces: createResourceKeys("spaces"),
   endpoints: createResourceKeys("endpoints"),
   environments: createResourceKeys("environments"),
   testRuns: createResourceKeys("test-runs"),

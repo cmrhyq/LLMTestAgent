@@ -104,18 +104,18 @@ class TestRunService(BaseService[TestRun, TestRunRepository]):
             round(duration, 2),
         )
 
-    def get_runs_by_project(self, project_id: int, limit: int = 50) -> list[TestRun]:
-        """按项目获取执行批次列表"""
-        return self.repo.get_by_project(project_id, limit)
+    def get_runs_by_space(self, space_id: int, limit: int = 50) -> list[TestRun]:
+        """按空间获取执行批次列表"""
+        return self.repo.get_by_space(space_id, limit)
 
     def get_runs_by_ids(self, run_ids: list[int]) -> list[TestRun]:
         """按 ID 列表批量获取执行批次（避免逐条查询）。"""
         return self.repo.get_by_ids(run_ids)
 
-    def list_runs(self, project_id: int | None, status: str | None, page: int, page_size: int):
+    def list_runs(self, space_id: int | None, status: str | None, page: int, page_size: int):
         filters = []
-        if project_id is not None:
-            filters.append(TestRun.project_id == project_id)
+        if space_id is not None:
+            filters.append(TestRun.space_id == space_id)
         if status is not None:
             filters.append(TestRun.status == status)
         return self.list(page, page_size, *filters)

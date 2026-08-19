@@ -18,7 +18,7 @@ from src.data.models.base import Base
 logger = get_logger(__name__)
 
 EXPECTED_TABLES = [
-    "project",
+    "space",
     "environment",
     "endpoint",
     "test_run",
@@ -170,7 +170,7 @@ def _create_views(manager: DatabaseManager) -> None:
         CREATE VIEW IF NOT EXISTS v_run_overview AS
         SELECT
             tr.id           AS run_id,
-            p.name          AS project_name,
+            p.name          AS space_name,
             e.name          AS environment_name,
             tr.status       AS run_status,
             tr.trigger_type,
@@ -181,7 +181,7 @@ def _create_views(manager: DatabaseManager) -> None:
             ts.total_duration,
             tr.started_at, tr.finished_at, tr.created_at
         FROM test_run tr
-        LEFT JOIN project      p  ON tr.project_id     = p.id
+        LEFT JOIN space      p  ON tr.space_id     = p.id
         LEFT JOIN environment  e  ON tr.environment_id  = e.id
         LEFT JOIN test_summary ts ON ts.run_id          = tr.id
         """,

@@ -16,8 +16,8 @@ class SelectedEndpoint(TypedDict):
     """用户选中的单个接口。"""
 
     endpoint_id: int
-    project_id: int | None
-    project_name: str
+    space_id: int | None
+    space_name: str
     reason: str
 
 

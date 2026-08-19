@@ -8,11 +8,12 @@ import {
   StreamingAssistantMessage,
 } from "@/components/chat/message-bubbles";
 import { ChatInput } from "@/components/chat/chat-input";
+import { cn } from "@/lib/utils";
 
 export default function SecurityChatPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const conversationId = searchParams.get("conversation_id");
-  const projectId = searchParams.get("project_id");
+  const spaceId = searchParams.get("space_id");
 
   const {
     instruction,
@@ -36,7 +37,7 @@ export default function SecurityChatPage() {
     showWelcome,
   } = useSecurityChat({
     conversationId,
-    projectId,
+    spaceId,
     onConversationCreated: (id) => {
       setSearchParams({ conversation_id: id }, { replace: true });
     },
@@ -55,7 +56,7 @@ export default function SecurityChatPage() {
         {showWelcome ? (
           <div className="flex flex-1 items-center justify-center">
             <div className="text-center">
-              <div className="font-mono text-sm font-semibold text-primary">&gt; _</div>
+              {/*<div className="font-mono text-sm font-semibold text-primary">&gt; _</div>*/}
               <h1 className="mt-4 font-display text-3xl font-semibold tracking-tight text-foreground">
                 你想测试什么？
               </h1>
@@ -90,7 +91,8 @@ export default function SecurityChatPage() {
         )}
       </div>
 
-      <div className="shrink-0 px-4 pb-6">
+      {/* Composer：空会话（欢迎态）时位于页面中下方，有消息时贴底跟随滚动 */}
+      <div className={cn("shrink-0 px-4 pb-6", showWelcome && "flex justify-center pt-[65vh]")}>
         <ChatInput
           instruction={instruction}
           onInstructionChange={handleInstructionChange}

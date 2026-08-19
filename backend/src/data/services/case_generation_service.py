@@ -31,14 +31,14 @@ class CaseGenerationService:
 
     def create_running_run(
         self,
-        project_id: int,
+        space_id: int,
         name: str,
         provider: str,
         model: str,
     ) -> TestRun:
         """创建 running 状态的执行批次。"""
         run = TestRun(
-            project_id=project_id,
+            space_id=space_id,
             name=name,
             status=TestStatus.RUNNING.value,
             trigger_type="manual",

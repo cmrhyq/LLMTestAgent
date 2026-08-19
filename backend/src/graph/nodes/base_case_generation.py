@@ -1,7 +1,7 @@
 """用例生成节点基类（模板方法）。
 
 single / flow 两个生成节点共享约 80% 的编排逻辑：
-validate → load(project/endpoints) → create_run → generate → persist。
+validate → load(space/endpoints) → create_run → generate → persist。
 
 子类只需实现 ``_generate_cases``（差异：PromptBuilder、是否按接口循环、case_id 规则）。
 """
@@ -16,7 +16,7 @@ from src.core.llm.llm_client import get_llm_client
 from src.core.logging import get_logger
 from src.data.models.endpoint import Endpoint
 from src.data.models.test_case import TestCase
-from src.data.services import CaseGenerationService, EndpointService, ProjectService
+from src.data.services import CaseGenerationService, EndpointService, SpaceService
 from src.graph.constants import NodeName
 from src.graph.state import AgentState
 from src.utils.db_bootstrap import ensure_db
@@ -49,7 +49,7 @@ class BaseCaseGenerationNode(ABC):
         """子类实现：调用 LLM 生成并构造 TestCase ORM 列表。"""
 
     def __call__(self, state: AgentState) -> dict:
-        """模板方法：校验 → 加载项目/接口 → 创建批次 → 生成 → 持久化。"""
+        """模板方法：校验 → 加载空间/接口 → 创建批次 → 生成 → 持久化。"""
         selected_endpoints = state.get("selected_endpoints", [])
         logger.info(
             f"进入用例生成节点，接口数: {len(selected_endpoints)}",
@@ -64,25 +64,25 @@ class BaseCaseGenerationNode(ABC):
         llm_client = get_llm_client()
         ensure_db()
 
-        project_id = int(selected_endpoints[0].get("project_id") or 0)
+        space_id = int(selected_endpoints[0].get("space_id") or 0)
         endpoint_ids = [int(ep["endpoint_id"]) for ep in selected_endpoints if ep.get("endpoint_id")]
 
         with get_db_manager().get_session() as session:
-            project_service = ProjectService(session)
+            space_service = SpaceService(session)
             endpoint_service = EndpointService(session)
             case_service = CaseGenerationService(session)
 
-            project = project_service.get_project(project_id)
-            if not project:
-                return self._error(f"项目不存在: project_id={project_id}")
+            space = space_service.get_space(space_id)
+            if not space:
+                return self._error(f"空间不存在: space_id={space_id}")
 
             endpoints: list[Endpoint] = endpoint_service.get_active_by_ids(endpoint_ids)
             if not endpoints:
                 return self._error("未查询到有效的接口定义")
 
-            base_url = project.base_url.rstrip("/")
+            base_url = space.base_url.rstrip("/")
             run = case_service.create_running_run(
-                project_id=project_id,
+                space_id=space_id,
                 name=f"{self.run_name_prefix}-{datetime.now().strftime('%Y%m%d%H%M%S')}",
                 provider=config.llm.provider,
                 model=get_model_name(config),

@@ -20,22 +20,29 @@ export const router = createBrowserRouter([
             },
           },
           {
-            path: "projects/:id",
+            path: "spaces",
             lazy: async () => {
-              const { default: Component } = await import("./pages/project/project-detail.tsx");
+              const { default: Component } = await import("./pages/space/spaces.tsx");
               return { Component };
             },
           },
           {
-            path: "projects/:id/endpoints",
+            path: "spaces/:id",
+            lazy: async () => {
+              const { default: Component } = await import("./pages/space/space-detail.tsx");
+              return { Component };
+            },
+          },
+          {
+            path: "spaces/:id/endpoints",
             element: <Navigate to=".." replace relative="path" />,
           },
           {
-            path: "projects/:id/environments",
+            path: "spaces/:id/environments",
             element: <Navigate to=".." replace relative="path" />,
           },
           {
-            path: "projects/:id/runs",
+            path: "spaces/:id/runs",
             element: <Navigate to=".." replace relative="path" />,
           },
           {
