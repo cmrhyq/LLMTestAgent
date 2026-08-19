@@ -26,7 +26,6 @@ interface UpdateConversationPayload {
 
 const {
   useList: useConversations,
-  useCreate: useCreateConversation,
   useUpdate: useUpdateConversation,
   useDelete: useDeleteConversation,
 } = createCrudHooks<
@@ -60,4 +59,4 @@ export function useConversationMessages(id: string | number | null | undefined) 
   });
 }
 
-export { useConversations, useCreateConversation, useUpdateConversation, useDeleteConversation };
+export { useConversations, useUpdateConversation, useDeleteConversation };

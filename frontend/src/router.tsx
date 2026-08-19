@@ -22,7 +22,7 @@ export const router = createBrowserRouter([
           {
             path: "projects/:id",
             lazy: async () => {
-              const { default: Component } = await import("./pages/poject/project-detail.tsx");
+              const { default: Component } = await import("./pages/project/project-detail.tsx");
               return { Component };
             },
           },
