@@ -82,7 +82,7 @@ def _create_openai_model(config: AppConfig) -> BaseChatModel:
 
 
 def _create_bedrock_model(config: AppConfig) -> BaseChatModel:
-    import boto3
+    import boto3  # type: ignore[import-untyped]
     from langchain_aws import ChatBedrock
 
     bedrock_config = config.llm.bedrock
@@ -115,9 +115,8 @@ def _create_qwen_model(config: AppConfig) -> BaseChatModel:
 
     qwen_config = config.llm.qwen
     return ChatTongyi(
-        dashscope_api_key=qwen_config.api_key,  # type: ignore[call-arg]
+        dashscope_api_key=SecretStr(qwen_config.api_key),  # type: ignore[call-arg]
         model=qwen_config.model,
-        api_key=qwen_config.api_key
     )
 
 
@@ -216,10 +215,10 @@ class LLMClient:
         return content
 
     def invoke_with_tools(
-            self,
-            messages: list[BaseMessage],
-            tools,
-            **kwargs,
+        self,
+        messages: list[BaseMessage],
+        tools,
+        **kwargs,
     ) -> BaseMessage:
         """使用已转换的消息发送带工具绑定的请求。"""
         model_with_tools = self._model.bind_tools(tools)
@@ -381,10 +380,10 @@ class LLMClient:
     # 流式接口：工具绑定（返回含 tool_call_chunks 的消息块）
     # -----------------------------------------------------------------------
     def invoke_with_tools_stream(
-            self,
-            messages: list[BaseMessage],
-            tools,
-            **kwargs,
+        self,
+        messages: list[BaseMessage],
+        tools,
+        **kwargs,
     ) -> Iterator[BaseMessage]:
         """流式发送带工具绑定的请求，产出含工具调用信息的消息块。
 
@@ -407,10 +406,10 @@ class LLMClient:
         yield from model_with_tools.stream(messages, **kwargs)
 
     async def ainvoke_with_tools_stream(
-            self,
-            messages: list[BaseMessage],
-            tools,
-            **kwargs,
+        self,
+        messages: list[BaseMessage],
+        tools,
+        **kwargs,
     ) -> AsyncIterator[BaseMessage]:
         """异步流式发送带工具绑定的请求，产出含工具调用信息的消息块。
 
@@ -436,10 +435,10 @@ class LLMClient:
     # 流式接口：事件流（细粒度可观测性）
     # -----------------------------------------------------------------------
     async def astream_events(
-            self,
-            messages: list[dict[str, str]] | list[BaseMessage],
-            version: Literal["v1", "v2"] = "v2",
-            **kwargs,
+        self,
+        messages: list[dict[str, str]] | list[BaseMessage],
+        version: Literal["v1", "v2"] = "v2",
+        **kwargs,
     ) -> AsyncIterator[dict[str, Any]]:
         """异步流式产出细粒度事件，用于 Agent / 链路的深度观测。
 
@@ -480,22 +479,23 @@ _chat_model: BaseChatModel | None = None
 _llm_client: LLMClient | None = None
 
 
-def get_chat_model(config: AppConfig | None = None) -> BaseChatModel | None:
+def get_chat_model(config: AppConfig | None = None) -> BaseChatModel:
     """获取全局 ChatModel 单例。
 
     Args:
         config: 应用配置，如果为 None 则使用全局配置
 
     Returns:
-        BaseChatModel 单例
+        BaseChatModel 单例（create_chat_model 始终返回实例，不会为 None）
     """
     global _chat_model
     if _chat_model is None:
         _chat_model = create_chat_model(config or get_config())
+    assert _chat_model is not None
     return _chat_model
 
 
-def get_llm_client(config: AppConfig | None = None) -> LLMClient | None:
+def get_llm_client(config: AppConfig | None = None) -> LLMClient:
     """获取全局 LLMClient 单例（兼容旧接口）。
 
     Args:
@@ -506,12 +506,12 @@ def get_llm_client(config: AppConfig | None = None) -> LLMClient | None:
     """
     global _llm_client
     if _llm_client is None:
-        model = get_chat_model(config)
-        _llm_client = LLMClient(model)
+        _llm_client = LLMClient(get_chat_model(config))
+    assert _llm_client is not None
     return _llm_client
 
 
-def init_llm_client(config: AppConfig | None = None) -> LLMClient | None:
+def init_llm_client(config: AppConfig | None = None) -> LLMClient:
     """重新初始化全局 LLM 客户端。
 
     Args:

@@ -37,7 +37,7 @@ class EndpointBase(BaseModel):
 class EndpointCreate(EndpointBase):
     """创建 Endpoint 请求体"""
 
-    project_id: int = Field(default=None, description="所属项目ID")
+    project_id: int | None = Field(default=None, description="所属项目ID")
 
     model_config = {
         "json_schema_extra": {

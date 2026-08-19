@@ -138,10 +138,11 @@ class StructLogger:
     @classmethod
     def _setup_stdlib_logging(cls) -> None:
         """配置标准库 logging"""
+        log_level = cls._log_level or logging.INFO
         # 重置 root logger 的 handlers，避免重复配置
         root_logger = logging.getLogger()
         root_logger.handlers.clear()
-        root_logger.setLevel(cls._log_level)
+        root_logger.setLevel(log_level)
 
         # 创建格式化器 - 根据环境选择不同的格式化器
         if cls._debug:
@@ -166,7 +167,7 @@ class StructLogger:
         # 添加控制台处理器
         if StructLogConfig.LOG_TO_CONSOLE:
             console_handler = logging.StreamHandler(sys.stdout)
-            console_handler.setLevel(cls._log_level)
+            console_handler.setLevel(log_level)
             console_handler.setFormatter(console_formatter)
             root_logger.addHandler(console_handler)
 
@@ -178,7 +179,7 @@ class StructLogger:
                 backupCount=StructLogConfig.LOG_BACKUP_COUNT,
                 encoding="utf-8",
             )
-            file_handler.setLevel(cls._log_level)
+            file_handler.setLevel(log_level)
             file_handler.setFormatter(file_formatter)
             root_logger.addHandler(file_handler)
 
@@ -308,7 +309,7 @@ def get_logger(name: str | None = None) -> "FilteringBoundLogger":
     return StructLogger.get_logger(name)
 
 
-def log_execution_time(name: str = None, level: str = "info", log_args: bool = False):
+def log_execution_time(name: str | None = None, level: str = "info", log_args: bool = False):
     """
     可配置的方法执行时间记录装饰器
     :param name: 方法名称

@@ -9,13 +9,14 @@ import re
 
 from src.core.llm.llm_client import get_llm_client
 from src.core.logging import get_logger
+from src.graph.constants import TestMode, UserIntent
 from src.graph.state import AgentState
 from src.prompts.builders.intent_builder import IntentPromptBuilder
 
 logger = get_logger(__name__)
 
-_VALID_INTENTS = ("run_test", "parse_openapi")
-_VALID_TEST_MODES = ("single", "flow")
+_VALID_INTENTS = tuple(intent.value for intent in UserIntent)
+_VALID_TEST_MODES = tuple(mode.value for mode in TestMode)
 
 
 def parse_input_node(state: AgentState) -> dict:

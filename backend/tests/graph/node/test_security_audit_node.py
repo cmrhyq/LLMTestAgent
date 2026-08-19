@@ -26,19 +26,20 @@ PROMPT_OFF_TOPIC = (
 def _make_agent_state(raw_input: str) -> AgentState:
     """构造仅替换 raw_input 的工作流状态。"""
     return AgentState(
-        current_step="",
+        next_node="",
+        run_status="pending",
         raw_input=raw_input,
         api_doc_file_path="",
         user_intent="",
         test_mode="",
         selected_endpoints=[],
-        test_results=[],
-        test_summary={},
+        endpoint_count=0,
         run_id=1,
         test_cases_count=1,
         test_results_summary={},
         report_path="",
         error_message="",
+        audit_result="",
         messages=[],
     )
 

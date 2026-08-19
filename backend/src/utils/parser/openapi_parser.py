@@ -44,7 +44,7 @@ from src.core.logging import get_logger
 logger = get_logger(__name__)
 
 try:
-    import yaml
+    import yaml  # type: ignore[import-untyped]
 
     _HAS_YAML = True
 except ImportError:
@@ -298,7 +298,7 @@ class OpenAPIParser:
     #  公开方法 - 格式化输出
     # ----------------------------------------------------------------
 
-    def print_summary(self, output: TextIO = None):
+    def print_summary(self, output: TextIO | None = None):
         """打印文档摘要到终端
 
         Args:
@@ -320,7 +320,7 @@ class OpenAPIParser:
         )
         out.write(f"  方法: {s['methods']}\n\n")
 
-    def print_endpoints(self, tag: str = None, output: TextIO = None):
+    def print_endpoints(self, tag: str | None = None, output: TextIO | None = None):
         """
         打印接口列表
 
@@ -334,7 +334,7 @@ class OpenAPIParser:
             dep = " [废弃]" if ep["deprecated"] else ""
             out.write(f"  {ep['method']:7s} {ep['path']:40s} {ep['summary']}{dep}\n")
 
-    def print_endpoint_detail(self, path: str, method: str, output: TextIO = None):
+    def print_endpoint_detail(self, path: str, method: str, output: TextIO | None = None):
         """打印单个接口详情
 
         Args:
@@ -805,7 +805,7 @@ class OpenAPIParser:
 
         return resp
 
-    def _print_schema_props(self, schema: dict, indent: int = 4, output: TextIO = None):
+    def _print_schema_props(self, schema: dict, indent: int = 4, output: TextIO | None = None):
         """辅助: 打印 schema 属性"""
         out = output or sys.stdout
         props = schema.get("properties", {})

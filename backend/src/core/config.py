@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -69,7 +69,7 @@ class LLMConfig(BaseModel):
     bedrock: BedrockConfig = Field(default_factory=BedrockConfig)
     zhipu: ZhipuConfig = Field(default_factory=ZhipuConfig)
     qwen: QwenConfig = Field(default_factory=QwenConfig)
-    deepseek: DeepseekConfig = Field(default=DeepseekConfig)
+    deepseek: DeepseekConfig = Field(default_factory=DeepseekConfig)
 
 
 class RetryConfig(BaseModel):

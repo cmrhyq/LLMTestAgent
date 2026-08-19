@@ -1,4 +1,8 @@
-"""Graph 节点实现模块。"""
+"""Graph 节点实现模块。
+
+说明：``task_complexity_node`` 属于实验代码，未接入工作流图
+（见 doc/design/Refactor-Remaining.md 3.7 决策 B），不再从这里导出。
+"""
 
 from src.graph.nodes.execute_flow_tests_node import execute_flow_tests_node
 from src.graph.nodes.execute_single_tests_node import execute_single_tests_node
@@ -11,7 +15,6 @@ from src.graph.nodes.select_endpoints_node import (
     parse_endpoints_result_node,
     select_endpoints_agent_node,
 )
-from src.graph.nodes.task_complexity_node import task_complexity_node
 
 __all__ = [
     "execute_flow_tests_node",
@@ -23,5 +26,4 @@ __all__ = [
     "parse_input_node",
     "parse_openapi_node",
     "select_endpoints_agent_node",
-    "task_complexity_node",
 ]

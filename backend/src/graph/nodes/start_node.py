@@ -1,6 +1,8 @@
 """起始节点：验证输入并初始化状态。"""
 
 from src.core.logging import get_logger
+from src.data.enum.workflow import TestStatus
+from src.graph.constants import NodeName
 from src.graph.state import AgentState
 
 logger = get_logger(__name__)
@@ -18,19 +20,21 @@ def start_node(state: AgentState) -> dict:
     api_doc = state.get("api_doc_file_path", "无")
     logger.info(
         f"进入开始节点，指令: {raw_input[:80]}，文档: {api_doc}",
-        node="start",
+        node=NodeName.START.value,
         raw_input=raw_input,
         api_doc=api_doc,
     )
 
     if not raw_input:
-        logger.warning("输入为空，无法继续工作流", node="start")
+        logger.warning("输入为空，无法继续工作流", node=NodeName.START.value)
         return {
-            "current_step": "error",
+            "next_node": NodeName.ERROR.value,
+            "run_status": TestStatus.FAILED.value,
             "error_message": "输入为空，无法进行工作流",
         }
 
     return {
-        "current_step": "parse_input",
+        "next_node": NodeName.PARSE_INPUT.value,
+        "run_status": TestStatus.PENDING.value,
         "error_message": "",
     }

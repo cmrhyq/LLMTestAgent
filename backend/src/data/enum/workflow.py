@@ -53,6 +53,8 @@ class TestStatus(str, Enum):
     FAILED = "failed"  # 失败
     SKIPPED = "skipped"  # 跳过
     ERROR = "error"  # 错误
+    COMPLETED = "completed"  # 完成（TestRun 终态）
+    CANCELLED = "cancelled"  # 已取消（TestRun 终态）
 
 
 class ScenarioType(str, Enum):
