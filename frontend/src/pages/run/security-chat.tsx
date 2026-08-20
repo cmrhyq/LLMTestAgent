@@ -20,9 +20,6 @@ export default function SecurityChatPage() {
 
     mode,
     setMode,
-    file,
-    uploadedPath,
-    isUploading,
     pendingUser,
     answer,
     isStreaming,
@@ -31,8 +28,6 @@ export default function SecurityChatPage() {
     handleSubmit,
     handleKeyDown,
     handleInstructionChange,
-    handleFileSelect,
-    handleRemoveFile,
 
     showWelcome,
   } = useSecurityChat({
@@ -92,19 +87,14 @@ export default function SecurityChatPage() {
       </div>
 
       {/* Composer：空会话（欢迎态）时位于页面中下方，有消息时贴底跟随滚动 */}
-      <div className={cn("shrink-0 px-4 pb-6", showWelcome && "flex justify-center pt-[65vh]")}>
+      <div className={cn("shrink-0 px-4 pb-6", showWelcome && "flex justify-center pt-[50vh]")}>
         <ChatInput
           instruction={instruction}
           onInstructionChange={handleInstructionChange}
           onKeyDown={handleKeyDown}
           mode={mode}
           onModeChange={setMode}
-          file={file}
-          isUploading={isUploading}
-          uploadedPath={uploadedPath}
           isStreaming={isStreaming}
-          onFileSelect={handleFileSelect}
-          onRemoveFile={handleRemoveFile}
           onSubmit={handleSubmit}
         />
       </div>

@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { FolderInput, Loader2, Plus, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { DataTable } from "@/components/shared/data-table.tsx";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog.tsx";
+import { useParseOpenAPI } from "@/hooks/use-workflows.ts";
 import { buildEndpointColumns } from "../columns";
 import type { Endpoint } from "@/lib/types.ts";
 
@@ -34,6 +35,9 @@ export function EndpointsTab({
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Endpoint | null>(null);
 
+  const { mutate: importOpenAPI, isPending: isImporting } = useParseOpenAPI();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const filtered = useMemo(() => {
     if (!search.trim()) return data;
     const keyword = search.toLowerCase();
@@ -50,9 +54,19 @@ export function EndpointsTab({
     onDelete: (endpoint) => setDeleteTarget(endpoint),
   });
 
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0];
+    if (selected) {
+      const formData = new FormData();
+      formData.append("file", selected);
+      importOpenAPI(formData);
+    }
+    e.target.value = "";
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -62,10 +76,32 @@ export function EndpointsTab({
             className="pl-9"
           />
         </div>
-        <Button size="sm" onClick={onAdd}>
-          <Plus className="mr-2 h-4 w-4" />
-          添加接口
-        </Button>
+        <div className="ml-auto flex items-center gap-2">
+          <Button size="sm" onClick={onAdd}>
+            <Plus className="mr-2 h-4 w-4" />
+            添加接口
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,.yaml,.yml"
+            onChange={handleImportFile}
+            className="hidden"
+          />
+          <Button
+            size="sm"
+            className="bg-cyan-500 border-cyan-500"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isImporting}
+          >
+            {isImporting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <FolderInput className="mr-2 h-4 w-4" />
+            )}
+            导入
+          </Button>
+        </div>
       </div>
 
       <DataTable

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { useUploadOpenAPI } from "@/hooks/use-workflows.ts";
 import { useConversationMessages } from "@/hooks/use-conversations.ts";
 import { streamChat } from "@/lib/stream.ts";
 import { queryKeys } from "@/lib/query-keys";
@@ -19,14 +18,11 @@ export function useSecurityChat({ conversationId, spaceId, onConversationCreated
 
   const [instruction, setInstruction] = useState("");
   const [mode, setMode] = useState("Ask");
-  const [file, setFile] = useState<File | null>(null);
-  const [uploadedPath, setUploadedPath] = useState<string | null>(null);
 
   const [pendingUser, setPendingUser] = useState<string | null>(null);
   const [answer, setAnswer] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
 
-  const { mutate: uploadFile, isPending: isUploading } = useUploadOpenAPI();
   const { data: messagesData, isLoading: messagesLoading } =
     useConversationMessages(conversationId);
   const serverMessages = messagesData?.items ?? [];
@@ -42,7 +38,7 @@ export function useSecurityChat({ conversationId, spaceId, onConversationCreated
   }
 
   const handleSubmit = async () => {
-    if (!instruction.trim() || isStreaming || isUploading) return;
+    if (!instruction.trim() || isStreaming) return;
 
     const prompt = instruction.trim();
     setInstruction("");
@@ -56,7 +52,6 @@ export function useSecurityChat({ conversationId, spaceId, onConversationCreated
       await streamChat(
         {
           instruction: prompt,
-          api_doc_path: uploadedPath,
           conversation_id: conversationId ?? undefined,
           mode,
           space_id: spaceId ?? undefined,
@@ -105,31 +100,6 @@ export function useSecurityChat({ conversationId, spaceId, onConversationCreated
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (selected) {
-      setFile(selected);
-      setUploadedPath(null);
-      const formData = new FormData();
-      formData.append("file", selected);
-      uploadFile(formData, {
-        onSuccess: (res) => {
-          setUploadedPath(res.path);
-        },
-        onError: () => {
-          setFile(null);
-          setUploadedPath(null);
-        },
-      });
-    }
-    e.target.value = "";
-  };
-
-  const handleRemoveFile = () => {
-    setFile(null);
-    setUploadedPath(null);
-  };
-
   const hasMessages = serverMessages.length > 0 || pendingUser !== null || isStreaming;
   const showWelcome = !hasMessages && !messagesLoading;
 
@@ -138,9 +108,6 @@ export function useSecurityChat({ conversationId, spaceId, onConversationCreated
     setInstruction,
     mode,
     setMode,
-    file,
-    uploadedPath,
-    isUploading,
     pendingUser,
     answer,
     isStreaming,
@@ -149,8 +116,6 @@ export function useSecurityChat({ conversationId, spaceId, onConversationCreated
     handleSubmit,
     handleKeyDown,
     handleInstructionChange,
-    handleFileSelect,
-    handleRemoveFile,
     hasMessages,
     showWelcome,
   };

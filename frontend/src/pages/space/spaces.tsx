@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown, MoreHorizontal, Pencil, Plus, Search } from "lucide-react";
+import { ChevronDown, MoreHorizontal, Pencil, Plus, Search, Trash2 } from "lucide-react";
 
 import { useSpaces, useDeleteSpace } from "@/hooks/use-spaces.ts";
 import { useDebouncedValue } from "@/hooks/use-debounced-value.ts";
@@ -94,7 +94,7 @@ export default function SpacesPage() {
       key: "status",
       header: "状态",
       render: (_, row) => (
-        <Badge variant={row.status === 1 ? "default" : "secondary"}>
+        <Badge variant={row.status === 1 ? "success" : "secondary"}>
           {STATUS_MAP[row.status] ?? "未知"}
         </Badge>
       ),
@@ -103,7 +103,9 @@ export default function SpacesPage() {
       key: "created_at",
       header: "创建时间",
       render: (_, row) => (
-        <span className="font-mono text-xs text-muted-foreground">{formatDate(row.created_at)}</span>
+        <span className="font-mono text-xs text-muted-foreground">
+          {formatDate(row.created_at)}
+        </span>
       ),
     },
     {
@@ -128,6 +130,7 @@ export default function SpacesPage() {
               编辑
             </DropdownMenuItem>
             <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(row)}>
+              <Trash2 className="h-3.5 w-3.5" />
               删除
             </DropdownMenuItem>
           </DropdownMenuContent>

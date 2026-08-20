@@ -91,7 +91,7 @@ export default function SpaceDetailPage() {
                   <Globe className="h-3.5 w-3.5" />
                   {space.base_url}
                 </span>
-                <Badge variant={space.status === 1 ? "default" : "secondary"}>
+                <Badge variant={space.status === 1 ? "success" : "secondary"}>
                   {SPACE_STATUS_MAP[space.status] ?? "未知"}
                 </Badge>
               </div>
