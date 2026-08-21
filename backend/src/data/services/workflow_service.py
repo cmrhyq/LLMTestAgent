@@ -4,9 +4,12 @@
 路由层只负责收文件、调 Service、返回 schema。
 """
 
+import json
 import tempfile
 import uuid
+from collections.abc import AsyncIterator
 from pathlib import Path
+from typing import Any
 
 from src.core.config import get_config
 from src.core.errors import ValidationError
@@ -93,3 +96,29 @@ class WorkflowService:
             return {"endpoint_count": result.get("endpoint_count", 0)}
         finally:
             tmp_path.unlink(missing_ok=True)
+
+    async def run_stream(self, body: Any) -> AsyncIterator[str]:
+        """以 SSE 格式流式运行测试工作流。
+
+        事件以 ``data: {json}\\n\\n`` 输出，事件内容来自
+        ``TestWorkflow.astream`` / ``astream_events`` 的结构化事件 dict。
+        ``body.include_tokens`` 为真时走事件级流式（含 LLM token 增量），
+        否则走节点级进度流式。
+
+        Args:
+            body: ``WorkflowRunStreamRequest`` 请求体
+
+        Yields:
+            str: SSE 格式的文本行
+        """
+        api_doc_file_path = body.api_doc_file_path or None
+        workflow = TestWorkflow(get_config())
+
+        generator = (
+            workflow.astream_events(body.raw_input, api_doc_file_path)
+            if body.include_tokens
+            else workflow.astream(body.raw_input, api_doc_file_path)
+        )
+
+        async for event in generator:
+            yield f"data: {json.dumps(event, ensure_ascii=False, default=str)}\n\n"
