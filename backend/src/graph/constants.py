@@ -38,6 +38,7 @@ class NodeName(str, Enum):
     GENERATE_FLOW_CASES = "generate_flow_cases"
     EXECUTE_FLOW_TESTS = "execute_flow_tests"
     GENERATE_REPORT = "generate_report"
+    ANSWER_QUESTION = "answer_question"
     PARSE_OPENAPI_DOC = "parse_openapi_doc"
     END = "end"
     ERROR = "error"
