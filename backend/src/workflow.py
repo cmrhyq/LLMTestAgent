@@ -162,8 +162,8 @@ def build_graph() -> CompiledStateGraph:
 
     # single / flow 分支：生成 → 执行 → 报告，错误统一走 error
     for generate_node, execute_node in (
-        (NodeName.GENERATE_SINGLE_CASES, NodeName.EXECUTE_SINGLE_TESTS),
-        (NodeName.GENERATE_FLOW_CASES, NodeName.EXECUTE_FLOW_TESTS),
+            (NodeName.GENERATE_SINGLE_CASES, NodeName.EXECUTE_SINGLE_TESTS),
+            (NodeName.GENERATE_FLOW_CASES, NodeName.EXECUTE_FLOW_TESTS),
     ):
         workflow.add_conditional_edges(
             generate_node.value,
@@ -215,9 +215,9 @@ class TestWorkflow:
         self.graph = build_graph()
 
     def _build_initial_state(
-        self,
-        raw_input: str,
-        api_doc_file_path: Path | None = None,
+            self,
+            raw_input: str,
+            api_doc_file_path: Path | None = None,
     ) -> dict[str, Any]:
         """构造工作流初始状态。
 
@@ -247,9 +247,9 @@ class TestWorkflow:
         }
 
     def run(
-        self,
-        raw_input: str,
-        api_doc_file_path: Path | None = None,
+            self,
+            raw_input: str,
+            api_doc_file_path: Path | None = None,
     ) -> dict[str, Any]:
         """运行工作流。
 
@@ -288,11 +288,11 @@ class TestWorkflow:
     # ------------------------------------------------------------------
 
     def stream(
-        self,
-        raw_input: str,
-        api_doc_file_path: Path | None = None,
-        *,
-        include_updates: bool = True,
+            self,
+            raw_input: str,
+            api_doc_file_path: Path | None = None,
+            *,
+            include_updates: bool = True,
     ) -> Iterator[dict[str, Any]]:
         """同步流式运行工作流，按节点产出结构化事件。
 
@@ -342,11 +342,11 @@ class TestWorkflow:
         yield {"type": "final", "state": final_state or initial_state, "timestamp": _now()}
 
     async def astream(
-        self,
-        raw_input: str,
-        api_doc_file_path: Path | None = None,
-        *,
-        include_updates: bool = True,
+            self,
+            raw_input: str,
+            api_doc_file_path: Path | None = None,
+            *,
+            include_updates: bool = True,
     ) -> AsyncIterator[dict[str, Any]]:
         """异步流式运行工作流，按节点产出结构化事件。
 
@@ -396,9 +396,9 @@ class TestWorkflow:
         yield {"type": "final", "state": final_state or initial_state, "timestamp": _now()}
 
     async def astream_events(
-        self,
-        raw_input: str,
-        api_doc_file_path: Path | None = None,
+            self,
+            raw_input: str,
+            api_doc_file_path: Path | None = None,
     ) -> AsyncIterator[dict[str, Any]]:
         """事件级流式运行工作流，额外产出 LLM token 增量。
 
@@ -447,4 +447,3 @@ class TestWorkflow:
             return
 
         yield {"type": "final", "state": final_state or initial_state, "timestamp": _now()}
-

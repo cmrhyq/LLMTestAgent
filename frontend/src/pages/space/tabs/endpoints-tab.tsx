@@ -10,6 +10,8 @@ import { buildEndpointColumns } from "../columns";
 import type { Endpoint } from "@/lib/types.ts";
 
 export interface EndpointsTabProps {
+  /** 当前空间 id，用于 OpenAPI 导入接口 */
+  spaceId: string | number;
   data: Endpoint[];
   total: number;
   loading: boolean;
@@ -22,6 +24,7 @@ export interface EndpointsTabProps {
 }
 
 export function EndpointsTab({
+  spaceId,
   data,
   total,
   loading,
@@ -35,7 +38,7 @@ export function EndpointsTab({
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Endpoint | null>(null);
 
-  const { mutate: importOpenAPI, isPending: isImporting } = useParseOpenAPI();
+  const { mutate: importOpenAPI, isPending: isImporting } = useParseOpenAPI(Number(spaceId));
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filtered = useMemo(() => {
@@ -90,7 +93,7 @@ export function EndpointsTab({
           />
           <Button
             size="sm"
-            className="bg-cyan-500 border-cyan-500"
+            variant="outline"
             onClick={() => fileInputRef.current?.click()}
             disabled={isImporting}
           >

@@ -6,14 +6,18 @@ import { queryKeys } from "@/lib/query-keys";
 import type { ParseOpenAPIResponse } from "@/lib/types";
 
 /** 上传并解析 OpenAPI 文档，把接口定义写入数据库。 */
-export function useParseOpenAPI() {
+export function useParseOpenAPI(space_id: number) {
   const queryClient = useQueryClient();
 
   return useMutation<ParseOpenAPIResponse, Error, FormData>({
     mutationFn: async (formData) => {
-      const { data } = await api.post<ParseOpenAPIResponse>("/workflows/parse/openapi", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const { data } = await api.post<ParseOpenAPIResponse>(
+        `/workflows/parse/openapi/${space_id}`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
       return data;
     },
     onSuccess: (data) => {

@@ -50,7 +50,7 @@ class WorkflowRunStreamRequest(BaseModel):
 
 @router.post("/upload/openapi", response_model=UploadOpenAPIResponse)
 async def upload_openapi(
-    file: UploadFile = File(..., description="OpenAPI 文档文件（JSON/YAML）"),
+        file: UploadFile = File(..., description="OpenAPI 文档文件（JSON/YAML）"),
 ):
     """上传 OpenAPI 文档并持久化保存，返回服务器路径供后续运行测试使用。"""
     service = WorkflowService()
@@ -65,14 +65,15 @@ async def upload_openapi(
     )
 
 
-@router.post("/parse/openapi", response_model=ParseOpenAPIRequest)
+@router.post("/parse/openapi/{space_id}", response_model=ParseOpenAPIRequest)
 async def parse_openapi(
-    file: UploadFile = File(..., description="OpenAPI 文档文件（JSON/YAML）"),
+        space_id: int,
+        file: UploadFile = File(..., description="OpenAPI 文档文件（JSON/YAML）"),
 ):
     """上传并解析 OpenAPI 文档，将接口定义存入数据库。"""
     service = WorkflowService()
     content = await file.read()
-    result = await run_in_threadpool(service.parse_openapi, file.filename or "", content)
+    result = await run_in_threadpool(service.parse_openapi, space_id, file.filename or "", content)
 
     return ParseOpenAPIRequest(
         status=TestStatus.COMPLETED.value,

@@ -112,6 +112,7 @@ export default function SpaceDetailPage() {
 
         <TabsContent value="endpoints" className="space-y-4">
           <EndpointsTab
+            spaceId={spaceId}
             data={endpointsData?.items ?? []}
             total={endpointsData?.total ?? 0}
             loading={endpointsLoading}
