@@ -8,6 +8,7 @@ import {
   StreamingAssistantMessage,
 } from "@/components/chat/message-bubbles";
 import { ChatInput } from "@/components/chat/chat-input";
+import { SpaceSelector } from "@/components/space/space-selector";
 import { cn } from "@/lib/utils";
 
 export default function SecurityChatPage() {
@@ -17,7 +18,6 @@ export default function SecurityChatPage() {
 
   const {
     instruction,
-
     mode,
     setMode,
     pendingUser,
@@ -28,7 +28,6 @@ export default function SecurityChatPage() {
     handleSubmit,
     handleKeyDown,
     handleInstructionChange,
-
     showWelcome,
   } = useSecurityChat({
     conversationId,
@@ -44,6 +43,14 @@ export default function SecurityChatPage() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [serverMessages.length, pendingUser, answer]);
+
+  // 切换空间：清空 conversation_id（每个会话归属一个空间，避免历史消息与新空间错配）。
+  // spaceId 仍由 URL 直接驱动，useSecurityChat 在 spaceId 变化时自动重载上下文。
+  const handleSpaceChange = (nextSpaceId: string | number) => {
+    const next = new URLSearchParams();
+    next.set("space_id", String(nextSpaceId));
+    setSearchParams(next, { replace: true });
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -88,15 +95,20 @@ export default function SecurityChatPage() {
 
       {/* Composer：空会话（欢迎态）时位于页面中下方，有消息时贴底跟随滚动 */}
       <div className={cn("shrink-0 px-4 pb-6", showWelcome && "flex justify-center pt-[50vh]")}>
-        <ChatInput
-          instruction={instruction}
-          onInstructionChange={handleInstructionChange}
-          onKeyDown={handleKeyDown}
-          mode={mode}
-          onModeChange={setMode}
-          isStreaming={isStreaming}
-          onSubmit={handleSubmit}
-        />
+        <div className="mx-auto w-full max-w-3xl">
+          <ChatInput
+            instruction={instruction}
+            onInstructionChange={handleInstructionChange}
+            onKeyDown={handleKeyDown}
+            mode={mode}
+            onModeChange={setMode}
+            isStreaming={isStreaming}
+            onSubmit={handleSubmit}
+          />
+          <div className="mt-2 flex items-center gap-2">
+            <SpaceSelector value={spaceId} onChange={handleSpaceChange} />
+          </div>
+        </div>
       </div>
     </div>
   );
