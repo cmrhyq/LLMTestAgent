@@ -34,13 +34,10 @@ function findCurrentSpace(spaces: Space[], value: Id | null): Space | undefined 
 }
 
 /**
- * 选择工作空间 pill 按钮。
+ * 工作空间选择器（蓝图标注式）。
  *
- * 视觉与 ChatInput 内 mode 选择器保持一致（同一段 className）：
- * - 公文包图标 + 空间名 / 占位符 + ChevronDown
- * - 加载中：图标位置变为 Loader2 旋转
- * - 错误 / 列表为空：按钮 disabled + 占位文案
- * - 下拉内容与 ChatInput dropdown 同款（shadow-popover），支持空态提示行
+ * 视觉语言对齐「工业蓝图」：直角描边 chip + mono ``SPACE`` 标注前缀，
+ * 与 Composer 的墨线风格统一；下拉项展示空间名 + base_url（mono 副行）。
  */
 export function SpaceSelector({
   value,
@@ -63,19 +60,33 @@ export function SpaceSelector({
           type="button"
           disabled={isDisabled}
           className={cn(
-            "flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground shadow-xs transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+            "group inline-flex h-8 items-center gap-2 rounded-[2px] border border-border bg-card px-2.5 shadow-xs transition-colors duration-200 ease-out-expo",
+            "hover:border-primary/50 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            "disabled:cursor-not-allowed disabled:opacity-40"
           )}
         >
-          {isLoading ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Briefcase className="h-3.5 w-3.5" />
-          )}
-          <span className="max-w-[160px] truncate">{label}</span>
-          <ChevronDown className="h-3.5 w-3.5" />
+          {/* mono 标注前缀：SPACE */}
+          <span className="hidden items-center gap-1 text-[10px] font-medium uppercase tracking-widest text-muted-foreground sm:flex">
+            <Briefcase className="h-3.5 w-3.5 text-primary" />
+            Space
+          </span>
+
+          <span
+            className={cn(
+              "max-w-[180px] truncate font-mono text-xs",
+              current ? "font-medium text-foreground" : "text-muted-foreground"
+            )}
+          >
+            {label}
+          </span>
+
+          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ease-out-expo group-data-[state=open]:rotate-180" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="min-w-[180px] shadow-popover" align="start">
+      <DropdownMenuContent className="min-w-[220px] shadow-popover" align="start">
+        <div className="px-2.5 pb-1 pt-2 font-mono text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+          Work Spaces
+        </div>
         {spaces.length === 0 ? (
           <DropdownMenuItem disabled className="text-muted-foreground">
             暂无可用空间，请先在仪表盘创建
@@ -87,10 +98,21 @@ export function SpaceSelector({
               <DropdownMenuItem
                 key={String(space.id)}
                 onClick={() => onChange(space.id)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2.5"
               >
-                <Briefcase className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <span className="flex-1 truncate">{space.name}</span>
+                <span
+                  className={cn(
+                    "h-1.5 w-1.5 shrink-0 rounded-full",
+                    isSelected ? "bg-primary" : "bg-muted-foreground/40"
+                  )}
+                  aria-hidden="true"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm text-foreground">{space.name}</span>
+                  <span className="block truncate font-mono text-[11px] text-muted-foreground">
+                    {space.base_url || "—"}
+                  </span>
+                </span>
                 {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
               </DropdownMenuItem>
             );

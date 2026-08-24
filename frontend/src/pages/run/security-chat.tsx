@@ -9,7 +9,6 @@ import {
 } from "@/components/chat/message-bubbles";
 import { ChatInput } from "@/components/chat/chat-input";
 import { SpaceSelector } from "@/components/space/space-selector";
-import { cn } from "@/lib/utils";
 
 export default function SecurityChatPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -93,8 +92,8 @@ export default function SecurityChatPage() {
         )}
       </div>
 
-      {/* Composer：空会话（欢迎态）时位于页面中下方，有消息时贴底跟随滚动 */}
-      <div className={cn("shrink-0 px-4 pb-6", showWelcome && "flex justify-center pt-[50vh]")}>
+      {/* Composer：固定在页面底部 */}
+      <div className="shrink-0 px-4 pb-6">
         <div className="mx-auto w-full max-w-3xl">
           <ChatInput
             instruction={instruction}
@@ -105,8 +104,12 @@ export default function SecurityChatPage() {
             isStreaming={isStreaming}
             onSubmit={handleSubmit}
           />
-          <div className="mt-2 flex items-center gap-2">
+          {/* 上下文条：左侧工作空间选择器，右侧 mono 提示 */}
+          <div className="mt-2 flex items-center justify-between gap-2">
             <SpaceSelector value={spaceId} onChange={handleSpaceChange} />
+            <span className="hidden font-mono text-[10px] uppercase tracking-widest text-muted-foreground/70 sm:block">
+              Context · Space
+            </span>
           </div>
         </div>
       </div>

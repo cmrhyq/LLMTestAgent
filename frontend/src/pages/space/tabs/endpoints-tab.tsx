@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { FolderInput, Loader2, Plus, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button.tsx";
@@ -12,6 +12,9 @@ import type { Endpoint } from "@/lib/types.ts";
 export interface EndpointsTabProps {
   /** 当前空间 id，用于 OpenAPI 导入接口 */
   spaceId: string | number;
+  /** 搜索关键字（受控，父组件防抖后发往服务端过滤） */
+  keyword: string;
+  onKeywordChange(keyword: string): void;
   data: Endpoint[];
   total: number;
   loading: boolean;
@@ -27,6 +30,8 @@ export interface EndpointsTabProps {
 
 export function EndpointsTab({
   spaceId,
+  keyword,
+  onKeywordChange,
   data,
   total,
   loading,
@@ -39,22 +44,10 @@ export function EndpointsTab({
   onEdit,
   onDelete,
 }: EndpointsTabProps) {
-  const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Endpoint | null>(null);
 
   const { mutate: importOpenAPI, isPending: isImporting } = useParseOpenAPI(Number(spaceId));
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const filtered = useMemo(() => {
-    if (!search.trim()) return data;
-    const keyword = search.toLowerCase();
-    return data.filter(
-      (ep) =>
-        ep.name.toLowerCase().includes(keyword) ||
-        ep.path.toLowerCase().includes(keyword) ||
-        ep.method.toLowerCase().includes(keyword)
-    );
-  }, [data, search]);
 
   const columns = buildEndpointColumns({
     onEdit,
@@ -78,8 +71,8 @@ export function EndpointsTab({
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="搜索接口…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={keyword}
+            onChange={(e) => onKeywordChange(e.target.value)}
             className="pl-9"
           />
         </div>
@@ -113,7 +106,7 @@ export function EndpointsTab({
 
       <DataTable
         columns={columns}
-        data={filtered}
+        data={data}
         loading={loading}
         error={error}
         onRetry={onRetry}

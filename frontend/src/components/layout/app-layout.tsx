@@ -41,7 +41,7 @@ export function AppLayout() {
           <ErrorBoundary>
             <div
               key={location.pathname}
-              className="flex min-h-full flex-col animate-in fade-in-0 slide-in-from-bottom-1 duration-300 ease-out-expo"
+              className="flex h-full flex-col animate-in fade-in-0 slide-in-from-bottom-1 duration-300 ease-out-expo"
             >
               <Outlet />
             </div>

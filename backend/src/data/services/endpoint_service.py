@@ -40,7 +40,12 @@ class EndpointService(BaseService[Endpoint, EndpointRepository]):
         if keyword:
             pattern = f"%{keyword}%"
             filters.append(
-                or_(Endpoint.name.ilike(pattern), Endpoint.path.ilike(pattern), Endpoint.summary.ilike(pattern))
+                or_(
+                    Endpoint.name.ilike(pattern),
+                    Endpoint.path.ilike(pattern),
+                    Endpoint.summary.ilike(pattern),
+                    Endpoint.method.ilike(pattern),
+                )
             )
         return self.list(page, page_size, *filters)
 

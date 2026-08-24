@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Globe } from "lucide-react";
 
@@ -6,6 +6,7 @@ import { useSpace } from "@/hooks/use-spaces.ts";
 import { useEndpoints, useDeleteEndpoint } from "@/hooks/use-endpoints.ts";
 import { useEnvironments, useDeleteEnvironment } from "@/hooks/use-environments.ts";
 import { useTestRuns } from "@/hooks/use-test-runs.ts";
+import { useDebouncedValue } from "@/hooks/use-debounced-value.ts";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
@@ -35,13 +36,25 @@ export default function SpaceDetailPage() {
 
   const [endpointPage, setEndpointPage] = useState(1);
   const [testRunPage, setTestRunPage] = useState(1);
+  const [endpointKeyword, setEndpointKeyword] = useState("");
+  const debouncedEndpointKeyword = useDebouncedValue(endpointKeyword, 300);
 
-  const { data: endpointsData, isLoading: endpointsLoading, isError: endpointsError, refetch: refetchEndpoints } =
-    useEndpoints({
-      space_id: spaceId,
-      page: endpointPage,
-      page_size: PAGE_SIZE,
-    });
+  // 搜索条件变化时回到第 1 页
+  useEffect(() => {
+    setEndpointPage(1);
+  }, [debouncedEndpointKeyword]);
+
+  const {
+    data: endpointsData,
+    isLoading: endpointsLoading,
+    isError: endpointsError,
+    refetch: refetchEndpoints,
+  } = useEndpoints({
+    space_id: spaceId,
+    keyword: debouncedEndpointKeyword || undefined,
+    page: endpointPage,
+    page_size: PAGE_SIZE,
+  });
   const {
     data: environmentsData,
     isLoading: environmentsLoading,
@@ -124,6 +137,8 @@ export default function SpaceDetailPage() {
         <TabsContent value="endpoints" className="space-y-4">
           <EndpointsTab
             spaceId={spaceId}
+            keyword={endpointKeyword}
+            onKeywordChange={setEndpointKeyword}
             data={endpointsData?.items ?? []}
             total={endpointsData?.total ?? 0}
             loading={endpointsLoading}
