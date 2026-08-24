@@ -53,6 +53,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           "flex h-full min-h-0 min-w-[250px] flex-col overflow-hidden transition-opacity duration-200",
           collapsed ? "pointer-events-none opacity-0" : "opacity-100"
         )}
+        inert={collapsed ? true : undefined}
       >
         <div className="flex items-start justify-between gap-2 border-b border-border-subtle px-4 pb-3 pt-4">
           <Link to="/dashboard" className="flex min-w-0 items-start gap-2.5 no-underline">

@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { StatusBadge } from "@/components/shared/status-badge.tsx";
 import { HttpMethodBadge } from "@/components/shared/http-method-badge.tsx";
 import { PassRateBar } from "@/components/shared/pass-rate-bar.tsx";
+import { QueryErrorState } from "@/components/shared/query-error-state.tsx";
 import { DataTable } from "@/components/shared/data-table.tsx";
 import type { Column } from "@/components/shared/data-table.tsx";
 import type { TestCaseBrief, TestResultBrief } from "@/lib/types.ts";
@@ -82,7 +83,7 @@ export default function RunDetailPage() {
   const navigate = useNavigate();
   const runId = id || "";
 
-  const { data, isLoading, isError } = useTestRunDetail(runId);
+  const { data, isLoading, isError, refetch } = useTestRunDetail(runId);
   const { data: reportsData } = useReports({ run_id: runId });
 
   const isActive = data?.status === "running" || data?.status === "pending";
@@ -110,7 +111,14 @@ export default function RunDetailPage() {
           <ArrowLeft className="mr-2 h-4 w-4" />
           返回
         </Button>
-        <p className="text-destructive">加载运行详情失败。</p>
+        <QueryErrorState
+          message="加载运行详情失败"
+          action={
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              重试
+            </Button>
+          }
+        />
       </div>
     );
   }

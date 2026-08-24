@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useCreateSpace, useUpdateSpace } from "@/hooks/use-spaces";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,36 +31,57 @@ const STATUS_OPTIONS = [
   { value: 0, label: "未启用" },
 ] as const;
 
+const spaceSchema = z.object({
+  name: z.string().trim().min(1, "请输入空间名称").max(50, "名称不能超过 50 字"),
+  base_url: z.string().trim().min(1, "请输入基础 URL").url("请输入有效的 URL，如 https://api.example.com"),
+  description: z.string().max(200, "描述不能超过 200 字").optional(),
+  status: z.number(),
+});
+
+type SpaceFormValues = z.infer<typeof spaceSchema>;
+
 function SpaceFormContent({ space, onClose }: SpaceFormContentProps) {
   const isEdit = !!space;
 
-  const [name, setName] = useState(space?.name ?? "");
-  const [baseUrl, setBaseUrl] = useState(space?.base_url ?? "");
-  const [description, setDescription] = useState(space?.description ?? "");
-  const [status, setStatus] = useState<number>(space?.status ?? 1);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SpaceFormValues>({
+    resolver: zodResolver(spaceSchema),
+    defaultValues: {
+      name: space?.name ?? "",
+      base_url: space?.base_url ?? "",
+      description: space?.description ?? "",
+      status: space?.status ?? 1,
+    },
+  });
 
   const createSpace = useCreateSpace();
   const updateSpace = useUpdateSpace();
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
+  const onSubmit = handleSubmit((values) => {
     if (isEdit && space) {
       updateSpace.mutate(
-        { id: space.id, payload: { name, base_url: baseUrl, description, status } },
+        { id: space.id, payload: values },
         { onSuccess: () => onClose() }
       );
     } else {
       // 创建时不带 status，保持后端默认
-      createSpace.mutate({ name, base_url: baseUrl, description }, { onSuccess: () => onClose() });
+      const createPayload = {
+        name: values.name,
+        base_url: values.base_url,
+        description: values.description,
+      };
+      createSpace.mutate(createPayload, { onSuccess: () => onClose() });
     }
-  }
+  });
 
   const isPending = createSpace.isPending || updateSpace.isPending;
   const errorMessage = createSpace.error?.message || updateSpace.error?.message;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
         <label htmlFor="space-name" className="text-sm font-medium">
           名称
@@ -66,10 +89,15 @@ function SpaceFormContent({ space, onClose }: SpaceFormContentProps) {
         <Input
           id="space-name"
           placeholder="我的 API 空间"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
+          aria-invalid={!!errors.name}
+          aria-describedby={errors.name ? "space-name-error" : undefined}
+          {...register("name")}
         />
+        {errors.name && (
+          <p id="space-name-error" role="alert" className="text-xs text-destructive">
+            {errors.name.message}
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -79,10 +107,15 @@ function SpaceFormContent({ space, onClose }: SpaceFormContentProps) {
         <Input
           id="space-base-url"
           placeholder="https://api.example.com"
-          value={baseUrl}
-          onChange={(e) => setBaseUrl(e.target.value)}
-          required
+          aria-invalid={!!errors.base_url}
+          aria-describedby={errors.base_url ? "space-base-url-error" : undefined}
+          {...register("base_url")}
         />
+        {errors.base_url && (
+          <p id="space-base-url-error" role="alert" className="text-xs text-destructive">
+            {errors.base_url.message}
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -92,9 +125,13 @@ function SpaceFormContent({ space, onClose }: SpaceFormContentProps) {
         <Input
           id="space-description"
           placeholder="可选描述"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          {...register("description")}
         />
+        {errors.description && (
+          <p role="alert" className="text-xs text-destructive">
+            {errors.description.message}
+          </p>
+        )}
       </div>
 
       {isEdit && (
@@ -104,8 +141,7 @@ function SpaceFormContent({ space, onClose }: SpaceFormContentProps) {
           </label>
           <select
             id="space-status"
-            value={status}
-            onChange={(e) => setStatus(Number(e.target.value))}
+            {...register("status", { valueAsNumber: true })}
             className="flex h-9 w-full rounded-md border-thin border-border/50 bg-input px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:shadow-card"
           >
             {STATUS_OPTIONS.map((opt) => (
@@ -117,7 +153,11 @@ function SpaceFormContent({ space, onClose }: SpaceFormContentProps) {
         </div>
       )}
 
-      {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
+      {errorMessage && (
+        <p role="alert" className="text-sm text-destructive">
+          {errorMessage}
+        </p>
+      )}
 
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onClose}>

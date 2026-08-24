@@ -54,7 +54,7 @@ export default function SpacesPage() {
     setPage(1);
   }, [debouncedKeyword, status]);
 
-  const { data: spacesData, isLoading } = useSpaces({
+  const { data: spacesData, isLoading, isError, refetch } = useSpaces({
     keyword: debouncedKeyword || undefined,
     status,
     page,
@@ -115,7 +115,7 @@ export default function SpacesPage() {
       render: (_, row) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="空间操作">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -199,6 +199,8 @@ export default function SpacesPage() {
         columns={columns}
         data={spacesData?.items ?? []}
         loading={isLoading}
+        error={isError}
+        onRetry={() => refetch()}
         emptyText="暂无空间，创建一个开始使用吧。"
         pagination={{
           page,

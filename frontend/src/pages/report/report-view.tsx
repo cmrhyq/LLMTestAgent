@@ -4,6 +4,7 @@ import { ArrowLeft, Download } from "lucide-react";
 import { useReportDetail, downloadReport } from "@/hooks/use-reports.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
+import { QueryErrorState } from "@/components/shared/query-error-state.tsx";
 import { PassRateBar } from "@/components/shared/pass-rate-bar.tsx";
 import { TestResultsTable } from "@/components/report/test-results-table.tsx";
 import { ResponseTimeStats } from "@/components/report/response-time-stats.tsx";
@@ -15,7 +16,7 @@ export default function ReportViewPage() {
   const navigate = useNavigate();
   const reportId = id || "";
 
-  const { data, isLoading, isError } = useReportDetail(reportId);
+  const { data, isLoading, isError, refetch } = useReportDetail(reportId);
 
   if (isLoading) {
     return (
@@ -38,7 +39,14 @@ export default function ReportViewPage() {
           <ArrowLeft className="mr-2 h-4 w-4" />
           返回
         </Button>
-        <p className="text-destructive">加载报告详情失败。</p>
+        <QueryErrorState
+          message="加载报告详情失败"
+          action={
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              重试
+            </Button>
+          }
+        />
       </div>
     );
   }

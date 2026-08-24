@@ -21,6 +21,12 @@ interface DataTableProps<T extends object> {
   columns: Column<T>[];
   data: T[];
   loading?: boolean;
+  /** 请求失败时为 true，显示错误态而非"暂无数据"（避免误导用户）。 */
+  error?: boolean;
+  /** error 时的提示文案。 */
+  errorText?: string;
+  /** error 态下的恢复动作（如"重试"按钮）。 */
+  onRetry?: () => void;
   emptyText?: string;
   pagination?: PaginationConfig;
 }
@@ -38,6 +44,9 @@ export function DataTable<T extends object>({
   columns,
   data,
   loading = false,
+  error = false,
+  errorText = "加载失败，请稍后重试",
+  onRetry,
   emptyText = "暂无数据",
   pagination,
 }: DataTableProps<T>) {
@@ -78,7 +87,29 @@ export function DataTable<T extends object>({
                 </tr>
               ))}
 
-            {!loading && data.length === 0 && (
+            {!loading && error && (
+              <tr>
+                <td
+                  colSpan={columns.length}
+                  className="px-4 py-12 text-center text-sm text-destructive"
+                >
+                  <div className="flex flex-col items-center gap-3">
+                    <span>{errorText}</span>
+                    {onRetry && (
+                      <button
+                        type="button"
+                        onClick={onRetry}
+                        className="rounded-[2px] border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        重试
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            )}
+
+            {!loading && !error && data.length === 0 && (
               <tr>
                 <td
                   colSpan={columns.length}

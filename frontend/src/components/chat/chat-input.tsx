@@ -119,6 +119,7 @@ export function ChatInput({
             type="button"
             onClick={onSubmit}
             disabled={!instruction.trim() || isStreaming}
+            aria-label="发送"
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors duration-200 ease-out-expo hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {isStreaming ? (

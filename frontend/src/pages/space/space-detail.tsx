@@ -36,15 +36,21 @@ export default function SpaceDetailPage() {
   const [endpointPage, setEndpointPage] = useState(1);
   const [testRunPage, setTestRunPage] = useState(1);
 
-  const { data: endpointsData, isLoading: endpointsLoading } = useEndpoints({
-    space_id: spaceId,
-    page: endpointPage,
-    page_size: PAGE_SIZE,
-  });
+  const { data: endpointsData, isLoading: endpointsLoading, isError: endpointsError, refetch: refetchEndpoints } =
+    useEndpoints({
+      space_id: spaceId,
+      page: endpointPage,
+      page_size: PAGE_SIZE,
+    });
   const { data: environmentsData, isLoading: environmentsLoading } = useEnvironments({
     space_id: spaceId,
   });
-  const { data: testRunsData, isLoading: testRunsLoading } = useTestRuns({
+  const {
+    data: testRunsData,
+    isLoading: testRunsLoading,
+    isError: testRunsError,
+    refetch: refetchTestRuns,
+  } = useTestRuns({
     space_id: spaceId,
     page: testRunPage,
     page_size: PAGE_SIZE,
@@ -116,6 +122,8 @@ export default function SpaceDetailPage() {
             data={endpointsData?.items ?? []}
             total={endpointsData?.total ?? 0}
             loading={endpointsLoading}
+            error={endpointsError}
+            onRetry={() => refetchEndpoints()}
             page={endpointPage}
             pageSize={PAGE_SIZE}
             onPageChange={setEndpointPage}
@@ -152,6 +160,8 @@ export default function SpaceDetailPage() {
             data={testRunsData?.items ?? []}
             total={testRunsData?.total ?? 0}
             loading={testRunsLoading}
+            error={testRunsError}
+            onRetry={() => refetchTestRuns()}
             page={testRunPage}
             pageSize={PAGE_SIZE}
             onPageChange={setTestRunPage}

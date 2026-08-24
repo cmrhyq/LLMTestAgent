@@ -63,7 +63,7 @@ export function EnvironmentsTab({ data, loading, onAdd, onEdit, onDelete }: Envi
                     )}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" aria-label="环境操作">
                           <MoreHorizontal className="h-3.5 w-3.5" />
                         </Button>
                       </DropdownMenuTrigger>

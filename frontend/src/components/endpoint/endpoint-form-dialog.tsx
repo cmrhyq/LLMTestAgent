@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useCreateEndpoint, useUpdateEndpoint } from "@/hooks/use-endpoints";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { isValidJson } from "@/lib/form-utils";
 import type { Endpoint } from "@/lib/types";
 
 const HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"] as const;
@@ -28,34 +31,48 @@ interface EndpointFormContentProps {
   onClose: () => void;
 }
 
+const endpointSchema = z.object({
+  name: z.string().trim().min(1, "请输入接口名称").max(100, "名称不能超过 100 字"),
+  method: z.string().min(1, "请选择方法"),
+  path: z.string().trim().min(1, "请输入接口路径"),
+  summary: z.string().max(200, "摘要不能超过 200 字").optional(),
+  content_type: z.string().trim().min(1, "请输入内容类型"),
+  params: z.string().refine(isValidJson, "参数必须是合法 JSON"),
+  headers: z.string().refine(isValidJson, "请求头必须是合法 JSON"),
+  body: z.string().refine(isValidJson, "请求体必须是合法 JSON"),
+});
+
+type EndpointFormValues = z.infer<typeof endpointSchema>;
+
 function EndpointFormContent({ spaceId, endpoint, onClose }: EndpointFormContentProps) {
   const isEdit = !!endpoint;
 
-  const [name, setName] = useState(endpoint?.name ?? "");
-  const [path, setPath] = useState(endpoint?.path ?? "");
-  const [method, setMethod] = useState(endpoint?.method ?? "GET");
-  const [summary, setSummary] = useState(endpoint?.summary ?? "");
-  const [contentType, setContentType] = useState(endpoint?.content_type ?? "application/json");
-  const [params, setParams] = useState(endpoint?.params ?? "");
-  const [headers, setHeaders] = useState(endpoint?.headers ?? "");
-  const [body, setBody] = useState(endpoint?.body ?? "");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<EndpointFormValues>({
+    resolver: zodResolver(endpointSchema),
+    defaultValues: {
+      name: endpoint?.name ?? "",
+      method: endpoint?.method ?? "GET",
+      path: endpoint?.path ?? "",
+      summary: endpoint?.summary ?? "",
+      content_type: endpoint?.content_type ?? "application/json",
+      params: endpoint?.params ?? "",
+      headers: endpoint?.headers ?? "",
+      body: endpoint?.body ?? "",
+    },
+  });
 
   const createEndpoint = useCreateEndpoint();
   const updateEndpoint = useUpdateEndpoint();
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const onSubmit = handleSubmit((values) => {
     const payload: Partial<Endpoint> = {
       space_id: spaceId,
-      name,
-      path,
-      method,
-      summary,
-      content_type: contentType,
-      params,
-      headers,
-      body,
-      operation_id: name.toLowerCase().replace(/\s+/g, "_"),
+      ...values,
+      operation_id: values.name.toLowerCase().replace(/\s+/g, "_"),
     };
 
     if (isEdit && endpoint) {
@@ -65,12 +82,12 @@ function EndpointFormContent({ spaceId, endpoint, onClose }: EndpointFormContent
         onSuccess: () => onClose(),
       });
     }
-  }
+  });
 
   const isPending = createEndpoint.isPending || updateEndpoint.isPending;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
         <label htmlFor="ep-name" className="text-sm font-medium">
           名称
@@ -78,10 +95,15 @@ function EndpointFormContent({ spaceId, endpoint, onClose }: EndpointFormContent
         <Input
           id="ep-name"
           placeholder="获取用户列表"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
+          aria-invalid={!!errors.name}
+          aria-describedby={errors.name ? "ep-name-error" : undefined}
+          {...register("name")}
         />
+        {errors.name && (
+          <p id="ep-name-error" role="alert" className="text-xs text-destructive">
+            {errors.name.message}
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-[120px_1fr] gap-3">
@@ -91,8 +113,7 @@ function EndpointFormContent({ spaceId, endpoint, onClose }: EndpointFormContent
           </label>
           <select
             id="ep-method"
-            value={method}
-            onChange={(e) => setMethod(e.target.value)}
+            {...register("method")}
             className="flex h-9 w-full rounded-md border-thin border-border/50 bg-input px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:shadow-card"
           >
             {HTTP_METHODS.map((m) => (
@@ -109,10 +130,15 @@ function EndpointFormContent({ spaceId, endpoint, onClose }: EndpointFormContent
           <Input
             id="ep-path"
             placeholder="/api/users"
-            value={path}
-            onChange={(e) => setPath(e.target.value)}
-            required
+            aria-invalid={!!errors.path}
+            aria-describedby={errors.path ? "ep-path-error" : undefined}
+            {...register("path")}
           />
+          {errors.path && (
+            <p id="ep-path-error" role="alert" className="text-xs text-destructive">
+              {errors.path.message}
+            </p>
+          )}
         </div>
       </div>
 
@@ -123,9 +149,13 @@ function EndpointFormContent({ spaceId, endpoint, onClose }: EndpointFormContent
         <Input
           id="ep-summary"
           placeholder="该接口的简要描述"
-          value={summary}
-          onChange={(e) => setSummary(e.target.value)}
+          {...register("summary")}
         />
+        {errors.summary && (
+          <p role="alert" className="text-xs text-destructive">
+            {errors.summary.message}
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -135,9 +165,13 @@ function EndpointFormContent({ spaceId, endpoint, onClose }: EndpointFormContent
         <Input
           id="ep-content-type"
           placeholder="application/json"
-          value={contentType}
-          onChange={(e) => setContentType(e.target.value)}
+          {...register("content_type")}
         />
+        {errors.content_type && (
+          <p role="alert" className="text-xs text-destructive">
+            {errors.content_type.message}
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -147,11 +181,17 @@ function EndpointFormContent({ spaceId, endpoint, onClose }: EndpointFormContent
         <Textarea
           id="ep-params"
           placeholder='[{"name": "id", "in": "path", "required": true}]'
-          value={params}
-          onChange={(e) => setParams(e.target.value)}
           rows={3}
           className="font-mono text-xs"
+          aria-invalid={!!errors.params}
+          aria-describedby={errors.params ? "ep-params-error" : undefined}
+          {...register("params")}
         />
+        {errors.params && (
+          <p id="ep-params-error" role="alert" className="text-xs text-destructive">
+            {errors.params.message}
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -161,11 +201,17 @@ function EndpointFormContent({ spaceId, endpoint, onClose }: EndpointFormContent
         <Textarea
           id="ep-headers"
           placeholder='{"Authorization": "Bearer token"}'
-          value={headers}
-          onChange={(e) => setHeaders(e.target.value)}
           rows={2}
           className="font-mono text-xs"
+          aria-invalid={!!errors.headers}
+          aria-describedby={errors.headers ? "ep-headers-error" : undefined}
+          {...register("headers")}
         />
+        {errors.headers && (
+          <p id="ep-headers-error" role="alert" className="text-xs text-destructive">
+            {errors.headers.message}
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -175,11 +221,17 @@ function EndpointFormContent({ spaceId, endpoint, onClose }: EndpointFormContent
         <Textarea
           id="ep-body"
           placeholder='{"type": "object", "properties": {...}}'
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
           rows={3}
           className="font-mono text-xs"
+          aria-invalid={!!errors.body}
+          aria-describedby={errors.body ? "ep-body-error" : undefined}
+          {...register("body")}
         />
+        {errors.body && (
+          <p id="ep-body-error" role="alert" className="text-xs text-destructive">
+            {errors.body.message}
+          </p>
+        )}
       </div>
 
       <DialogFooter>

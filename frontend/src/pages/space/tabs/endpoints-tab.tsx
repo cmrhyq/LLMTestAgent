@@ -15,6 +15,8 @@ export interface EndpointsTabProps {
   data: Endpoint[];
   total: number;
   loading: boolean;
+  error?: boolean;
+  onRetry?: () => void;
   page: number;
   pageSize: number;
   onPageChange(page: number): void;
@@ -28,6 +30,8 @@ export function EndpointsTab({
   data,
   total,
   loading,
+  error = false,
+  onRetry,
   page,
   pageSize,
   onPageChange,
@@ -111,6 +115,8 @@ export function EndpointsTab({
         columns={columns}
         data={filtered}
         loading={loading}
+        error={error}
+        onRetry={onRetry}
         emptyText="该空间暂无接口。"
         pagination={{
           page,
