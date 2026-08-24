@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Download, Eye } from "lucide-react";
 
 import { useReports, downloadReport } from "@/hooks/use-reports.ts";
+import { Button } from "@/components/ui/button.tsx";
 import { DataTable } from "@/components/shared/data-table.tsx";
 import { PageHeader } from "@/components/layout/page-header.tsx";
 import type { Column } from "@/components/shared/data-table.tsx";
@@ -57,23 +58,23 @@ export default function ReportsPage() {
     key: "_actions",
     header: "操作",
     render: (_, row) => (
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
+      <div className="flex items-center gap-1.5">
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => navigate(`/reports/${row.id}`)}
-          className="inline-flex items-center gap-1 rounded-[2px] border border-border px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
         >
           <Eye className="h-3.5 w-3.5" />
           查看
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => downloadReport(row.id)}
-          className="inline-flex items-center gap-1 rounded-[2px] border border-border px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
         >
           <Download className="h-3.5 w-3.5" />
           下载
-        </button>
+        </Button>
       </div>
     ),
   };

@@ -12,10 +12,17 @@ export function AppLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
+      {/* 跳过导航直达内容区（键盘用户，UX #45 Skip Links） */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-[2px] focus:border focus:border-border focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-foreground focus:shadow-elevated"
+      >
+        跳到主要内容
+      </a>
       <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(true)} />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
-        <main className="relative flex-1 overflow-y-auto bg-background p-6 lg:p-8">
+        <main id="main-content" className="relative flex-1 overflow-y-auto bg-background p-6 lg:p-8">
           {sidebarCollapsed && (
             <button
               type="button"

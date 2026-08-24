@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -50,6 +57,8 @@ function EndpointFormContent({ spaceId, endpoint, onClose }: EndpointFormContent
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<EndpointFormValues>({
     resolver: zodResolver(endpointSchema),
@@ -64,6 +73,8 @@ function EndpointFormContent({ spaceId, endpoint, onClose }: EndpointFormContent
       body: endpoint?.body ?? "",
     },
   });
+
+  const method = watch("method");
 
   const createEndpoint = useCreateEndpoint();
   const updateEndpoint = useUpdateEndpoint();
@@ -90,7 +101,7 @@ function EndpointFormContent({ spaceId, endpoint, onClose }: EndpointFormContent
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
         <label htmlFor="ep-name" className="text-sm font-medium">
-          名称
+          名称 <span className="text-destructive" aria-hidden="true">*</span>
         </label>
         <Input
           id="ep-name"
@@ -111,21 +122,25 @@ function EndpointFormContent({ spaceId, endpoint, onClose }: EndpointFormContent
           <label htmlFor="ep-method" className="text-sm font-medium">
             方法
           </label>
-          <select
-            id="ep-method"
-            {...register("method")}
-            className="flex h-9 w-full rounded-md border-thin border-border/50 bg-input px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:shadow-card"
+          <Select
+            value={method}
+            onValueChange={(value) => setValue("method", value, { shouldValidate: true })}
           >
-            {HTTP_METHODS.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger id="ep-method">
+              <SelectValue placeholder="选择方法" />
+            </SelectTrigger>
+            <SelectContent>
+              {HTTP_METHODS.map((m) => (
+                <SelectItem key={m} value={m}>
+                  {m}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-2">
           <label htmlFor="ep-path" className="text-sm font-medium">
-            路径
+            路径 <span className="text-destructive" aria-hidden="true">*</span>
           </label>
           <Input
             id="ep-path"

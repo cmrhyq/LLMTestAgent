@@ -82,7 +82,7 @@ function EnvironmentFormContent({ spaceId, environment, onClose }: EnvironmentFo
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
         <label htmlFor="env-name" className="text-sm font-medium">
-          名称
+          名称 <span className="text-destructive" aria-hidden="true">*</span>
         </label>
         <Input
           id="env-name"
@@ -100,7 +100,7 @@ function EnvironmentFormContent({ spaceId, environment, onClose }: EnvironmentFo
 
       <div className="space-y-2">
         <label htmlFor="env-base-url" className="text-sm font-medium">
-          基础 URL
+          基础 URL <span className="text-destructive" aria-hidden="true">*</span>
         </label>
         <Input
           id="env-base-url"

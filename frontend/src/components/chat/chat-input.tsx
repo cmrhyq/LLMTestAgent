@@ -16,7 +16,6 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils";
@@ -86,8 +85,7 @@ export function ChatInput({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="shadow-popover">
-              <TooltipProvider delayDuration={200}>
-                {MODES.map((m) => (
+              {MODES.map((m) => (
                   <DropdownMenuItem key={m.value} onClick={() => onModeChange(m.value)}>
                     {m.icon}
                     <span className="flex-1">{m.value}</span>
@@ -111,7 +109,6 @@ export function ChatInput({
                     </Tooltip>
                   </DropdownMenuItem>
                 ))}
-              </TooltipProvider>
             </DropdownMenuContent>
           </DropdownMenu>
 

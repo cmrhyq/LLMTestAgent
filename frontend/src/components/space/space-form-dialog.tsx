@@ -5,6 +5,13 @@ import { useCreateSpace, useUpdateSpace } from "@/hooks/use-spaces";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -46,6 +53,8 @@ function SpaceFormContent({ space, onClose }: SpaceFormContentProps) {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<SpaceFormValues>({
     resolver: zodResolver(spaceSchema),
@@ -56,6 +65,8 @@ function SpaceFormContent({ space, onClose }: SpaceFormContentProps) {
       status: space?.status ?? 1,
     },
   });
+
+  const status = watch("status");
 
   const createSpace = useCreateSpace();
   const updateSpace = useUpdateSpace();
@@ -84,7 +95,7 @@ function SpaceFormContent({ space, onClose }: SpaceFormContentProps) {
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
         <label htmlFor="space-name" className="text-sm font-medium">
-          名称
+          名称 <span className="text-destructive" aria-hidden="true">*</span>
         </label>
         <Input
           id="space-name"
@@ -102,7 +113,7 @@ function SpaceFormContent({ space, onClose }: SpaceFormContentProps) {
 
       <div className="space-y-2">
         <label htmlFor="space-base-url" className="text-sm font-medium">
-          基础 URL
+          基础 URL <span className="text-destructive" aria-hidden="true">*</span>
         </label>
         <Input
           id="space-base-url"
@@ -139,17 +150,21 @@ function SpaceFormContent({ space, onClose }: SpaceFormContentProps) {
           <label htmlFor="space-status" className="text-sm font-medium">
             状态
           </label>
-          <select
-            id="space-status"
-            {...register("status", { valueAsNumber: true })}
-            className="flex h-9 w-full rounded-md border-thin border-border/50 bg-input px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:shadow-card"
+          <Select
+            value={String(status)}
+            onValueChange={(value) => setValue("status", Number(value), { shouldValidate: true })}
           >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger id="space-status">
+              <SelectValue placeholder="选择状态" />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={String(opt.value)}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
 

@@ -42,7 +42,12 @@ export default function SpaceDetailPage() {
       page: endpointPage,
       page_size: PAGE_SIZE,
     });
-  const { data: environmentsData, isLoading: environmentsLoading } = useEnvironments({
+  const {
+    data: environmentsData,
+    isLoading: environmentsLoading,
+    isError: environmentsError,
+    refetch: refetchEnvironments,
+  } = useEnvironments({
     space_id: spaceId,
   });
   const {
@@ -143,6 +148,8 @@ export default function SpaceDetailPage() {
           <EnvironmentsTab
             data={environmentsData?.items ?? []}
             loading={environmentsLoading}
+            error={environmentsError}
+            onRetry={() => refetchEnvironments()}
             onAdd={() => {
               setEditingEnv(null);
               setEnvDialogOpen(true);

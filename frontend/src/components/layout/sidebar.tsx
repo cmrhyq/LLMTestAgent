@@ -21,7 +21,7 @@ function NavItem({ to, index, icon, label }: NavItemProps) {
       to={to}
       className={({ isActive }) =>
         cn(
-          "flex items-center gap-2 rounded-sm border-l-2 px-3 py-1.5 text-sm transition-colors no-underline",
+          "flex items-center gap-2 rounded-sm border-l-2 px-3 py-1.5 text-sm transition-colors no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
           isActive
             ? "border-primary bg-surface-primary font-medium text-foreground"
             : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"

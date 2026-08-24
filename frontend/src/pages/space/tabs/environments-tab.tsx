@@ -11,18 +11,29 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
 import { EmptyState } from "@/components/shared/empty-state.tsx";
+import { QueryErrorState } from "@/components/shared/query-error-state.tsx";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog.tsx";
 import type { Environment } from "@/lib/types.ts";
 
 export interface EnvironmentsTabProps {
   data: Environment[];
   loading: boolean;
+  error?: boolean;
+  onRetry?: () => void;
   onAdd(): void;
   onEdit(environment: Environment): void;
   onDelete(environment: Environment): void;
 }
 
-export function EnvironmentsTab({ data, loading, onAdd, onEdit, onDelete }: EnvironmentsTabProps) {
+export function EnvironmentsTab({
+  data,
+  loading,
+  error = false,
+  onRetry,
+  onAdd,
+  onEdit,
+  onDelete,
+}: EnvironmentsTabProps) {
   const [deleteTarget, setDeleteTarget] = useState<Environment | null>(null);
 
   return (
@@ -35,7 +46,18 @@ export function EnvironmentsTab({ data, loading, onAdd, onEdit, onDelete }: Envi
         </Button>
       </div>
 
-      {loading ? (
+      {error ? (
+        <QueryErrorState
+          message="环境列表加载失败"
+          action={
+            onRetry && (
+              <Button variant="outline" size="sm" onClick={onRetry}>
+                重试
+              </Button>
+            )
+          }
+        />
+      ) : loading ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Card key={i}>
