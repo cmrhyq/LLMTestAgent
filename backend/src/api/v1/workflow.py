@@ -19,15 +19,6 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/workflows", tags=["工作流"])
 
 
-class ParseOpenAPIRequest(BaseModel):
-    """解析 OpenAPI 文档响应体。"""
-
-    run_id: int | None = None
-    status: str = TestStatus.COMPLETED.value
-    message: str = ""
-    endpoints_count: int = 0
-
-
 class UploadOpenAPIResponse(BaseModel):
     """上传 OpenAPI 文档响应体。"""
 
@@ -41,7 +32,6 @@ class WorkflowRunStreamRequest(BaseModel):
     """流式运行工作流请求体。"""
 
     raw_input: str = Field(..., description="用户自然语言指令")
-    api_doc_file_path: str | None = Field(default=None, description="OpenAPI 文档路径（可选）")
     include_tokens: bool = Field(
         default=False,
         description="是否输出 LLM token 级流式事件（默认仅节点级进度）",
@@ -62,23 +52,6 @@ async def upload_openapi(
         path=path,
         status="uploaded",
         message=f"文件 {file.filename} 上传成功",
-    )
-
-
-@router.post("/parse/openapi/{space_id}", response_model=ParseOpenAPIRequest)
-async def parse_openapi(
-        space_id: int,
-        file: UploadFile = File(..., description="OpenAPI 文档文件（JSON/YAML）"),
-):
-    """上传并解析 OpenAPI 文档，将接口定义存入数据库。"""
-    service = WorkflowService()
-    content = await file.read()
-    result = await run_in_threadpool(service.parse_openapi, space_id, file.filename or "", content)
-
-    return ParseOpenAPIRequest(
-        status=TestStatus.COMPLETED.value,
-        message=f"文档 {file.filename} 解析成功",
-        endpoints_count=result["endpoint_count"],
     )
 
 

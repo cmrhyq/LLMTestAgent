@@ -1,10 +1,17 @@
 -- ============================================================================
 -- LLMTestAgent 数据库建表脚本 (SQLite)
+--
+-- 说明：
+-- 1. 应用启动时由 SQLAlchemy Base.metadata.create_all() 建表，本脚本用于
+--    手工初始化 / 种子数据参考，全部语句可重复执行（IF NOT EXISTS / OR IGNORE）。
+-- 2. status 语义统一为 0=未启用，1=已启用（与前端 STATUS_MAP 一致）。
+-- 3. environment.is_default 语义为 1=默认，0=不默认（布尔语义，与前端一致）。
+-- 4. 本表结构必须与 src/data/models/*.py 保持一致，改表请同步改模型。
 -- ============================================================================
 
 PRAGMA journal_mode = WAL;
 PRAGMA foreign_keys = ON;
-PRAGMA encoding = 'UTF-8';
+-- 注意：SQLite 的 encoding 为建库期属性，对已存在的数据库执行此 PRAGMA 会静默无效。
 
 -- ============================================================================
 -- 1. 空间表 (space)
@@ -16,12 +23,12 @@ CREATE TABLE IF NOT EXISTS space
     name        TEXT    NOT NULL UNIQUE,
     base_url    TEXT    NOT NULL, -- 默认基础URL
     description TEXT             DEFAULT '',
-    status   INTEGER NOT NULL DEFAULT 1, -- 1=启用，2=禁用，3=已删除
+    status   INTEGER NOT NULL DEFAULT 1, -- 0=未启用，1=已启用
     created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')),
     updated_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime'))
 );
 
-CREATE INDEX idx_space_name    ON space(name);
+CREATE INDEX IF NOT EXISTS idx_space_name    ON space(name);
 
 -- ============================================================================
 -- 2. 测试环境表 (environment)
@@ -35,13 +42,14 @@ CREATE TABLE IF NOT EXISTS environment
     base_url    TEXT    NOT NULL,
     description TEXT             DEFAULT '',
     variables   TEXT             DEFAULT '{}', -- 环境变量 KV
-    is_default  INTEGER NOT NULL DEFAULT 1, -- 1=默认，2=不默认
-    status   INTEGER NOT NULL DEFAULT 1, -- 1=启用，2=禁用，3=已删除
+    is_default  INTEGER NOT NULL DEFAULT 1, -- 1=默认，0=不默认
+    status   INTEGER NOT NULL DEFAULT 1, -- 0=未启用，1=已启用
     created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')),
-    updated_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime'))
+    updated_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')),
+    FOREIGN KEY (space_id) REFERENCES space (id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_env_space ON environment (space_id);
+CREATE INDEX IF NOT EXISTS idx_env_space ON environment (space_id);
 
 -- ============================================================================
 -- 3. API 定义表 (endpoint)
@@ -57,15 +65,15 @@ CREATE TABLE IF NOT EXISTS endpoint
     method       TEXT    NOT NULL CHECK (method IN ('GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS')),
     tags         TEXT             DEFAULT '[]',
     summary      TEXT             DEFAULT NULL,
-    description  TEXT             DEFAULT NULL,
-    params       TEXT             DEFAULT '{}',
+    description  TEXT             DEFAULT '',
+    params       TEXT             DEFAULT NULL,
     headers      TEXT             DEFAULT '{}',
-    body         TEXT             DEFAULT '{}',
+    body         TEXT             DEFAULT NULL,
     responses    TEXT             DEFAULT '[]', -- 响应定义 JSON 数组
     security     TEXT             DEFAULT '[]', -- 接口级认证方案 JSON 数组
     content_type TEXT             DEFAULT 'application/json', -- 请求体 Content-Type
     deprecated   INTEGER NOT NULL DEFAULT 0, -- 0=正常，1=已废弃（来自 OpenAPI deprecated 标记）
-    status    INTEGER NOT NULL DEFAULT 1, -- 1=启用，2=禁用，3=已删除, 4=已废弃
+    status    INTEGER NOT NULL DEFAULT 1, -- 0=未启用，1=已启用
     version      INTEGER NOT NULL DEFAULT 1,
     created_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')),
     updated_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')),
@@ -73,8 +81,8 @@ CREATE TABLE IF NOT EXISTS endpoint
     FOREIGN KEY (space_id) REFERENCES space (id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_endpoint_space ON endpoint (space_id);
-CREATE INDEX idx_endpoint_operation_id ON endpoint (operation_id);
+CREATE INDEX IF NOT EXISTS idx_endpoint_space ON endpoint (space_id);
+CREATE INDEX IF NOT EXISTS idx_endpoint_operation_id ON endpoint (operation_id);
 
 -- ============================================================================
 -- 4. 执行批次表 (test_run)
@@ -83,7 +91,7 @@ CREATE INDEX idx_endpoint_operation_id ON endpoint (operation_id);
 CREATE TABLE IF NOT EXISTS test_run
 (
     id              INTEGER PRIMARY KEY,
-    space_id      INTEGER,
+    space_id      INTEGER NOT NULL,
     environment_id  INTEGER,
     name            TEXT             DEFAULT '',
     status          TEXT    NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'running', 'completed', 'failed', 'cancelled')),
@@ -105,12 +113,12 @@ CREATE TABLE IF NOT EXISTS test_run
     error_message   TEXT             DEFAULT '',
     created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')),
     updated_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')),
-    FOREIGN KEY (space_id) REFERENCES space (id) ON DELETE SET NULL,
+    FOREIGN KEY (space_id) REFERENCES space (id) ON DELETE CASCADE,
     FOREIGN KEY (environment_id) REFERENCES environment (id) ON DELETE SET NULL
 );
 
-CREATE INDEX idx_run_space ON test_run (space_id);
-CREATE INDEX idx_run_env ON test_run (environment_id);
+CREATE INDEX IF NOT EXISTS idx_run_space ON test_run (space_id);
+CREATE INDEX IF NOT EXISTS idx_run_env ON test_run (environment_id);
 
 -- ============================================================================
 -- 5. 测试用例表 (test_case)
@@ -143,16 +151,16 @@ CREATE TABLE IF NOT EXISTS test_case
     remark          TEXT             DEFAULT '',
     unique_hash     TEXT             DEFAULT '',
     generated_by    TEXT    NOT NULL DEFAULT 'llm' CHECK (generated_by IN ('llm', 'manual', 'import')),
-    status       INTEGER NOT NULL DEFAULT 1, -- 1=启用，2=禁用，3=已删除, 4=已废弃
+    status       INTEGER NOT NULL DEFAULT 1, -- 0=未启用，1=已启用
     created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')),
     updated_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')),
     FOREIGN KEY (run_id) REFERENCES test_run (id) ON DELETE CASCADE,
     FOREIGN KEY (endpoint_id) REFERENCES endpoint (id) ON DELETE SET NULL
 );
 
-CREATE INDEX idx_case_run ON test_case (run_id);
-CREATE INDEX idx_case_api ON test_case (endpoint_id);
-CREATE INDEX idx_case_case_id ON test_case (case_id);
+CREATE INDEX IF NOT EXISTS idx_case_run ON test_case (run_id);
+CREATE INDEX IF NOT EXISTS idx_case_api ON test_case (endpoint_id);
+CREATE INDEX IF NOT EXISTS idx_case_case_id ON test_case (case_id);
 
 -- ============================================================================
 -- 6. 测试结果表 (test_result)
@@ -188,8 +196,8 @@ CREATE TABLE IF NOT EXISTS test_result
     FOREIGN KEY (test_case_id) REFERENCES test_case (id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_result_run ON test_result (run_id);
-CREATE INDEX idx_result_case ON test_result (test_case_id);
+CREATE INDEX IF NOT EXISTS idx_result_run ON test_result (run_id);
+CREATE INDEX IF NOT EXISTS idx_result_case ON test_result (test_case_id);
 
 -- ============================================================================
 -- 7. 测试摘要表 (test_summary)
@@ -217,8 +225,8 @@ CREATE TABLE IF NOT EXISTS test_summary (
     FOREIGN KEY (run_id) REFERENCES test_run(id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_summary_run       ON test_summary(run_id);
-CREATE INDEX idx_summary_pass_rate ON test_summary(pass_rate);
+CREATE INDEX IF NOT EXISTS idx_summary_run       ON test_summary(run_id);
+CREATE INDEX IF NOT EXISTS idx_summary_pass_rate ON test_summary(pass_rate);
 
 -- ============================================================================
 -- 8. 报告记录表 (report)
@@ -235,13 +243,49 @@ CREATE TABLE IF NOT EXISTS report
     FOREIGN KEY (run_id) REFERENCES test_run (id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_report_run ON report (run_id);
-CREATE INDEX idx_report_format ON report (format);
+CREATE INDEX IF NOT EXISTS idx_report_run ON report (run_id);
+CREATE INDEX IF NOT EXISTS idx_report_format ON report (format);
+
+-- ============================================================================
+-- 9. 会话表 (conversation)
+--    记录一次多轮对话的元数据（对应 src/data/models/conversation.py）
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS conversation
+(
+    id              INTEGER PRIMARY KEY,
+    space_id        INTEGER             DEFAULT NULL,
+    title           TEXT    NOT NULL DEFAULT '',
+    mode            TEXT    NOT NULL DEFAULT 'Run' CHECK (mode IN ('Ask', 'Plan', 'Run')),
+    status          INTEGER NOT NULL DEFAULT 1 CHECK (status IN (0, 1)), -- 0=未启用，1=启用
+    last_message_at TEXT                DEFAULT NULL,
+    created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')),
+    updated_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')),
+    FOREIGN KEY (space_id) REFERENCES space (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_conversation_space ON conversation (space_id);
+
+-- ============================================================================
+-- 10. 消息表 (message)
+--     会话中的单条消息（append-only，对应 src/data/models/message.py）
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS message
+(
+    id              INTEGER PRIMARY KEY,
+    conversation_id INTEGER NOT NULL,
+    role            TEXT    NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
+    content         TEXT    NOT NULL DEFAULT '',
+    meta            TEXT    NOT NULL DEFAULT '{}',
+    created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')),
+    FOREIGN KEY (conversation_id) REFERENCES conversation (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_message_conv ON message (conversation_id);
 
 -- ============================================================================
 -- 触发器：自动更新 updated_at 字段
 -- ============================================================================
-CREATE TRIGGER trg_space_updated
+CREATE TRIGGER IF NOT EXISTS trg_space_updated
     AFTER UPDATE
     ON space
 BEGIN
@@ -250,7 +294,7 @@ BEGIN
     WHERE id = NEW.id;
 END;
 
-CREATE TRIGGER trg_environment_updated
+CREATE TRIGGER IF NOT EXISTS trg_environment_updated
     AFTER UPDATE
     ON environment
 BEGIN
@@ -259,7 +303,7 @@ BEGIN
     WHERE id = NEW.id;
 END;
 
-CREATE TRIGGER trg_endpoint_updated
+CREATE TRIGGER IF NOT EXISTS trg_endpoint_updated
     AFTER UPDATE
     ON endpoint
 BEGIN
@@ -268,7 +312,7 @@ BEGIN
     WHERE id = NEW.id;
 END;
 
-CREATE TRIGGER trg_test_run_updated
+CREATE TRIGGER IF NOT EXISTS trg_test_run_updated
     AFTER UPDATE
     ON test_run
 BEGIN
@@ -277,11 +321,20 @@ BEGIN
     WHERE id = NEW.id;
 END;
 
-CREATE TRIGGER trg_test_case_updated
+CREATE TRIGGER IF NOT EXISTS trg_test_case_updated
     AFTER UPDATE
     ON test_case
 BEGIN
     UPDATE test_case
+    SET updated_at = strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')
+    WHERE id = NEW.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_conversation_updated
+    AFTER UPDATE
+    ON conversation
+BEGIN
+    UPDATE conversation
     SET updated_at = strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')
     WHERE id = NEW.id;
 END;
@@ -341,12 +394,12 @@ FROM test_case tc
 GROUP BY tc.scenario_type;
 
 -- ============================================================================
--- 初始数据（ID 由应用层雪花算法生成，此处使用固定种子值）
+-- 初始数据（ID 由应用层雪花算法生成，此处使用固定种子值；OR IGNORE 保证可重复执行）
 -- ============================================================================
-INSERT INTO space (id, name, base_url, description, status)
+INSERT OR IGNORE INTO space (id, name, base_url, description, status)
 VALUES (100000000000001, 'HTTP Bin Space', 'https://httpbin.org', '', 1);
 
-INSERT INTO environment (id, space_id, name, base_url, description, variables, is_default, status)
+INSERT OR IGNORE INTO environment (id, space_id, name, base_url, description, variables, is_default, status)
 VALUES (200000000000001, 100000000000001, 'httpbin dev', 'https://httpbin.org', 'dev env', '{"name": "alan"}', 1, 1);
-INSERT INTO environment (id, space_id, name, base_url, description, variables, is_default, status)
-VALUES (200000000000002, 100000000000001, 'httpbin prod', 'https://httpbin.org', 'prod env', '{"name": "anna"}', 2, 1);
+INSERT OR IGNORE INTO environment (id, space_id, name, base_url, description, variables, is_default, status)
+VALUES (200000000000002, 100000000000001, 'httpbin prod', 'https://httpbin.org', 'prod env', '{"name": "anna"}', 0, 1);

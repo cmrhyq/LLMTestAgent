@@ -29,7 +29,6 @@ def _make_agent_state(raw_input: str) -> AgentState:
         next_node="",
         run_status="pending",
         raw_input=raw_input,
-        api_doc_file_path="",
         user_intent="",
         test_mode="",
         selected_endpoints=[],

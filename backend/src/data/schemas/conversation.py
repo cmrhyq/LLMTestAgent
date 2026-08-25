@@ -9,7 +9,7 @@ class ConversationBase(BaseModel):
 
     space_id: int | None = Field(default=None, description="所属空间ID（可空）")
     title: str = Field(default="", description="会话标题")
-    mode: str = Field(default="Ask", description="模式: Ask / Plan")
+    mode: str = Field(default="Run", description="模式: Run / Ask / Plan")
 
 
 class ConversationCreate(ConversationBase):
@@ -32,7 +32,7 @@ class ConversationUpdate(BaseModel):
     """更新 Conversation 请求体（所有字段可选）"""
 
     title: str | None = Field(default=None, description="会话标题")
-    mode: str | None = Field(default=None, description="模式: Ask / Plan")
+    mode: str | None = Field(default=None, description="模式: Run / Ask / Plan")
     status: int | None = Field(default=None, description="状态: 1-正常, 0-删除")
 
 
@@ -66,5 +66,5 @@ class ChatStreamRequest(BaseModel):
     instruction: str = Field(..., min_length=1, description="用户输入的 prompt")
     api_doc_path: str | None = Field(default=None, description="可选的已上传 OpenAPI 文档路径")
     conversation_id: int | None = Field(default=None, description="会话 ID；缺省时自动新建会话")
-    mode: str = Field(default="Ask", description="模式: Ask / Plan")
+    mode: str = Field(default="Run", description="模式: Run / Ask / Plan")
     space_id: int | None = Field(default=None, description="新建会话时所属空间 ID（可选）")

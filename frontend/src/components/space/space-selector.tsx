@@ -1,4 +1,4 @@
-import { Briefcase, Check, ChevronDown, Loader2 } from "lucide-react";
+import { Briefcase, Check, ChevronDown } from "lucide-react";
 
 import { useSpaces } from "@/hooks/use-spaces";
 import {

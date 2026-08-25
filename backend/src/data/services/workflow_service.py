@@ -184,13 +184,12 @@ class WorkflowService:
         Yields:
             str: SSE 格式的文本行
         """
-        api_doc_file_path = body.api_doc_file_path or None
         workflow = TestWorkflow(get_config())
 
         generator = (
-            workflow.astream_events(body.raw_input, api_doc_file_path)
+            workflow.astream_events(body.raw_input)
             if body.include_tokens
-            else workflow.astream(body.raw_input, api_doc_file_path)
+            else workflow.astream(body.raw_input)
         )
 
         async for event in generator:

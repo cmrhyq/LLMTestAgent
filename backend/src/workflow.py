@@ -8,7 +8,6 @@
 - execute_single_tests: 单接口测试执行（HTTP 请求 + 断言）
 - execute_flow_tests: 流程测试执行（顺序执行 + 上下文传递）
 - generate_report: 报告生成
-- parse_openapi_doc: OpenAPI 文档解析
 
 节点名与路由统一使用 ``src.graph.constants`` 中的枚举，
 条件边由 ``src.graph.route`` 的注册表驱动。
@@ -35,6 +34,7 @@ from src.core.config import AppConfig, get_config
 from src.core.logging import get_logger
 from src.data.enum.workflow import TestStatus
 from src.graph.constants import NodeName
+from src.graph.nodes.answer_question import answer_question_node
 from src.graph.nodes.end_node import end_node
 from src.graph.nodes.error_node import error_node
 from src.graph.nodes.execute_flow_tests_node import execute_flow_tests_node
@@ -43,7 +43,6 @@ from src.graph.nodes.generate_flow_cases_node import generate_flow_cases_node
 from src.graph.nodes.generate_report_node import generate_report_node
 from src.graph.nodes.generate_single_cases_node import generate_single_cases_node
 from src.graph.nodes.parse_input_node import parse_input_node
-from src.graph.nodes.parse_openapi_node import parse_openapi_node
 from src.graph.nodes.select_endpoints_node import (
     AVAILABLE_TOOLS,
     parse_endpoints_result_node,
@@ -96,7 +95,6 @@ def build_graph() -> CompiledStateGraph:
             -> (tools_condition) -> parse_result -> (route_by_test_mode)
                 -> "generate_single_cases" -> execute_single_tests -> generate_report -> END
                 -> "generate_flow_cases" -> execute_flow_tests -> generate_report -> END
-            -> "parse_openapi_doc" -> END
 
     Returns:
         编译后的 StateGraph
@@ -116,8 +114,8 @@ def build_graph() -> CompiledStateGraph:
     workflow.add_node(NodeName.EXECUTE_FLOW_TESTS.value, execute_flow_tests_node)
     # 公共报告节点
     workflow.add_node(NodeName.GENERATE_REPORT.value, generate_report_node)
-    # 解析API文档分支
-    workflow.add_node(NodeName.PARSE_OPENAPI_DOC.value, parse_openapi_node)
+    # 问答分支节点（ask 意图）
+    workflow.add_node(NodeName.ANSWER_QUESTION.value, answer_question_node)
     # 结束和错误节点
     workflow.add_node(NodeName.END.value, end_node)
     workflow.add_node(NodeName.ERROR.value, error_node)
@@ -137,7 +135,7 @@ def build_graph() -> CompiledStateGraph:
         route_by_intent,
         {
             NodeName.SELECT_ENDPOINTS_AGENT.value: NodeName.SELECT_ENDPOINTS_AGENT.value,
-            NodeName.PARSE_OPENAPI_DOC.value: NodeName.PARSE_OPENAPI_DOC.value,
+            NodeName.ANSWER_QUESTION.value: NodeName.ANSWER_QUESTION.value,
         },
     )
 
@@ -182,15 +180,24 @@ def build_graph() -> CompiledStateGraph:
             },
         )
 
-    for terminal_node in (NodeName.GENERATE_REPORT, NodeName.PARSE_OPENAPI_DOC):
-        workflow.add_conditional_edges(
-            terminal_node.value,
-            route_by_next_node,
-            {
-                NodeName.END.value: NodeName.END.value,
-                NodeName.ERROR.value: NodeName.ERROR.value,
-            },
-        )
+    workflow.add_conditional_edges(
+        NodeName.GENERATE_REPORT.value,
+        route_by_next_node,
+        {
+            NodeName.END.value: NodeName.END.value,
+            NodeName.ERROR.value: NodeName.ERROR.value,
+        },
+    )
+
+    # 问答分支：answer_question 返回 next_node 后结束或走 error
+    workflow.add_conditional_edges(
+        NodeName.ANSWER_QUESTION.value,
+        route_by_next_node,
+        {
+            NodeName.END.value: NodeName.END.value,
+            NodeName.ERROR.value: NodeName.ERROR.value,
+        },
+    )
 
     # 结束节点连接到 END
     workflow.add_edge(NodeName.END.value, END)
@@ -217,20 +224,20 @@ class TestWorkflow:
     def _build_initial_state(
             self,
             raw_input: str,
-            api_doc_file_path: Path | None = None,
+            space_id: int | None = None,
     ) -> dict[str, Any]:
         """构造工作流初始状态。
 
         Args:
             raw_input: 用户自然语言指令
-            api_doc_file_path: OpenAPI 文档文件路径
+            space_id: 当前空间 ID（run 流程选接口/生成用例用，可选）
 
         Returns:
             初始状态字典
         """
         return {
             "raw_input": raw_input,
-            "api_doc_file_path": str(api_doc_file_path) if api_doc_file_path else "",
+            "space_id": space_id,
             "next_node": "",
             "run_status": TestStatus.PENDING.value,
             "user_intent": "",
@@ -249,24 +256,24 @@ class TestWorkflow:
     def run(
             self,
             raw_input: str,
-            api_doc_file_path: Path | None = None,
+            space_id: int | None = None,
     ) -> dict[str, Any]:
         """运行工作流。
 
         Args:
             raw_input: 用户自然语言指令
-            api_doc_file_path: OpenAPI 文档文件路径
+            space_id: 当前空间 ID（可选）
 
         Returns:
             最终工作流状态字典
         """
         logger.info(
-            f"工作流开始执行，指令: {raw_input[:80]}，文档: {api_doc_file_path or '无'}",
+            f"工作流开始执行，指令: {raw_input[:80]}",
             raw_input=raw_input,
-            api_doc_file_path=str(api_doc_file_path) if api_doc_file_path else "",
+            space_id=space_id,
         )
 
-        initial_state = self._build_initial_state(raw_input, api_doc_file_path)
+        initial_state = self._build_initial_state(raw_input, space_id)
 
         try:
             final_state = self.graph.invoke(initial_state)
@@ -290,7 +297,7 @@ class TestWorkflow:
     def stream(
             self,
             raw_input: str,
-            api_doc_file_path: Path | None = None,
+            space_id: int | None = None,
             *,
             include_updates: bool = True,
     ) -> Iterator[dict[str, Any]]:
@@ -302,7 +309,7 @@ class TestWorkflow:
 
         Args:
             raw_input: 用户自然语言指令
-            api_doc_file_path: OpenAPI 文档文件路径
+            space_id: 当前空间 ID（可选）
             include_updates: 是否在 node 事件中携带节点对状态的部分更新
                 （可能较大，如生成的测试用例列表），默认 True
 
@@ -313,11 +320,10 @@ class TestWorkflow:
             for event in workflow.stream("测试登录接口"):
             ... print(event["type"], event.get("node", ""))
         """
-        initial_state = self._build_initial_state(raw_input, api_doc_file_path)
+        initial_state = self._build_initial_state(raw_input, space_id)
         logger.info(
             "工作流流式执行开始(同步)",
             raw_input=raw_input[:100],
-            api_doc_file_path=initial_state["api_doc_file_path"],
         )
         yield {"type": "start", "raw_input": raw_input, "timestamp": _now()}
 
@@ -344,7 +350,7 @@ class TestWorkflow:
     async def astream(
             self,
             raw_input: str,
-            api_doc_file_path: Path | None = None,
+            space_id: int | None = None,
             *,
             include_updates: bool = True,
     ) -> AsyncIterator[dict[str, Any]]:
@@ -356,7 +362,7 @@ class TestWorkflow:
 
         Args:
             raw_input: 用户自然语言指令
-            api_doc_file_path: OpenAPI 文档文件路径
+            space_id: 当前空间 ID（可选）
             include_updates: 是否在 node 事件中携带节点对状态的部分更新
                 （可能较大，如生成的测试用例列表），默认 True
 
@@ -367,11 +373,10 @@ class TestWorkflow:
             async for event in workflow.astream("测试登录接口"):
             ... await websocket.send_json(event)
         """
-        initial_state = self._build_initial_state(raw_input, api_doc_file_path)
+        initial_state = self._build_initial_state(raw_input, space_id)
         logger.info(
             "工作流流式执行开始(异步)",
             raw_input=raw_input[:100],
-            api_doc_file_path=initial_state["api_doc_file_path"],
         )
         yield {"type": "start", "raw_input": raw_input, "timestamp": _now()}
 
@@ -398,7 +403,7 @@ class TestWorkflow:
     async def astream_events(
             self,
             raw_input: str,
-            api_doc_file_path: Path | None = None,
+            space_id: int | None = None,
     ) -> AsyncIterator[dict[str, Any]]:
         """事件级流式运行工作流，额外产出 LLM token 增量。
 
@@ -412,16 +417,15 @@ class TestWorkflow:
 
         Args:
             raw_input: 用户自然语言指令
-            api_doc_file_path: OpenAPI 文档文件路径
+            space_id: 当前空间 ID（可选）
 
         Yields:
             dict: 结构化事件，type 为 start / token / final / error
         """
-        initial_state = self._build_initial_state(raw_input, api_doc_file_path)
+        initial_state = self._build_initial_state(raw_input, space_id)
         logger.info(
             "工作流事件级流式执行开始",
             raw_input=raw_input[:100],
-            api_doc_file_path=initial_state["api_doc_file_path"],
         )
         yield {"type": "start", "raw_input": raw_input, "timestamp": _now()}
 

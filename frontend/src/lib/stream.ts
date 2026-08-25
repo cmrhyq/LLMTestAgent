@@ -1,6 +1,5 @@
 export interface ChatStreamRequest {
   instruction: string;
-  api_doc_path?: string | null;
   conversation_id?: string | number | null;
   mode?: string;
   space_id?: string | number | null;
@@ -10,6 +9,17 @@ export interface StreamChatOptions {
   signal?: AbortSignal;
   /** 首次从响应头 X-Conversation-Id 读取到会话 ID 时触发（用于新建会话回写） */
   onConversationId?: (conversationId: string) => void;
+}
+
+/** run 模式 SSE 事件（/chat/stream mode=run 输出，与 /workflows/run/stream 一致） */
+export interface StreamRunEvent {
+  type: "start" | "node" | "final" | "error";
+  node?: string;
+  content?: string;
+  update?: Record<string, unknown>;
+  state?: Record<string, unknown>;
+  message?: string;
+  timestamp?: number;
 }
 
 /**
@@ -60,6 +70,70 @@ export async function streamChat(
     }
     const tail = decoder.decode();
     if (tail) onChunk(tail);
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+/**
+ * 以 SSE 方式请求 /api/v1/chat/stream（mode=run）。
+ *
+ * 后端返回 ``text/event-stream``，事件形如 ``data: {json}\\n\\n``，
+ * 每个事件通过 onEvent 回调以结构化对象返回（start / node / final / error）。
+ *
+ * @param payload 请求体（须带 mode: "Run"）
+ * @param onEvent 每收到一个 SSE 事件时触发
+ * @param options 可选项：AbortSignal 与会话 ID 回调
+ */
+export async function streamRunEvents(
+  payload: ChatStreamRequest,
+  onEvent: (event: StreamRunEvent) => void,
+  options?: StreamChatOptions
+): Promise<void> {
+  const response = await fetch("/api/v1/chat/stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    signal: options?.signal,
+  });
+
+  if (!response.ok || !response.body) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(detail || `请求失败（${response.status}）`);
+  }
+
+  const conversationId = response.headers.get("X-Conversation-Id");
+  if (conversationId && options?.onConversationId) {
+    options.onConversationId(conversationId);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      // 按空行切分 SSE 事件
+      let sep: number;
+      while ((sep = buffer.indexOf("\n\n")) !== -1) {
+        const rawEvent = buffer.slice(0, sep);
+        buffer = buffer.slice(sep + 2);
+        for (const line of rawEvent.split("\n")) {
+          if (!line.startsWith("data:")) continue;
+          const data = line.slice(5).trim();
+          if (!data) continue;
+          try {
+            onEvent(JSON.parse(data) as StreamRunEvent);
+          } catch {
+            // 忽略非 JSON 行
+          }
+        }
+      }
+    }
   } finally {
     reader.releaseLock();
   }

@@ -1,7 +1,7 @@
 """意图解析节点。
 
-调用 LLM 判断用户意图：run_test 或 parse_openapi，
-并在 run_test 场景下区分测试模式：single（单接口）或 flow（业务流程）。
+调用 LLM 判断用户意图：run（执行测试）或 ask（提问/回答），
+并在 run 场景下区分测试模式：single（单接口）或 flow（业务流程）。
 """
 
 import json
@@ -38,7 +38,7 @@ def parse_input_node(state: AgentState) -> dict:
 
         llm_client = get_llm_client()
         response = llm_client.chat(messages)
-        logger.debug(f"LLM意图分类原始响应: {response[:300]}", node="parse_input", response_length=len(response))
+        logger.info(f"LLM意图分类原始响应: {response[:300]}", node="parse_input", response_length=len(response))
 
         result = _extract_classification(response)
         logger.info(
@@ -52,13 +52,13 @@ def parse_input_node(state: AgentState) -> dict:
     except Exception as e:
         error_msg = f"输入解析异常: {str(e)}"
         logger.error(
-            f"意图解析失败，使用默认值(run_test/single): {e}",
+            f"意图解析失败，使用默认值(run/single): {e}",
             node="parse_input",
             error=str(e),
-            default_intent="run_test",
+            default_intent="run",
             default_mode="single",
         )
-        return {"user_intent": "run_test", "test_mode": "single", "error_message": error_msg}
+        return {"user_intent": "run", "test_mode": "single", "error_message": error_msg}
 
 
 def _extract_classification(response: str) -> dict[str, str]:
@@ -84,10 +84,10 @@ def _extract_classification(response: str) -> dict[str, str]:
     except (json.JSONDecodeError, AttributeError):
         pass
 
-    intent_match = re.search(r'"intent"\s*:\s*"(run_test|parse_openapi)"', response)
+    intent_match = re.search(r'"intent"\s*:\s*"(run|ask)"', response)
     mode_match = re.search(r'"test_mode"\s*:\s*"(single|flow)"', response)
 
     return {
-        "intent": intent_match.group(1) if intent_match else "run_test",
+        "intent": intent_match.group(1) if intent_match else "run",
         "test_mode": mode_match.group(1) if mode_match else "single",
     }

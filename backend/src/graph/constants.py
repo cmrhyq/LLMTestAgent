@@ -11,8 +11,8 @@ from enum import Enum
 class UserIntent(str, Enum):
     """用户意图。"""
 
-    RUN_TEST = "run_test"  # 运行 API 测试
-    PARSE_OPENAPI = "parse_openapi"  # 解析 OpenAPI 文档
+    RUN = "run"  # 运行 API 测试
+    ASK = "ask"  # 提问 / 回答（走 answer_question_node）
 
 
 class TestMode(str, Enum):
@@ -39,6 +39,5 @@ class NodeName(str, Enum):
     EXECUTE_FLOW_TESTS = "execute_flow_tests"
     GENERATE_REPORT = "generate_report"
     ANSWER_QUESTION = "answer_question"
-    PARSE_OPENAPI_DOC = "parse_openapi_doc"
     END = "end"
     ERROR = "error"

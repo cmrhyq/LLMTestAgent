@@ -168,17 +168,17 @@ function SpaceAccordionItem({ spaceId, spaceName }: SpaceAccordionItemProps) {
                   <span className="shrink-0 text-xs text-muted-foreground group-hover/item:hidden">
                     {formatRelativeTime(item.last_message_at || item.updated_at)}
                   </span>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        type="button"
-                        aria-label="会话操作"
-                        className="hidden shrink-0 rounded p-0.5 text-muted-foreground hover:bg-background hover:text-foreground group-hover/item:block"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <MoreHorizontal className="h-3.5 w-3.5" />
-                      </button>
-                    </DropdownMenuTrigger>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label="会话操作"
+                          className="invisible shrink-0 rounded p-0.5 text-muted-foreground group-hover/item:visible hover:bg-background hover:text-foreground focus-visible:visible"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreHorizontal className="h-3.5 w-3.5" />
+                        </button>
+                      </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="shadow-popover">
                       <DropdownMenuItem onClick={() => setRenameTarget(item)}>
                         <Pencil className="h-3.5 w-3.5" />

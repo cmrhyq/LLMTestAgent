@@ -33,7 +33,7 @@ def mock_llm_client():
     """Mock LLM 客户端，避免测试中真实调用 LLM API。"""
     with patch("src.core.llm.llm_client.get_llm_client") as mock_get:
         client = MagicMock()
-        client.chat.return_value = '{"intent": "parse_openapi"}'
+        client.chat.return_value = '{"intent": "run", "test_mode": "single"}'
         mock_get.return_value = client
         yield client
 

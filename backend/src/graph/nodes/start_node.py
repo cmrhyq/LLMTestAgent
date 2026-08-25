@@ -17,12 +17,10 @@ def start_node(state: AgentState) -> dict:
     - 返回的字段会合并到当前状态中
     """
     raw_input = state.get("raw_input", "")
-    api_doc = state.get("api_doc_file_path", "无")
     logger.info(
-        f"进入开始节点，指令: {raw_input[:80]}，文档: {api_doc}",
+        f"进入开始节点，指令: {raw_input[:80]}",
         node=NodeName.START.value,
         raw_input=raw_input,
-        api_doc=api_doc,
     )
 
     if not raw_input:

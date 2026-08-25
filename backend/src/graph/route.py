@@ -8,8 +8,8 @@ from src.graph.state import AgentState
 
 # 用户意图 → 下一跳节点
 INTENT_ROUTES: dict[UserIntent, NodeName] = {
-    UserIntent.PARSE_OPENAPI: NodeName.PARSE_OPENAPI_DOC,
-    UserIntent.RUN_TEST: NodeName.SELECT_ENDPOINTS_AGENT,
+    UserIntent.RUN: NodeName.SELECT_ENDPOINTS_AGENT,
+    UserIntent.ASK: NodeName.ANSWER_QUESTION,
 }
 
 # 测试模式 → 用例生成节点
@@ -36,7 +36,7 @@ def route_by_intent(state: AgentState) -> str:
     try:
         intent = UserIntent(raw)
     except ValueError:
-        intent = UserIntent.RUN_TEST
+        intent = UserIntent.RUN
     return INTENT_ROUTES.get(intent, NodeName.SELECT_ENDPOINTS_AGENT).value
 
 

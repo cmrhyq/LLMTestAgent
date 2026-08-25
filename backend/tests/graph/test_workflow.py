@@ -27,8 +27,8 @@ class TestRouteRegistries:
         assert len(values) == len(set(values))
 
     def test_route_by_intent(self):
-        assert route_by_intent({"user_intent": UserIntent.PARSE_OPENAPI.value}) == NodeName.PARSE_OPENAPI_DOC.value
-        assert route_by_intent({"user_intent": UserIntent.RUN_TEST.value}) == NodeName.SELECT_ENDPOINTS_AGENT.value
+        assert route_by_intent({"user_intent": UserIntent.RUN.value}) == NodeName.SELECT_ENDPOINTS_AGENT.value
+        assert route_by_intent({"user_intent": UserIntent.ASK.value}) == NodeName.ANSWER_QUESTION.value
 
     def test_route_by_test_mode(self):
         assert route_by_test_mode({"test_mode": "flow"}) == NodeName.GENERATE_FLOW_CASES.value
@@ -73,7 +73,7 @@ class TestBuildGraph:
             NodeName.GENERATE_FLOW_CASES.value,
             NodeName.EXECUTE_FLOW_TESTS.value,
             NodeName.GENERATE_REPORT.value,
-            NodeName.PARSE_OPENAPI_DOC.value,
+            NodeName.ANSWER_QUESTION.value,
             NodeName.END.value,
             NodeName.ERROR.value,
         }
@@ -91,5 +91,6 @@ class TestAgentState:
         assert "test_results" not in hints
         assert "test_summary" not in hints
         assert "current_step" not in hints
+        assert "api_doc_file_path" not in hints
         # 关键字段必须存在
         assert {"next_node", "run_status", "selected_endpoints", "test_results_summary"}.issubset(hints)

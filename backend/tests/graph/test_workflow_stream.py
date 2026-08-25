@@ -65,7 +65,7 @@ def _make_workflow(graph: FakeGraph) -> TestWorkflow:
 
 
 NODE_CHUNKS = [
-    ("updates", {"parse_input": {"user_intent": "run_test"}}),
+    ("updates", {"parse_input": {"user_intent": "run"}}),
     ("updates", {"generate_report": {"report_path": "/tmp/report.md"}}),
     ("values", {"run_status": TestStatus.COMPLETED.value, "report_path": "/tmp/report.md"}),
 ]

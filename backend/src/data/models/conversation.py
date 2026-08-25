@@ -35,7 +35,7 @@ class Conversation(Base):
     )
 
     __table_args__ = (
-        CheckConstraint("mode IN ('Ask','Plan')", name="ck_conversation_mode"),
+        CheckConstraint("mode IN ('Ask','Plan','Run')", name="ck_conversation_mode"),
         CheckConstraint("status IN (0,1)", name="ck_conversation_status"),
         Index("idx_conversation_space", "space_id"),
     )

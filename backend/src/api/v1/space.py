@@ -1,8 +1,12 @@
 """空间管理路由。"""
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, UploadFile, File
 from sqlalchemy.orm import Session
+from pydantic import BaseModel, Field
+from starlette.concurrency import run_in_threadpool
 
+from src.data.enum import TestStatus
+from src.data.services.workflow_service import WorkflowService
 from src.api.deps import get_db
 from src.data.schemas.space import (
     SpaceCreate,
@@ -36,6 +40,15 @@ def list_spaces(
     )
 
 
+class ParseOpenAPIRequest(BaseModel):
+    """解析 OpenAPI 文档响应体。"""
+
+    run_id: int | None = None
+    status: str = TestStatus.COMPLETED.value
+    message: str = ""
+    endpoints_count: int = 0
+
+
 @router.get("/{space_id}", response_model=SpaceResponse)
 def get_space(space_id: int, db: Session = Depends(get_db)):
     """获取空间详情。"""
@@ -52,3 +65,20 @@ def update_space(space_id: int, body: SpaceUpdate, db: Session = Depends(get_db)
 def delete_space(space_id: int, db: Session = Depends(get_db)):
     """删除空间及其关联的环境、端点、测试运行等数据。"""
     SpaceService(db).delete_space(space_id)
+
+
+@router.post("/parse/openapi/{space_id}", response_model=ParseOpenAPIRequest)
+async def parse_openapi(
+        space_id: int,
+        file: UploadFile = File(..., description="OpenAPI 文档文件（JSON/YAML）"),
+):
+    """上传并解析 OpenAPI 文档，将接口定义存入数据库。"""
+    service = WorkflowService()
+    content = await file.read()
+    result = await run_in_threadpool(service.parse_openapi, space_id, file.filename or "", content)
+
+    return ParseOpenAPIRequest(
+        status=TestStatus.COMPLETED.value,
+        message=f"文档 {file.filename} 解析成功",
+        endpoints_count=result["endpoint_count"],
+    )

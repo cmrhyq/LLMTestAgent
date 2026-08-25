@@ -6,6 +6,7 @@ import {
   MessageSquare,
   ListTodo,
   Send,
+  Zap,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -22,11 +23,23 @@ import { cn } from "@/lib/utils";
 
 const MODES = [
   {
+    icon: <Zap />,
+    value: "Run",
+    description: "运行模式：分析需求并执行 API 测试（推荐）",
+    disabled: false,
+  },
+  {
     icon: <MessageSquare />,
     value: "Ask",
-    description: "询问模式：分析接口并解答问题，不实际执行测试",
+    description: "询问模式：解答测试相关问题，不实际执行测试",
+    disabled: false,
   },
-  { icon: <ListTodo />, value: "Plan", description: "计划模式：生成测试计划，确认后执行测试" },
+  {
+    icon: <ListTodo />,
+    value: "Plan",
+    description: "计划模式：生成测试计划（开发中）",
+    disabled: true,
+  },
 ] as const;
 
 export interface ChatInputProps {
@@ -86,7 +99,12 @@ export function ChatInput({
             </DropdownMenuTrigger>
             <DropdownMenuContent className="shadow-popover">
               {MODES.map((m) => (
-                  <DropdownMenuItem key={m.value} onClick={() => onModeChange(m.value)}>
+                  <DropdownMenuItem
+                    key={m.value}
+                    onClick={() => !m.disabled && onModeChange(m.value)}
+                    disabled={m.disabled}
+                    title={m.disabled ? "开发中" : undefined}
+                  >
                     {m.icon}
                     <span className="flex-1">{m.value}</span>
                     {mode === m.value && <Check className="h-3.5 w-3.5" />}

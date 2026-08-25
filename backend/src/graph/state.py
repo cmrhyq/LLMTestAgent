@@ -45,9 +45,13 @@ class AgentState(MessagesState):
 
     # 输入字段
     raw_input: str
-    api_doc_file_path: str
     user_intent: str  # UserIntent.value
     test_mode: str  # TestMode.value
+    space_id: int | None  # 当前空间 ID（run 流程选接口/生成用例用）
+
+    # 对话字段（answer_question_node 消费，API 层注入 conversation_id）
+    answer_content: str  # 问答节点生成的完整回答文本
+    conversation_id: int | None  # 会话 ID，用于加载历史 / 落库 assistant 消息
 
     # 业务字段
     selected_endpoints: list[SelectedEndpoint]

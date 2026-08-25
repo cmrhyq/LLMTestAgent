@@ -12,7 +12,7 @@ export function useParseOpenAPI(space_id: number) {
   return useMutation<ParseOpenAPIResponse, Error, FormData>({
     mutationFn: async (formData) => {
       const { data } = await api.post<ParseOpenAPIResponse>(
-        `/workflows/parse/openapi/${space_id}`,
+        `/spaces/parse/openapi/${space_id}`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },

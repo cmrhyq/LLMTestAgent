@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { useConversationMessages } from "@/hooks/use-conversations.ts";
-import { streamChat } from "@/lib/stream.ts";
+import { streamChat, streamRunEvents, type StreamRunEvent } from "@/lib/stream.ts";
 import { queryKeys } from "@/lib/query-keys";
 
 export interface UseSecurityChatParams {
@@ -13,11 +13,38 @@ export interface UseSecurityChatParams {
   onConversationCreated(conversationId: string): void;
 }
 
+/** 把 run 模式 SSE 事件格式化为展示文本。 */
+function formatRunEvent(event: StreamRunEvent): string {
+  switch (event.type) {
+    case "start":
+      return "▶ 开始执行测试流程\n";
+    case "node":
+      return `▸ 节点 ${event.node ?? "?"} 完成\n`;
+    case "final": {
+      const state = event.state ?? {};
+      if (state.user_intent === "ask" && state.answer_content) {
+        return `${state.answer_content}\n`;
+      }
+      const s = (state.test_results_summary ?? {}) as Record<string, number>;
+      const passRate = ((s.pass_rate ?? 0) * 100).toFixed(1);
+      const lines = [
+        `\n📊 测试完成：共 ${s.total ?? 0} 条，通过 ${s.passed ?? 0}，失败 ${s.failed ?? 0}，通过率 ${passRate}%`,
+      ];
+      if (state.report_path) lines.push(`📄 报告：${state.report_path}`);
+      return lines.join("\n") + "\n";
+    }
+    case "error":
+      return `✖ 执行失败：${event.message ?? "未知错误"}\n`;
+    default:
+      return "";
+  }
+}
+
 export function useSecurityChat({ conversationId, spaceId, onConversationCreated }: UseSecurityChatParams) {
   const queryClient = useQueryClient();
 
   const [instruction, setInstruction] = useState("");
-  const [mode, setMode] = useState("Ask");
+  const [mode, setMode] = useState("Run");
 
   const [pendingUser, setPendingUser] = useState<string | null>(null);
   const [answer, setAnswer] = useState("");
@@ -49,20 +76,28 @@ export function useSecurityChat({ conversationId, spaceId, onConversationCreated
     let newConversationId: string | null = null;
 
     try {
-      await streamChat(
-        {
-          instruction: prompt,
-          conversation_id: conversationId ?? undefined,
-          mode,
-          space_id: spaceId ?? undefined,
+      const payload = {
+        instruction: prompt,
+        conversation_id: conversationId ?? undefined,
+        mode,
+        space_id: spaceId ?? undefined,
+      };
+      const streamOptions = {
+        onConversationId: (id: string) => {
+          newConversationId = id;
         },
-        (chunk) => setAnswer((prev) => prev + chunk),
-        {
-          onConversationId: (id) => {
-            newConversationId = id;
-          },
-        }
-      );
+      };
+
+      if (mode === "Run") {
+        // run 模式：SSE 事件流（节点进度 + 测试结果）
+        await streamRunEvents(payload, (event) => {
+          const text = formatRunEvent(event);
+          if (text) setAnswer((prev) => prev + text);
+        }, streamOptions);
+      } else {
+        // ask / plan：text/plain 文本流
+        await streamChat(payload, (chunk) => setAnswer((prev) => prev + chunk), streamOptions);
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "请求失败";
       toast.error(message);
