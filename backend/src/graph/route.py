@@ -3,7 +3,7 @@
 新增 intent / test_mode 时只改注册表，不改一长串 if。
 """
 
-from src.graph.constants import NodeName, TestMode, UserIntent
+from data.constant.constants import NodeName, TestMode, UserIntent
 from src.graph.state import AgentState
 
 # 用户意图 → 下一跳节点

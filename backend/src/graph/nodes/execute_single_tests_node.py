@@ -11,7 +11,7 @@ from src.core.database import get_db_manager
 from src.core.logging import get_logger
 from src.data.models.test_case import TestCase
 from src.data.services import TestCaseService, TestRunService
-from src.graph.constants import NodeName
+from data.constant.constants import NodeName
 from src.graph.executor.test_executor import TestExecutor
 from src.graph.state import AgentState
 from src.utils.db_bootstrap import ensure_db

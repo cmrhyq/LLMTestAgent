@@ -17,7 +17,7 @@ from src.core.logging import get_logger
 from src.data.models.endpoint import Endpoint
 from src.data.models.test_case import TestCase
 from src.data.services import CaseGenerationService, EndpointService, SpaceService
-from src.graph.constants import NodeName
+from data.constant.constants import NodeName
 from src.graph.state import AgentState
 from src.utils.db_bootstrap import ensure_db
 from src.utils.llm_utils import get_model_name

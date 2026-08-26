@@ -14,7 +14,7 @@ from src.data.models.base import local_now
 from src.data.models.test_case import TestCase
 from src.data.models.test_result import TestResult
 from src.data.services import TestCaseService, TestRunService
-from src.graph.constants import NodeName
+from data.constant.constants import NodeName
 from src.graph.executor.test_executor import TestExecutor
 from src.graph.state import AgentState
 from src.utils.db_bootstrap import ensure_db

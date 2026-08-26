@@ -18,7 +18,7 @@ from src.core.llm.llm_client import get_llm_client
 from src.core.logging import get_logger
 from src.data.services.conversation_service import ConversationService
 from src.graph import AgentState
-from src.graph.constants import NodeName
+from data.constant.constants import NodeName
 from src.graph.nodes.security_audit_node import security_audit_node
 from src.prompts.loader import get_loader
 from src.utils.json_utils import parse_llm_json_object

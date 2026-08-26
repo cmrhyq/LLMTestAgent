@@ -11,7 +11,7 @@ from src.core.database.connection import get_db_manager
 from src.core.logging import get_logger
 from src.data.models.report import Report
 from src.data.services import ReportService, TestResultService, TestRunService
-from src.graph.constants import NodeName
+from data.constant.constants import NodeName
 from src.graph.report import render_report
 from src.graph.state import AgentState
 from src.utils.db_bootstrap import ensure_db

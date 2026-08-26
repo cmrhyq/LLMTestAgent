@@ -6,7 +6,7 @@
 - AgentState 无死字段（test_results / test_summary 已移除）
 """
 
-from src.graph.constants import NodeName, UserIntent
+from data.constant.constants import NodeName, UserIntent
 from src.graph.route import INTENT_ROUTES, TEST_MODE_ROUTES, route_by_intent, route_by_next_node, route_by_test_mode
 from src.workflow import build_graph
 
@@ -18,7 +18,7 @@ class TestRouteRegistries:
         assert set(INTENT_ROUTES) == set(UserIntent)
 
     def test_test_mode_routes_cover_all_modes(self):
-        from src.graph.constants import TestMode
+        from data.constant.constants import TestMode
 
         assert set(TEST_MODE_ROUTES) == set(TestMode)
 

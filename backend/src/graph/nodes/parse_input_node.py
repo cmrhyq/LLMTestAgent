@@ -9,7 +9,7 @@ import re
 
 from src.core.llm.llm_client import get_llm_client
 from src.core.logging import get_logger
-from src.graph.constants import TestMode, UserIntent
+from data.constant.constants import TestMode, UserIntent
 from src.graph.state import AgentState
 from src.prompts.builders.intent_builder import IntentPromptBuilder
 

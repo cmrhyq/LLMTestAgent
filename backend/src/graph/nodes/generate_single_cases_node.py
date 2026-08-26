@@ -11,7 +11,7 @@ from src.core.logging import get_logger
 from src.data.models.endpoint import Endpoint
 from src.data.models.test_case import TestCase
 from src.data.services import CaseGenerationService
-from src.graph.constants import NodeName
+from data.constant.constants import NodeName
 from src.graph.nodes.base_case_generation import BaseCaseGenerationNode
 from src.prompts.builders.case_builder import CasePromptBuilder
 from src.utils.json_utils import parse_llm_json_response, safe_json_loads

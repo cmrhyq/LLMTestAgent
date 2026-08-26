@@ -7,7 +7,7 @@
 
 from src import get_llm_client
 from src.core.logging import get_logger
-from src.graph.constants import NodeName
+from data.constant.constants import NodeName
 from src.graph.state import AgentState
 from src.prompts.builders.system_safety import SystemSafetyBuilder
 
