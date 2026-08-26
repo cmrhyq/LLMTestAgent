@@ -13,17 +13,23 @@
 from collections.abc import Callable
 from typing import cast
 
+from data.constant.constants import NodeName
 from src.core.database.connection import get_db_manager
 from src.core.llm.llm_client import get_llm_client
 from src.core.logging import get_logger
 from src.data.services.conversation_service import ConversationService
 from src.graph import AgentState
-from data.constant.constants import NodeName
 from src.graph.nodes.security_audit_node import security_audit_node
 from src.prompts.loader import get_loader
 from src.utils.json_utils import parse_llm_json_object
 
 logger = get_logger(__name__)
+
+# 审计/生成异常时返回给用户的兜底提示（测试引用此常量）
+AUDIT_ERROR_MESSAGE = "抱歉，处理您的请求时发生错误，请稍后重试。"
+# 命中安全风险 / 非 API 测试内容的提示（测试引用）
+SECURITY_RISK_MESSAGE = "⚠️ 检测到您的输入存在安全风险，无法处理该请求。请调整后重试。"
+NON_TESTING_MESSAGE = "抱歉，我只处理 API 测试相关的内容，无法回答 API 测试以外的问题。"
 
 
 # --------------------------------------------------------------------------
@@ -107,7 +113,7 @@ def answer_question_node(
         if audit_state.get("next_node") == NodeName.ERROR.value:
             logger.warning("安全审计节点返回异常，拦截请求", error=audit_state.get("error_message", ""))
             return {
-                "answer_content": "抱歉，处理您的请求时发生错误，请稍后重试。",
+                "answer_content": AUDIT_ERROR_MESSAGE,
                 "next_node": NodeName.END.value,
             }
 
@@ -115,7 +121,7 @@ def answer_question_node(
         if not parsed_audit:
             logger.warning("安全审计结果解析为空，出于安全考虑拦截请求")
             return {
-                "answer_content": "抱歉，处理您的请求时发生错误，请稍后重试。",
+                "answer_content": AUDIT_ERROR_MESSAGE,
                 "next_node": NodeName.END.value,
             }
 
@@ -125,20 +131,20 @@ def answer_question_node(
                 summary=(parsed_audit.get("security_analysis") or {}).get("summary", ""),
             )
             return {
-                "answer_content": "⚠️ 检测到您的输入存在安全风险，无法处理该请求。请调整后重试。",
+                "answer_content": SECURITY_RISK_MESSAGE,
                 "next_node": NodeName.END.value,
             }
 
         if is_non_testing(parsed_audit):
             logger.info("Prompt 非 API 测试内容，拒绝处理")
             return {
-                "answer_content": "抱歉，我只处理 API 测试相关的内容，无法回答 API 测试以外的问题。",
+                "answer_content": NON_TESTING_MESSAGE,
                 "next_node": NodeName.END.value,
             }
     except Exception as e:
         logger.error("回答问题节点安全审计失败", node=NodeName.ANSWER_QUESTION.value, error=str(e))
         return {
-            "answer_content": "抱歉，处理您的请求时发生错误，请稍后重试。",
+            "answer_content": AUDIT_ERROR_MESSAGE,
             "next_node": NodeName.END.value,
             "error_message": f"Answer Question Node 安全审计异常: {str(e)}",
         }
