@@ -3,14 +3,16 @@
 > 版本：v0.1.0（对应当前前端实现）
 > 技术栈：Tailwind CSS v4 + shadcn/ui + React 19
 > 设计语言：**工业蓝图（Blueprint）** —— 像一张"活的工程图纸"
-> 令牌来源：[`frontend/src/index.css`](../../frontend/src/index.css)、[`frontend/tailwind.config.ts`](../../frontend/tailwind.config.ts)
+> 令牌来源：[`frontend/src/index.css`](../../frontend/src/index.css)、[
+`frontend/tailwind.config.ts`](../../frontend/tailwind.config.ts)
 > 设计上下文：项目根目录 [`.impeccable.md`](../../.impeccable.md)
 
 ---
 
 ## 一、设计目标
 
-TestAgents 是一台 **AI 驱动的 API 测试精密工具**。界面气质对标**工程图纸 / 蓝图 / 技术标注**：浅蓝纸底、工程蓝墨线、等宽标注、印章式徽章——精密、克制、有强烈辨识度，与市面上千篇一律的暗色 AI 界面区隔。
+TestAgents 是一台 **AI 驱动的 API 测试精密工具**。界面气质对标**工程图纸 / 蓝图 / 技术标注**
+：浅蓝纸底、工程蓝墨线、等宽标注、印章式徽章——精密、克制、有强烈辨识度，与市面上千篇一律的暗色 AI 界面区隔。
 
 核心原则：
 
@@ -28,48 +30,48 @@ TestAgents 是一台 **AI 驱动的 API 测试精密工具**。界面气质对�
 
 ### 2.1 亮色图纸（默认）
 
-| 令牌 | oklch 值 | 用途 |
-|------|----------|------|
-| `background` | `0.955 0.012 235` | 页面主背景（浅蓝图纸） |
-| `sidebar` | `0.93 0.015 235` | 侧边栏背景（比主区略深） |
-| `card` / `popover` / `input` | `0.985 0.006 230` | 卡片、弹层、输入框（描图纸感） |
-| `foreground` | `0.30 0.05 250` | 标题、正文（墨蓝） |
-| `muted` | `0.93 0.012 235` | hover 背景、次要容器 |
-| `secondary` | `0.90 0.015 235` | 略深 hover、secondary 按钮 |
-| `muted-foreground` | `0.50 0.05 245` | 说明文字、表头、占位符（≥4.5:1 对比度） |
-| `border` | `0.78 0.035 240` | 容器边框、分隔线（工程蓝墨线） |
-| `border-subtle` | `0.87 0.022 240` | 表格行分隔等更弱的分割 |
+| 令牌                           | oklch 值           | 用途                      |
+|------------------------------|-------------------|-------------------------|
+| `background`                 | `0.955 0.012 235` | 页面主背景（浅蓝图纸）             |
+| `sidebar`                    | `0.93 0.015 235`  | 侧边栏背景（比主区略深）            |
+| `card` / `popover` / `input` | `0.985 0.006 230` | 卡片、弹层、输入框（描图纸感）         |
+| `foreground`                 | `0.30 0.05 250`   | 标题、正文（墨蓝）               |
+| `muted`                      | `0.93 0.012 235`  | hover 背景、次要容器           |
+| `secondary`                  | `0.90 0.015 235`  | 略深 hover、secondary 按钮   |
+| `muted-foreground`           | `0.50 0.05 245`   | 说明文字、表头、占位符（≥4.5:1 对比度） |
+| `border`                     | `0.78 0.035 240`  | 容器边框、分隔线（工程蓝墨线）         |
+| `border-subtle`              | `0.87 0.022 240`  | 表格行分隔等更弱的分割             |
 
 ### 2.2 暗色夜图（`html.dark`）
 
-| 令牌 | oklch 值 | 说明 |
-|------|----------|------|
-| `background` | `0.18 0.025 250` | 深海军蓝（非纯黑） |
-| `card` | `0.22 0.028 250` | 略亮于背景 |
-| `sidebar` | `0.15 0.02 250` | 比背景更深 |
-| `foreground` | `0.90 0.02 230` | 浅蓝白（非纯白） |
-| `primary` | `0.72 0.12 240` | 提亮的工程蓝 |
-| `border` | `0.34 0.04 245` | 暗色墨线 |
-| `success` / `warning` / `info` | 提亮档（`0.72 0.11 150` / `0.76 0.13 80` / `0.70 0.10 240`） | 保证对比度 |
+| 令牌                             | oklch 值                                                 | 说明        |
+|--------------------------------|---------------------------------------------------------|-----------|
+| `background`                   | `0.18 0.025 250`                                        | 深海军蓝（非纯黑） |
+| `card`                         | `0.22 0.028 250`                                        | 略亮于背景     |
+| `sidebar`                      | `0.15 0.02 250`                                         | 比背景更深     |
+| `foreground`                   | `0.90 0.02 230`                                         | 浅蓝白（非纯白）  |
+| `primary`                      | `0.72 0.12 240`                                         | 提亮的工程蓝    |
+| `border`                       | `0.34 0.04 245`                                         | 暗色墨线      |
+| `success` / `warning` / `info` | 提亮档（`0.72 0.11 150` / `0.76 0.13 80` / `0.70 0.10 240`） | 保证对比度     |
 
 ### 2.3 语义色（产品逻辑）
 
-| 令牌 | 亮色 oklch | 用途 |
-|------|-----------|------|
-| `primary` | `0.50 0.13 255` | 主按钮、激活态、链接、focus 环（**工程蓝**） |
-| `accent` | `0.50 0.13 255` | 同 primary（品牌即强调） |
-| `destructive` | `0.52 0.17 25` | 删除、失败（修订红） |
-| `success` | `0.55 0.11 150` | 通过、批准（印章绿） |
-| `warning` | `0.62 0.13 75` | 警告、跳过（铅笔琥珀） |
-| `info` | `0.55 0.10 250` | 信息、运行中（蓝） |
+| 令牌            | 亮色 oklch        | 用途                          |
+|---------------|-----------------|-----------------------------|
+| `primary`     | `0.50 0.13 255` | 主按钮、激活态、链接、focus 环（**工程蓝**） |
+| `accent`      | `0.50 0.13 255` | 同 primary（品牌即强调）            |
+| `destructive` | `0.52 0.17 25`  | 删除、失败（修订红）                  |
+| `success`     | `0.55 0.11 150` | 通过、批准（印章绿）                  |
+| `warning`     | `0.62 0.13 75`  | 警告、跳过（铅笔琥珀）                 |
+| `info`        | `0.55 0.10 250` | 信息、运行中（蓝）                   |
 
 ### 2.4 HTTP 方法色（`--color-method-*`）
 
-| 方法 | 语义 | 方法 | 语义 |
-|------|------|------|------|
-| `GET` | 印章绿（success） | `DELETE` | 修订红（destructive） |
-| `POST` | 蓝（info） | `PATCH` | 弱紫 |
-| `PUT` | 琥珀（warning） | 未知 | `border-border` 灰 |
+| 方法     | 语义           | 方法       | 语义                |
+|--------|--------------|----------|-------------------|
+| `GET`  | 印章绿（success） | `DELETE` | 修订红（destructive）  |
+| `POST` | 蓝（info）      | `PATCH`  | 弱紫                |
+| `PUT`  | 琥珀（warning）  | 未知       | `border-border` 灰 |
 
 ### 2.5 表面 tint（`surface-*`）
 
@@ -88,30 +90,58 @@ TestAgents 是一台 **AI 驱动的 API 测试精密工具**。界面气质对�
 
 ### 3.1 字体族（Google Fonts）
 
-| 令牌 | 字体 | 用途 |
-|------|------|------|
-| `--font-sans` | **Inter** | 正文 UI，中文回退 Noto Sans SC |
-| `--font-mono` | **IBM Plex Mono** | 标注、表头、编号、代码、URL、统计读数 |
-| `--font-display` | **Space Grotesk** | 页面大标题、统计大数字 |
+| 令牌               | 字体                | 用途                      |
+|------------------|-------------------|-------------------------|
+| `--font-sans`    | **Inter**         | 正文 UI，中文回退 Noto Sans SC |
+| `--font-mono`    | **IBM Plex Mono** | 标注、表头、编号、代码、URL、统计读数    |
+| `--font-display` | **Space Grotesk** | 页面大标题、统计大数字             |
 
 ```css
---font-sans: "Inter", -apple-system, "Segoe UI", "Noto Sans SC", "PingFang SC", sans-serif;
---font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
---font-display: "Space Grotesk", "Inter", sans-serif;
+--font-sans:
+
+"Inter"
+,
+-apple-system,
+
+"Segoe UI"
+,
+"Noto Sans SC"
+,
+"PingFang SC"
+,
+sans-serif
+
+;
+--font-mono:
+
+"IBM Plex Mono"
+,
+ui-monospace, Consolas, monospace
+
+;
+--font-display:
+
+"Space Grotesk"
+,
+"Inter"
+,
+sans-serif
+
+;
 ```
 
 ### 3.2 层级规范
 
-| 元素 | 类名建议 | 说明 |
-|------|----------|------|
-| 页面标题 | `font-display text-2xl font-semibold tracking-tight` | 如「仪表盘」 |
-| 页头注解 | `.annotation`（`font-mono text-[11px] uppercase tracking-[0.1em]`） | 如 `FIG.01 — OVERVIEW`、`SPACE_12` |
-| 区块标题 | `font-display text-lg font-semibold` | 如「空间」 |
-| 表头 | `font-mono text-[11px] uppercase tracking-wider text-muted-foreground` | DataTable 内置 |
-| 统计读数 | `font-display text-3xl font-semibold tabular-nums` | 读数带大数字 |
-| 等宽数据 | `font-mono text-xs` | URL、时间、文件大小、编号 |
-| 正文 | `text-sm` | 默认内容 |
-| 辅助说明 | `text-sm text-muted-foreground` | 副标题、描述 |
+| 元素   | 类名建议                                                                   | 说明                               |
+|------|------------------------------------------------------------------------|----------------------------------|
+| 页面标题 | `font-display text-2xl font-semibold tracking-tight`                   | 如「仪表盘」                           |
+| 页头注解 | `.annotation`（`font-mono text-[11px] uppercase tracking-[0.1em]`）      | 如 `FIG.01 — OVERVIEW`、`SPACE_12` |
+| 区块标题 | `font-display text-lg font-semibold`                                   | 如「空间」                            |
+| 表头   | `font-mono text-[11px] uppercase tracking-wider text-muted-foreground` | DataTable 内置                     |
+| 统计读数 | `font-display text-3xl font-semibold tabular-nums`                     | 读数带大数字                           |
+| 等宽数据 | `font-mono text-xs`                                                    | URL、时间、文件大小、编号                   |
+| 正文   | `text-sm`                                                              | 默认内容                             |
+| 辅助说明 | `text-sm text-muted-foreground`                                        | 副标题、描述                           |
 
 ### 3.3 字重
 
@@ -124,13 +154,13 @@ TestAgents 是一台 **AI 驱动的 API 测试精密工具**。界面气质对�
 
 ### 4.1 圆角（图纸工具感：锐利）
 
-| 令牌 | 值 | 适用 |
-|------|-----|------|
-| `rounded-sm` | 0 | 印章徽章、小元素 |
-| `rounded-md` | 2px | 按钮、输入框 |
-| `rounded-lg` | 4px | 卡片、表格容器、Composer |
-| `rounded-xl` | 6px | 弹层等稍大元素 |
-| `rounded-full` | 50% | 仅发送按钮、色点 |
+| 令牌             | 值   | 适用               |
+|----------------|-----|------------------|
+| `rounded-sm`   | 0   | 印章徽章、小元素         |
+| `rounded-md`   | 2px | 按钮、输入框           |
+| `rounded-lg`   | 4px | 卡片、表格容器、Composer |
+| `rounded-xl`   | 6px | 弹层等稍大元素          |
+| `rounded-full` | 50% | 仅发送按钮、色点         |
 
 ### 4.2 边框
 
@@ -142,12 +172,12 @@ TestAgents 是一台 **AI 驱动的 API 测试精密工具**。界面气质对�
 
 定义于 `index.css` 的 `--shadow-*`（亮/暗双套），按 elevation 选用：
 
-| 类名 | 场景 |
-|------|------|
-| `shadow-xs` / `shadow-card` | 卡片、按钮、输入框默认态 |
-| `shadow-elevated` | 侧栏展开 FAB |
-| `shadow-popover` | Dropdown、Tooltip 弹层（带 1px 墨线环） |
-| `shadow-input` | Input / Textarea focus 态（工程蓝光环） |
+| 类名                          | 场景                              |
+|-----------------------------|---------------------------------|
+| `shadow-xs` / `shadow-card` | 卡片、按钮、输入框默认态                    |
+| `shadow-elevated`           | 侧栏展开 FAB                        |
+| `shadow-popover`            | Dropdown、Tooltip 弹层（带 1px 墨线环）  |
+| `shadow-input`              | Input / Textarea focus 态（工程蓝光环） |
 
 **原则：** 蓝图以墨线为主、阴影为辅——阴影透明度极低（≤8%），禁止大面积阴影。
 
@@ -159,9 +189,11 @@ TestAgents 是一台 **AI 驱动的 API 测试精密工具**。界面气质对�
 
 1. **图纸网格** — `body` 自带 16px 极淡网格（主色 4% 透明度）；hero 卡用 `.bg-blueprint-grid`（24px，5%）铺底。
 2. **等宽标注** — `.annotation` 类（mono 大写宽字距）：页头 `FIG.xx — TITLE`、空间卡 `SPACE_{id}`、顶栏 `~/页面名` 面包屑。
-3. **印章式徽章** — 状态与 HTTP 方法均为**描边印章**：`rounded-[2px] border border-{color}/50 bg-{color}/5 font-mono text-[11px] uppercase`；`pending` 用虚线边框（草稿批注感）。
+3. **印章式徽章** — 状态与 HTTP 方法均为**描边印章**：
+   `rounded-[2px] border border-{color}/50 bg-{color}/5 font-mono text-[11px] uppercase`；`pending` 用虚线边框（草稿批注感）。
 4. **图纸角标** — hero 卡四角十字墨线（`CornerMarks`，见 `dashboard.tsx`）。
-5. **读数带** — 统计区不用"卡片套卡片"，改为**横排读数带**：`divide-x divide-border-subtle` 竖墨线分隔 + `font-display` 大数字 + mono 色点标签（见 `dashboard.tsx`、`run-detail.tsx`、`report-view.tsx`）。
+5. **读数带** — 统计区不用"卡片套卡片"，改为**横排读数带**：`divide-x divide-border-subtle` 竖墨线分隔 + `font-display`
+   大数字 + mono 色点标签（见 `dashboard.tsx`、`run-detail.tsx`、`report-view.tsx`）。
 6. **终端提示符** — Composer 输入框带 mono `❯` 前缀；AI 空态欢迎页 `> _`。
 7. **Agent 输出流** — 左侧 2px 工程蓝墨线 + mono `AGENT` 标注 + 虚线分隔（`message-bubbles.tsx`）。
 8. **刻度进度条** — 通过率条为 3–6px 高圆角条，填充带垂直刻度线纹理（`pass-rate-bar.tsx`）。
@@ -190,21 +222,21 @@ TestAgents 是一台 **AI 驱动的 API 测试精密工具**。界面气质对�
 - 背景：`bg-sidebar`；右边框：`border-r border-border`。
 - 品牌区：**空心工程蓝方块** logo（`border-2 border-primary`）+ `font-display` 产品名 + mono 版本号。
 - 导航项（`NavLink`）：
-  - 默认：`border-l-2 border-transparent text-muted-foreground`
-  - Hover：`hover:bg-muted hover:text-foreground`
-  - 选中：`border-l-2 border-primary bg-surface-primary font-medium text-foreground`
-  - 右侧 mono 编号（`01` / `02` / `03`）
-  - 布局：`rounded-sm px-3 py-1.5 gap-2 text-sm`
+    - 默认：`border-l-2 border-transparent text-muted-foreground`
+    - Hover：`hover:bg-muted hover:text-foreground`
+    - 选中：`border-l-2 border-primary bg-surface-primary font-medium text-foreground`
+    - 右侧 mono 编号（`01` / `02` / `03`）
+    - 布局：`rounded-sm px-3 py-1.5 gap-2 text-sm`
 - 导航分组上方有 mono 注解 `NAV_01`。
 
 ### 6.3 页头（`page-header.tsx`）
 
 ```tsx
 <PageHeader
-  title="仪表盘"
-  annotation="FIG.01 — OVERVIEW"   // 可选 mono 注解
-  description="API 测试空间概览。"
-  actions={<Button ...>...</Button>}  // 可选右侧操作区
+    title="仪表盘"
+    annotation="FIG.01 — OVERVIEW"   // 可选 mono 注解
+    description="API 测试空间概览。"
+    actions={<Button ...>...</Button>}  // 可选右侧操作区
 />
 ```
 
@@ -224,14 +256,14 @@ TestAgents 是一台 **AI 驱动的 API 测试精密工具**。界面气质对�
 
 ### 7.2 Button
 
-| Variant | 场景 |
-|---------|------|
-| `default` | 主操作 — 工程蓝底白字 + `border border-primary`，hover `brightness-110` |
-| `outline` | 次要操作 — 白底 + 墨线边框 |
-| `ghost` | 表格行内、工具栏图标按钮 |
-| `secondary` | 低强调填充按钮 |
-| `destructive` | 删除确认（修订红） |
-| `link` | 行内文字链 |
+| Variant       | 场景                                                            |
+|---------------|---------------------------------------------------------------|
+| `default`     | 主操作 — 工程蓝底白字 + `border border-primary`，hover `brightness-110` |
+| `outline`     | 次要操作 — 白底 + 墨线边框                                              |
+| `ghost`       | 表格行内、工具栏图标按钮                                                  |
+| `secondary`   | 低强调填充按钮                                                       |
+| `destructive` | 删除确认（修订红）                                                     |
+| `link`        | 行内文字链                                                         |
 
 - 圆角 `rounded-[2px]`；高度 `h-8`；过渡 `duration-200 ease-out-expo`。
 
@@ -253,9 +285,9 @@ TestAgents 是一台 **AI 驱动的 API 测试精密工具**。界面气质对�
 ```tsx
 <div className="rounded-[4px] border border-border bg-card px-3 py-2.5 shadow-xs
                 focus-within:border-primary/50 focus-within:shadow-input">
-  <span className="font-mono text-sm font-semibold text-primary">❯</span>
-  <textarea className="bg-transparent ..." />
-  {/* 工具栏：rounded-full 胶囊按钮 + 发送圆形按钮 */}
+    <span className="font-mono text-sm font-semibold text-primary">❯</span>
+    <textarea className="bg-transparent ..."/>
+    {/* 工具栏：rounded-full 胶囊按钮 + 发送圆形按钮 */}
 </div>
 ```
 
@@ -278,13 +310,13 @@ TestAgents 是一台 **AI 驱动的 API 测试精密工具**。界面气质对�
 
 ## 八、间距与密度
 
-| 场景 | 建议 |
-|------|------|
-| 页面级垂直间距 | `space-y-6` / `gap-8` |
-| 读数带内边距 | `px-6 py-5` |
-| 卡片网格 | `grid gap-4 md:grid-cols-3` |
-| 侧栏导航项 | `px-3 py-1.5`，项间距 `gap-0.5` |
-| 表格单元格 | `px-4 py-3` |
+| 场景      | 建议                          |
+|---------|-----------------------------|
+| 页面级垂直间距 | `space-y-6` / `gap-8`       |
+| 读数带内边距  | `px-6 py-5`                 |
+| 卡片网格    | `grid gap-4 md:grid-cols-3` |
+| 侧栏导航项   | `px-3 py-1.5`，项间距 `gap-0.5` |
+| 表格单元格   | `px-4 py-3`                 |
 
 保持"可呼吸"——图纸标注式排版需要充足留白，避免元素贴边。
 
@@ -292,12 +324,15 @@ TestAgents 是一台 **AI 驱动的 API 测试精密工具**。界面气质对�
 
 ## 九、主题切换（亮色图纸 ⇄ 暗色夜图）
 
-1. **默认亮色**：`localStorage["lta-theme"]` 缺省 `light`；`index.html` 内联防闪烁脚本在 React 挂载前设置 `html.dark` 类与初始背景色。
-2. **切换**：`use-theme.ts` 同步 `documentElement.classList.toggle("dark", ...)` + localStorage；顶栏 `ThemeToggle`（Sun/Moon）。
+1. **默认亮色**：`localStorage["lta-theme"]` 缺省 `light`；`index.html` 内联防闪烁脚本在 React 挂载前设置 `html.dark`
+   类与初始背景色。
+2. **切换**：`use-theme.ts` 同步 `documentElement.classList.toggle("dark", ...)` + localStorage；顶栏 `ThemeToggle`
+   （Sun/Moon）。
 3. **联动**：
-   - sonner Toaster 绑定 `theme`（`main.tsx`）。
-   - Shiki 代码高亮：双主题输出 `--shiki-dark` CSS 变量，`html.dark .shiki span { color: var(--shiki-dark) !important }` 切换（见 `markdown.css`）。
-   - Mermaid：`markdown-mermaid-block.tsx` 依据 `useTheme` 选 `neutral` / `dark`，以 theme 为 key 重渲染。
+    - sonner Toaster 绑定 `theme`（`main.tsx`）。
+    - Shiki 代码高亮：双主题输出 `--shiki-dark` CSS 变量，`html.dark .shiki span { color: var(--shiki-dark) !important }`
+      切换（见 `markdown.css`）。
+    - Mermaid：`markdown-mermaid-block.tsx` 依据 `useTheme` 选 `neutral` / `dark`，以 theme 为 key 重渲染。
 4. `color-scheme` 同步设置，保证原生控件跟随。
 
 ---
@@ -328,30 +363,34 @@ TestAgents 是一台 **AI 驱动的 API 测试精密工具**。界面气质对�
 
 ## 十二、技术说明
 
-- **令牌架构**：`index.css` 用「纯 CSS 变量（`--background` 等）+ `@theme inline` 映射 `--color-background: var(--background)`」模式；Lightning CSS 构建时会自动为 oklch 生成 hex / `display-p3` / `lab` 三套 `@supports` 兜底（勿在 `html.dark` / `:root` 内直接写 `--color-*` 覆盖，会被构建管线重排丢弃）。
-- **动效**：统一 `ease-out-expo`（`cubic-bezier(0.16,1,0.3,1)`），时长 150 / 200 / 300ms；流式光标为 1px 闪烁竖线（`animate-cursor-blink`，step-end）。
+- **令牌架构**：`index.css` 用「纯 CSS 变量（`--background` 等）+ `@theme inline` 映射
+  `--color-background: var(--background)`」模式；Lightning CSS 构建时会自动为 oklch 生成 hex / `display-p3` / `lab` 三套
+  `@supports` 兜底（勿在 `html.dark` / `:root` 内直接写 `--color-*` 覆盖，会被构建管线重排丢弃）。
+- **动效**：统一 `ease-out-expo`（`cubic-bezier(0.16,1,0.3,1)`），时长 150 / 200 / 300ms；流式光标为 1px 闪烁竖线（
+  `animate-cursor-blink`，step-end）。
 - **字体加载**：Google Fonts（Inter / IBM Plex Mono / Space Grotesk），如需内网可换 `@fontsource-variable/*` 自托管。
 
 ---
 
 ## 十三、相关文件索引
 
-| 类型 | 路径 |
-|------|------|
-| 设计上下文 | `.impeccable.md` |
-| 色彩 / 字体 / 主题令牌 | `frontend/src/index.css` |
-| 阴影 / 动画结构令牌 | `frontend/tailwind.config.ts` |
-| 主题 hook | `frontend/src/hooks/use-theme.ts` |
-| 主题切换按钮 | `frontend/src/components/shared/theme-toggle.tsx` |
-| 应用布局 / 顶栏 / 侧栏 / 页头 | `frontend/src/components/layout/{app-layout,top-bar,sidebar,page-header}.tsx` |
-| 共享组件 | `frontend/src/components/shared/*` |
-| UI 基元 | `frontend/src/components/ui/*` |
-| 对话组件 | `frontend/src/components/chat/*` |
-| Markdown 子系统 | `frontend/src/components/markdown/*`、`frontend/src/styles/markdown.css` |
-| 参考页面 | `frontend/src/pages/dashboard.tsx`（读数带 + 角标）、`frontend/src/pages/run/security-chat.tsx`（Composer + Agent 输出流） |
+| 类型                  | 路径                                                                                                            |
+|---------------------|---------------------------------------------------------------------------------------------------------------|
+| 设计上下文               | `.impeccable.md`                                                                                              |
+| 色彩 / 字体 / 主题令牌      | `frontend/src/index.css`                                                                                      |
+| 阴影 / 动画结构令牌         | `frontend/tailwind.config.ts`                                                                                 |
+| 主题 hook             | `frontend/src/hooks/use-theme.ts`                                                                             |
+| 主题切换按钮              | `frontend/src/components/shared/theme-toggle.tsx`                                                             |
+| 应用布局 / 顶栏 / 侧栏 / 页头 | `frontend/src/components/layout/{app-layout,top-bar,sidebar,page-header}.tsx`                                 |
+| 共享组件                | `frontend/src/components/shared/*`                                                                            |
+| UI 基元               | `frontend/src/components/ui/*`                                                                                |
+| 对话组件                | `frontend/src/components/chat/*`                                                                              |
+| Markdown 子系统        | `frontend/src/components/markdown/*`、`frontend/src/styles/markdown.css`                                       |
+| 参考页面                | `frontend/src/pages/dashboard.tsx`（读数带 + 角标）、`frontend/src/pages/run/security-chat.tsx`（Composer + Agent 输出流） |
 
 ---
 
 ## 十四、演进说明
 
-本准则随前端实现迭代。调整全局风格时**优先改令牌层**（`index.css`），再改基元组件，最后才改个别页面；单次改版避免同时改动配色、圆角、布局三套体系，便于 review 与回退。
+本准则随前端实现迭代。调整全局风格时**优先改令牌层**（`index.css`），再改基元组件，最后才改个别页面；单次改版避免同时改动配色、圆角、布局三套体系，便于
+review 与回退。

@@ -130,20 +130,20 @@ conversation ||--o{ message : "CASCADE"
 
 ## 二、关系详解
 
-| 主表 | 关系 | 从表 | 外键 | 删除策略 |
-|------|:----:|------|------|----------|
-| `space` | 1 : N | `environment` | `environment.space_id` | CASCADE |
-| `space` | 1 : N | `endpoint` | `endpoint.space_id` | CASCADE |
-| `space` | 1 : N | `test_run` | `test_run.space_id` | CASCADE |
-| `space` | 1 : N | `conversation` | `conversation.space_id`（可空） | CASCADE |
-| `environment` | 1 : N | `test_run` | `test_run.environment_id` | SET NULL |
-| `test_run` | 1 : N | `test_case` | `test_case.run_id` | CASCADE |
-| `test_run` | 1 : N | `test_result` | `test_result.run_id` | CASCADE |
-| `test_run` | 1 : 1 | `test_summary` | `test_summary.run_id` (UNIQUE) | CASCADE |
-| `test_run` | 1 : N | `report` | `report.run_id` | CASCADE |
-| `endpoint` | 1 : N | `test_case` | `test_case.endpoint_id` | SET NULL |
-| `test_case` | 1 : N | `test_result` | `test_result.test_case_id` | CASCADE |
-| `conversation` | 1 : N | `message` | `message.conversation_id` | CASCADE |
+| 主表             |  关系   | 从表             | 外键                             | 删除策略     |
+|----------------|:-----:|----------------|--------------------------------|----------|
+| `space`        | 1 : N | `environment`  | `environment.space_id`         | CASCADE  |
+| `space`        | 1 : N | `endpoint`     | `endpoint.space_id`            | CASCADE  |
+| `space`        | 1 : N | `test_run`     | `test_run.space_id`            | CASCADE  |
+| `space`        | 1 : N | `conversation` | `conversation.space_id`（可空）    | CASCADE  |
+| `environment`  | 1 : N | `test_run`     | `test_run.environment_id`      | SET NULL |
+| `test_run`     | 1 : N | `test_case`    | `test_case.run_id`             | CASCADE  |
+| `test_run`     | 1 : N | `test_result`  | `test_result.run_id`           | CASCADE  |
+| `test_run`     | 1 : 1 | `test_summary` | `test_summary.run_id` (UNIQUE) | CASCADE  |
+| `test_run`     | 1 : N | `report`       | `report.run_id`                | CASCADE  |
+| `endpoint`     | 1 : N | `test_case`    | `test_case.endpoint_id`        | SET NULL |
+| `test_case`    | 1 : N | `test_result`  | `test_result.test_case_id`     | CASCADE  |
+| `conversation` | 1 : N | `message`      | `message.conversation_id`      | CASCADE  |
 
 ---
 
@@ -199,18 +199,18 @@ CONV -right-> MSG : "1:N CASCADE"
 
 ## 四、实体清单
 
-| 表名 | 模型文件 | 职责 |
-|------|----------|------|
-| `space` | `src/data/models/space.py` | 工作空间，管理多个被测服务，多空间隔离 |
-| `environment` | `src/data/models/environment.py` | 测试环境，支持多环境对比 |
-| `endpoint` | `src/data/models/endpoint.py` | OpenAPI 解析后的 API 定义 |
-| `test_run` | `src/data/models/test_run.py` | 执行批次，关联配置快照与执行环境 |
-| `test_case` | `src/data/models/test_case.py` | 测试用例（LLM 生成 / 手工 / 导入） |
-| `test_result` | `src/data/models/test_result.py` | 用例执行结果（请求/响应全量记录） |
-| `test_summary` | `src/data/models/test_summary.py` | 批次聚合摘要（1:1） |
-| `report` | `src/data/models/report.py` | 报告文件记录 |
+| 表名             | 模型文件                              | 职责                         |
+|----------------|-----------------------------------|----------------------------|
+| `space`        | `src/data/models/space.py`        | 工作空间，管理多个被测服务，多空间隔离        |
+| `environment`  | `src/data/models/environment.py`  | 测试环境，支持多环境对比               |
+| `endpoint`     | `src/data/models/endpoint.py`     | OpenAPI 解析后的 API 定义        |
+| `test_run`     | `src/data/models/test_run.py`     | 执行批次，关联配置快照与执行环境           |
+| `test_case`    | `src/data/models/test_case.py`    | 测试用例（LLM 生成 / 手工 / 导入）     |
+| `test_result`  | `src/data/models/test_result.py`  | 用例执行结果（请求/响应全量记录）          |
+| `test_summary` | `src/data/models/test_summary.py` | 批次聚合摘要（1:1）                |
+| `report`       | `src/data/models/report.py`       | 报告文件记录                     |
 | `conversation` | `src/data/models/conversation.py` | 会话元数据（Ask / Plan / Run 模式） |
-| `message` | `src/data/models/message.py` | 会话消息（append-only） |
+| `message`      | `src/data/models/message.py`      | 会话消息（append-only）          |
 
 ---
 
@@ -234,20 +234,20 @@ CONV -right-> MSG : "1:N CASCADE"
 
 ### 常用视图
 
-| 视图 | 用途 |
-|------|------|
-| `v_run_overview` | 执行批次概览（关联空间、环境） |
-| `v_api_pass_rate` | 接口维度聚合（URL+Method 通过率、响应时间） |
+| 视图                        | 用途                                   |
+|---------------------------|--------------------------------------|
+| `v_run_overview`          | 执行批次概览（关联空间、环境）                      |
+| `v_api_pass_rate`         | 接口维度聚合（URL+Method 通过率、响应时间）          |
 | `v_scenario_distribution` | 场景类型分布（normal / param_missing 等覆盖情况） |
 
 ---
 
 ## 六、变更记录
 
-| 日期 | 变更 |
-|------|------|
+| 日期         | 变更                                                                                                                    |
+|------------|-----------------------------------------------------------------------------------------------------------------------|
 | 2026-08-27 | 同步 `project → space` 术语层重命名；`test_run.space_id` 删除策略 SET NULL → CASCADE；新增 `conversation` / `message` 会话消息表；补充视图与设计要点 |
-| 旧版 | 初始版本（project 术语） |
+| 旧版         | 初始版本（project 术语）                                                                                                      |
 
 ---
 
