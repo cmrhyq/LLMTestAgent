@@ -77,13 +77,6 @@ export default function SpacesPage() {
       ),
     },
     {
-      key: "base_url",
-      header: "基础 URL",
-      render: (_, row) => (
-        <span className="font-mono text-xs text-muted-foreground">{row.base_url}</span>
-      ),
-    },
-    {
       key: "description",
       header: "描述",
       render: (_, row) => (

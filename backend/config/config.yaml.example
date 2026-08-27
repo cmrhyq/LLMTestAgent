@@ -59,7 +59,7 @@ execution:
 
 # 数据库配置
 database:
-  url: "sqlite:///db/LLMTest.db"
+  url: "sqlite:///db/TestAgents.db"
   echo: false
   pool_size: 5
   max_overflow: 10

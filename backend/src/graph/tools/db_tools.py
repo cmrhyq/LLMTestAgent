@@ -15,7 +15,7 @@ from src.utils.db_bootstrap import ensure_db
 
 @tool
 def search_space(name: str) -> str:
-    """根据名称搜索空间，支持模糊匹配。返回匹配的空间列表（JSON格式），包含id、name、base_url、description字段。"""
+    """根据名称搜索空间，支持模糊匹配。返回匹配的空间列表（JSON格式），包含id、name、description字段。"""
     ensure_db()
     with get_db_manager().get_session() as session:
         service = SpaceService(session)
@@ -27,7 +27,6 @@ def search_space(name: str) -> str:
             {
                 "id": p.id,
                 "name": p.name,
-                "base_url": p.base_url,
                 "description": p.description,
             }
             for p in results

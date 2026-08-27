@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Globe } from "lucide-react";
 
 import { useSpace } from "@/hooks/use-spaces.ts";
 import { useEndpoints, useDeleteEndpoint } from "@/hooks/use-endpoints.ts";
@@ -111,10 +110,6 @@ export default function SpaceDetailPage() {
                 {space.name}
               </h1>
               <div className="mt-3 flex flex-wrap items-center gap-3">
-                <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-border bg-card px-2 py-1 font-mono text-xs text-muted-foreground">
-                  <Globe className="h-3.5 w-3.5" />
-                  {space.base_url}
-                </span>
                 <Badge variant={space.status === 1 ? "success" : "secondary"}>
                   {SPACE_STATUS_MAP[space.status] ?? "未知"}
                 </Badge>

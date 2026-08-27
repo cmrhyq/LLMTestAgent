@@ -110,7 +110,7 @@ export function SpaceSelector({
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm text-foreground">{space.name}</span>
                   <span className="block truncate font-mono text-[11px] text-muted-foreground">
-                    {space.base_url || "—"}
+                    {space.description || "—"}
                   </span>
                 </span>
                 {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}

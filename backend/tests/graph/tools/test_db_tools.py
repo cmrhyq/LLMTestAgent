@@ -23,7 +23,6 @@ class TestSearchSpace:
         space = MagicMock()
         space.id = 1
         space.name = "demo"
-        space.base_url = "http://example.com"
         space.description = "desc"
 
         service = MagicMock()
@@ -44,14 +43,13 @@ class TestSearchSpace:
         # fallback 调用必须是合法的四参数形式
         assert service.list_spaces.call_args_list[1].args == (None, 1, 1, 100)
         data = json.loads(result)
-        assert data == [{"id": 1, "name": "demo", "base_url": "http://example.com", "description": "desc"}]
+        assert data == [{"id": 1, "name": "demo", "description": "desc"}]
 
     def test_search_returns_match_directly(self):
         """按名称直接命中时不再触发 fallback。"""
         space = MagicMock()
         space.id = 2
         space.name = "real"
-        space.base_url = ""
         space.description = ""
 
         service = MagicMock()

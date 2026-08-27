@@ -1,10 +1,9 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 from src.data.schemas.common import (
     BatchDeleteRequest,
     BatchUpdateStatusRequest,
     PaginatedResponse,
-    strip_trailing_slash,
 )
 
 # ==================== 基础 Schema ====================
@@ -14,14 +13,8 @@ class SpaceBase(BaseModel):
     """Space 基础字段"""
 
     name: str = Field(..., min_length=1, max_length=100, description="空间名称（唯一）")
-    base_url: str = Field(..., description="基础URL地址")
     description: str | None = Field(default="", description="空间描述")
     status: int = Field(default=1, description="状态(DataStatus): 1-启用, 2-禁用")
-
-    @field_validator("base_url", mode="before")
-    @classmethod
-    def validate_base_url(cls, v):
-        return strip_trailing_slash(v)
 
 
 # ==================== 创建 Schema ====================
@@ -35,7 +28,6 @@ class SpaceCreate(SpaceBase):
             "examples": [
                 {
                     "name": "用户服务",
-                    "base_url": "https://api.example.com/v1",
                     "description": "用户中心微服务",
                     "status": 1,
                 }
@@ -51,14 +43,8 @@ class SpaceUpdate(BaseModel):
     """更新 Space 请求体（所有字段可选）"""
 
     name: str | None = Field(default=None, min_length=1, max_length=100, description="空间名称")
-    base_url: str | None = Field(default=None, description="基础URL地址")
     description: str | None = Field(default=None, description="空间描述")
     status: int | None = Field(default=None, description="状态(DataStatus): 1-启用, 2-禁用")
-
-    @field_validator("base_url", mode="before")
-    @classmethod
-    def validate_base_url(cls, v):
-        return strip_trailing_slash(v)
 
 
 # ==================== 响应 Schema ====================

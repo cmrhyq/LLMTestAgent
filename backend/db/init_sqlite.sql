@@ -21,7 +21,6 @@ CREATE TABLE IF NOT EXISTS space
 (
     id          INTEGER PRIMARY KEY,
     name        TEXT    NOT NULL UNIQUE,
-    base_url    TEXT    NOT NULL, -- 默认基础URL
     description TEXT             DEFAULT '',
     status   INTEGER NOT NULL DEFAULT 1, -- 0=未启用，1=已启用
     created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime')),
@@ -347,7 +346,6 @@ END;
 CREATE VIEW IF NOT EXISTS v_run_overview AS
 SELECT tr.id      AS run_id,
        p.name     AS space_name,
-       p.base_url AS space_base_url,
        e.name     AS environment_name,
        tr.status  AS run_status,
        tr.trigger_type,
@@ -396,8 +394,8 @@ GROUP BY tc.scenario_type;
 -- ============================================================================
 -- 初始数据（ID 由应用层雪花算法生成，此处使用固定种子值；OR IGNORE 保证可重复执行）
 -- ============================================================================
-INSERT OR IGNORE INTO space (id, name, base_url, description, status)
-VALUES (100000000000001, 'HTTP Bin Space', 'https://httpbin.org', '', 1);
+INSERT OR IGNORE INTO space (id, name, description, status)
+VALUES (100000000000001, 'HTTP Bin Space', '', 1);
 
 INSERT OR IGNORE INTO environment (id, space_id, name, base_url, description, variables, is_default, status)
 VALUES (200000000000001, 100000000000001, 'httpbin dev', 'https://httpbin.org', 'dev env', '{"name": "alan"}', 1, 1);

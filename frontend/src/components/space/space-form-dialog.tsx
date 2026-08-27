@@ -40,7 +40,6 @@ const STATUS_OPTIONS = [
 
 const spaceSchema = z.object({
   name: z.string().trim().min(1, "请输入空间名称").max(50, "名称不能超过 50 字"),
-  base_url: z.string().trim().min(1, "请输入基础 URL").url("请输入有效的 URL，如 https://api.example.com"),
   description: z.string().max(200, "描述不能超过 200 字").optional(),
   status: z.number(),
 });
@@ -60,7 +59,6 @@ function SpaceFormContent({ space, onClose }: SpaceFormContentProps) {
     resolver: zodResolver(spaceSchema),
     defaultValues: {
       name: space?.name ?? "",
-      base_url: space?.base_url ?? "",
       description: space?.description ?? "",
       status: space?.status ?? 1,
     },
@@ -81,7 +79,6 @@ function SpaceFormContent({ space, onClose }: SpaceFormContentProps) {
       // 创建时不带 status，保持后端默认
       const createPayload = {
         name: values.name,
-        base_url: values.base_url,
         description: values.description,
       };
       createSpace.mutate(createPayload, { onSuccess: () => onClose() });
@@ -107,24 +104,6 @@ function SpaceFormContent({ space, onClose }: SpaceFormContentProps) {
         {errors.name && (
           <p id="space-name-error" role="alert" className="text-xs text-destructive">
             {errors.name.message}
-          </p>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <label htmlFor="space-base-url" className="text-sm font-medium">
-          基础 URL <span className="text-destructive" aria-hidden="true">*</span>
-        </label>
-        <Input
-          id="space-base-url"
-          placeholder="https://api.example.com"
-          aria-invalid={!!errors.base_url}
-          aria-describedby={errors.base_url ? "space-base-url-error" : undefined}
-          {...register("base_url")}
-        />
-        {errors.base_url && (
-          <p id="space-base-url-error" role="alert" className="text-xs text-destructive">
-            {errors.base_url.message}
           </p>
         )}
       </div>
