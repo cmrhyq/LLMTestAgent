@@ -1,30 +1,14 @@
-# LLMTestAgent 架构设计文档
+# TestAgents 架构设计文档
 
-> 版本：v0.3（对应当前代码实现，2026-08）
+> 版本：v0.4（对应当前代码实现，2026-08）
 > 定位：本文是对 **当前真实实现** 的整体架构说明，跨越前端、后端、数据层、工作流引擎与外部依赖。
-> 与其他文档关系：本文为总览；细节见 [ADR-001](../adr/ADR_001_project-workspace-ask-plan-chroma.md)（工作空间/Ask·Plan/Chroma 决策）、[数据库设计](DatabaseDesign.md)、[ER 图](ER.md)、[系统流程图](SystemFlowchart.md)、[页面设计准则](UI-Design-Guidelines.md)、[剩余重构清单](Refactor-Remaining.md)（阶段 2–6）。
-
----
-
-## 〇、文档说明与现状校准
-
-本项目已有较完整的设计文档，但其中一部分内容属于 **产品设想 / 规划**（尤其 ADR-001 的多数条目状态为 `Proposed`）。本文在撰写时对现状做了校准，明确区分 **已实现** 与 **规划中**：
-
-| 主题 | 既有文档描述 | 当前真实实现 |
-|------|--------------|--------------|
-| 对话历史持久化 | ADR-001 §2.2 标为待实现（`conversation`/`message` 表、`/chat/stream` 无状态、侧边栏 mock） | 已实现：新增 `conversation` + `message` 表、CRUD API、`/chat/stream` 支持会话与多轮上下文、侧边栏接入真实数据 |
-| 对话入口 | 原有「新建测试」(`/workflows/run`) 与「安全对话」(`/workflows/chat`) 两个入口 | 已合并为单一对话入口 `/workflows/chat`；`/workflows/run` 重定向；`workflow-run.tsx` 与 `useRunTest` 已删除 |
-| Ask / Plan 模式 | 前端 UI 占位，`mode` 未传后端 | `mode` 已随 `/chat/stream` 传后端，但后端尚未按 Plan 触发测试执行（仍走问答链路） |
-| Chroma 语义检索 | `ChromaManager` 就绪但未接入业务 | 未变：连接层就绪，未接入业务链路，lifespan 未初始化 |
-| `project_id` 贯穿全链路 | 规划中 | 部分：`conversation` 支持可空 `project_id`；测试执行工作流仍以自然语言 + DB 工具挑选项目 |
-
-> 结论：本文以 “后端 LangGraph 测试工作流 + 对话历史 + 前端工作台” 三块已落地能力为主线，Chroma 语义层、Plan 执行闭环作为演进方向单列。
+> 与其他文档关系：本文为总览；[数据库设计](DatabaseDesign.md)、[ER 图](ER.md)、[系统流程图](SystemFlowchart.md)、[页面设计准则](UI-Design-Guidelines.md)。
 
 ---
 
 ## 一、系统总览
 
-**LLMTestAgent** 是一个由大模型驱动的 API 自动化测试平台：用户用自然语言描述测试意图，系统解析 OpenAPI 文档入库、由 Agent 挑选接口、生成多场景用例、执行 HTTP 请求并断言、最终产出报告；同时提供一个安全审计前置的多轮对话入口用于 API 测试问答。
+**TestAgents** 是一个由大模型驱动的 API 自动化测试平台：用户用自然语言描述测试意图，系统解析 OpenAPI 文档入库、由 Agent 挑选接口、生成多场景用例、执行 HTTP 请求并断言、最终产出报告；同时提供一个安全审计前置的多轮对话入口用于 API 测试问答。
 
 ### 1.1 技术栈
 
@@ -42,7 +26,7 @@
 flowchart TB
   subgraph FE [前端 React SPA]
     layout[AppLayout + Sidebar]
-    pages[Pages: dashboard / project-detail / security-chat / reports / run-detail]
+    pages[Pages: dashboard / space-detail / security-chat / reports / run-detail]
     hooks[TanStack Query Hooks]
     layout --> pages --> hooks
   end
@@ -117,16 +101,16 @@ flowchart TB
 
 | 路由文件 | prefix | 端点 |
 |----------|--------|------|
-| `project.py` | `/projects` | POST `/` · GET `/` · GET `/{id}` · PUT `/{id}` · DELETE `/{id}`（级联） |
+| `space.py` | `/spaces` | POST `/` · GET `/` · GET `/{id}` · PUT `/{id}` · DELETE `/{id}`（级联）· POST `/parse/openapi/{space_id}` |
 | `endpoint.py` | `/endpoints` | POST `/` · POST `/batch` · GET `/` · GET `/{id}` · PUT `/{id}` · DELETE `/{id}` |
 | `environment.py` | `/environments` | POST `/` · GET `/` · GET `/{id}` · PUT `/{id}` · DELETE `/{id}` |
-| `workflow.py` | `/workflows` | POST `/upload/openapi` · POST `/parse/openapi` |
+| `workflow.py` | `/workflows` | POST `/upload/openapi` · POST `/run/stream` |
 | `test_run.py` | `/test/runs` | GET `/` · GET `/{run_id}`（含 cases + results） |
 | `report.py` | `/reports` | GET `/` · GET `/{id}` · GET `/{id}/download` |
 | `chat.py` | `/chat` | POST `/stream`（流式，安全审计前置，多轮上下文，消息落库） |
 | `conversation.py` | `/conversations` | POST `/` · GET `/` · GET `/{id}` · GET `/{id}/messages` · PUT `/{id}` · DELETE `/{id}` |
 
-> `workflow.py` 仅负责 OpenAPI 文档的上传与解析（`/parse/openapi` 通过 `TestWorkflow.run()` 解析并入库）；上传接口有路径遍历防护（`Path(filename).name`）。触发测试已统一由 `chat.py` 的 `POST /chat/stream` 承担（自然语言 + 流式）。
+> `workflow.py` 负责 OpenAPI 文档的上传与流式执行（`/run/stream`）；`space.py` 的 `POST /parse/openapi/{space_id}` 提供直接解析入库。触发测试已统一由 `chat.py` 的 `POST /chat/stream` 承担（自然语言 + 流式）。
 
 ---
 
@@ -184,7 +168,7 @@ flowchart TD
 | `CacheResolver` | `inject()`/`extract()`/依赖检查；`cache_rules` 约定注入目标（headers/body/params + 模板）与提取路径（简易 JSONPath） |
 | `AssertionEngine` | `evaluate_all()`，支持 `== != > < >= <= contains not_contains exists not_exists matches`、`status_code`、`response_time` 等 DSL |
 
-**工具**（`src/graph/tools/`）：`db_tools`（`search_project`、`get_project_endpoints`，接入主图）；`fs_tools`（文件/命令工具，未接入主图）。
+**工具**（`src/graph/tools/`）：`db_tools`（`search_space`、`get_space_endpoints`，接入主图）；`fs_tools`（文件/命令工具，未接入主图）。
 
 ---
 
@@ -195,16 +179,16 @@ flowchart TD
 - 分层：`models`(ORM) → `schemas`(Pydantic) → `repositories`(继承 `BaseRepository[T]`) → `services`(业务)。
 - 主键：全局雪花 ID（`utils/id/snow_id_utils.py` 的 `next_id`，`autoincrement=False`）。
 - 时间：`Text` 存本地时间字符串（`local_now`）。
-- 迁移：`init_database_from_orm()` 默认按 ORM 建表并创建 3 个分析视图（`v_run_overview`、`v_api_pass_rate`、`v_scenario_distribution`）；`EXPECTED_TABLES` 现含 10 张表。
+- 迁移：`init_database_from_orm()` 默认按 ORM 建表并创建 3 个分析视图（`v_run_overview`、`v_api_pass_rate`、`v_scenario_distribution`）；`EXPECTED_TABLES` 现含 10 张表（含 conversation / message）。
 
 ### 4.2 实体关系（含新增会话表）
 
 ```mermaid
 erDiagram
-  project ||--o{ environment : "CASCADE"
-  project ||--o{ endpoint : "CASCADE"
-  project ||--o{ test_run : "SET NULL"
-  project ||--o{ conversation : "CASCADE"
+  space ||--o{ environment : "CASCADE"
+  space ||--o{ endpoint : "CASCADE"
+  space ||--o{ test_run : "CASCADE"
+  space ||--o{ conversation : "CASCADE"
   environment ||--o{ test_run : "SET NULL"
   test_run ||--o{ test_case : "CASCADE"
   test_run ||--o{ test_result : "CASCADE"
@@ -215,13 +199,13 @@ erDiagram
   conversation ||--o{ message : "CASCADE"
 ```
 
-**测试域实体**（详见 [DatabaseDesign.md](DatabaseDesign.md)）：`project`、`environment`、`endpoint`、`test_run`、`test_case`、`test_result`、`test_summary`、`report`。
+**测试域实体**（详见 [DatabaseDesign.md](DatabaseDesign.md)）：`space`、`environment`、`endpoint`、`test_run`、`test_case`、`test_result`、`test_summary`、`report`。
 
-**对话域实体**（本次新增）：
+**对话域实体**：
 
 | 表 | 关键字段 | 说明 |
 |----|----------|------|
-| `conversation` | `id`、`project_id`(FK, 可空, CASCADE)、`title`、`mode`(Ask/Plan)、`status`(1/0)、`last_message_at`、`created_at`、`updated_at` | 会话头，供侧边栏列表；`project_id` 可空以支持无项目会话 |
+| `conversation` | `id`、`space_id`(FK, 可空, CASCADE)、`title`、`mode`(Ask/Plan/Run)、`status`(1/0)、`last_message_at`、`created_at`、`updated_at` | 会话头，供侧边栏列表；`space_id` 可空以支持无空间会话 |
 | `message` | `id`、`conversation_id`(FK, CASCADE)、`role`(user/assistant/system)、`content`、`meta`(JSON)、`created_at` | append-only 消息，按时间升序加载 |
 
 ---
@@ -230,7 +214,7 @@ erDiagram
 
 ### 5.1 设计取向
 
-对齐 Cursor（composer/bubble）、Codex（thread/rollout）等产品的共性：**会话头与消息两级分离**，会话头存元数据供列表，消息 append-only。会话数据以 SQLite 为权威存储（非 Chroma、非 localStorage、不复用 `test_run`，理由见 ADR-001 §7.5–7.7）。
+对齐 Cursor（composer/bubble）、Codex（thread/rollout）等产品的共性：**会话头与消息两级分离**，会话头存元数据供列表，消息 append-only。会话数据以 SQLite 为权威存储（非 Chroma、非 localStorage、不复用 `test_run`。
 
 ### 5.2 流式对话时序
 
@@ -260,7 +244,7 @@ sequenceDiagram
 
 - `hooks/use-conversations.ts`：`useConversations`、`useConversationMessages`、`useCreateConversation`、`useUpdateConversation`、`useDeleteConversation`。
 - `lib/stream.ts` 的 `streamChat`：支持 `conversation_id`/`mode`，从响应头读 `X-Conversation-Id` 回调。
-- `components/layout/spaces-section.tsx`：侧边栏「空间」按项目分组展示真实会话，支持新建/历史跳转/重命名/删除。
+- `components/layout/spaces-section.tsx`：侧边栏「空间」按空间分组展示真实会话，支持新建/历史跳转/重命名/删除。
 - `pages/run/security-chat.tsx`：多轮消息气泡列表，按 URL `conversation_id` 加载历史，首轮写回 URL 并刷新会话列表。
 
 ---
@@ -283,13 +267,13 @@ sequenceDiagram
 ### 6.2 应用骨架与路由
 
 - 布局：左侧 `Sidebar`（250px，可折叠）+ 右侧 `<Outlet />` 主内容区，无顶部 Header（见 [UI-Design-Guidelines.md](UI-Design-Guidelines.md)）。
-- 侧边栏导航：仪表盘 / 新建对话（`/workflows/chat`）/ 报告；下方「空间」区按项目分组展示会话列表。
-- 路由要点：`/` 重定向 `/dashboard`；`/workflows/run` 重定向 `/workflows/chat`（历史入口兼容）；`projects/:id/*` 子路径重定向到项目详情。
+- 侧边栏导航：仪表盘 / 新建对话（`/workflows/chat`）/ 报告；下方「空间」区按空间分组展示会话列表。
+- 路由要点：`/` 重定向 `/dashboard`；`/workflows/run` 重定向 `/workflows/chat`（历史入口兼容）；`spaces/:id/*` 子路径重定向到空间详情。
 
 ```mermaid
 flowchart LR
   root["/"] --> dash["/dashboard"]
-  root --> proj["/projects/:id"]
+  root --> proj["/spaces/:id"]
   root --> chat["/workflows/chat 单一对话入口"]
   root --> runDetail["/runs/:id"]
   root --> reports["/reports"] --> reportView["/reports/:id"]
@@ -350,20 +334,19 @@ flowchart LR
 | 并发执行隔离 | `DataCache.create_scoped(run_id)` 按运行隔离步骤间变量 |
 | 流式执行 | 测试经 `POST /chat/stream` 触发并以流式增量返回结果；前端用 `fetch + ReadableStream` 消费 |
 | 阻塞规避 | `/chat/stream` 把阻塞的安全审计放入线程池，避免阻塞事件循环 |
-| 级联删除 | 项目删除级联 environment/endpoint/conversation；test_run 相关子表 CASCADE |
+| 级联删除 | 空间删除级联 environment/endpoint/test_run/conversation；test_run 相关子表 CASCADE |
 | 数据一致性 | SQLite 为 Source of Truth；Chroma（规划）仅作语义索引层 |
 
 ---
 
 ## 十、演进方向（规划中，未实现）
 
-以下来自 [ADR-001](../adr/ADR_001_project-workspace-ask-plan-chroma.md)，当前尚未落地：
-
 1. **Chroma 语义检索层**：接入 lifespan 初始化，`KnowledgeIndexer`/`KnowledgeRetriever`，Ask/选接口的 RAG 增强，Embedding 配置。
 2. **Plan 执行闭环**：`mode=Plan` 生成结构化测试计划 → 用户确认 → 注入 `AgentState` 复用执行链路 → 回写 `conversation` 与 `test_run` 关联。
-3. **project_id 全链路**：测试执行工作流以 `project_id` 限定范围，减少 LLM 猜项目名。
+3. **space_id 全链路**：测试执行工作流以 `space_id` 限定范围，减少 LLM 猜空间名。
 4. **task_complexity / fs_tools 接入主图**：目前已实现但未挂入工作流。
 5. **会话与 run 关联**：`conversation` 增加 `test_run_id` 关联字段，打通对话与执行产物。
+6. **测试空间功能**：在测试空间详情页面解析 OpenAPI文档时可以选择要导入的 endpoint 和 env，创建测试空间时删除base_url字段
 
 ---
 
@@ -371,7 +354,6 @@ flowchart LR
 
 | 文档 | 内容 |
 |------|------|
-| [ADR-001](../adr/ADR_001_project-workspace-ask-plan-chroma.md) | 工作空间 / Ask·Plan·Run / Chroma / 对话历史决策 |
 | [DatabaseDesign.md](DatabaseDesign.md) | 各表字段、约束、索引、枚举 |
 | [ER.md](ER.md) | 实体关系图与拓扑 |
 | [SystemFlowchart.md](SystemFlowchart.md) | 测试工作流流程图与节点详解 |
@@ -386,4 +368,5 @@ flowchart LR
 
 | 版本 | 日期 | 说明 |
 |------|------|------|
+| 0.4 | 2026-08-27 | `project` → `space` 全文术语同步；路由清单更新 `/spaces`；tool 名同步 `search_space`/`get_space_endpoints`；`test_run.space_id` 改为 CASCADE |
 | 0.3 | 2026-08-13 | 初稿：整合前后端全景架构；校准对话历史已实现、单一对话入口、Ask/Plan 现状；标注 Chroma/Plan 为演进方向 |

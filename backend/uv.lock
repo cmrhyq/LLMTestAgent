@@ -2420,7 +2420,7 @@ wheels = [
 ]
 
 [[package]]
-name = "llmtestagent"
+name = "testagents"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },

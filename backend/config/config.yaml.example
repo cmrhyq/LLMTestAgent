@@ -86,5 +86,5 @@ logging:
 langsmith:
   enabled: false  # 设为 true 启用 LangSmith 追踪
   api_key: ""
-  project: LLMTestAgent
+  project: TestAgents
   endpoint: https://api.smith.langchain.com

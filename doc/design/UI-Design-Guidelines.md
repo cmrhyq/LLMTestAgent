@@ -1,4 +1,4 @@
-# LLMTestAgent 页面设计准则（工业蓝图 · Blueprint）
+# TestAgents 页面设计准则（工业蓝图 · Blueprint）
 
 > 版本：v0.1.0（对应当前前端实现）
 > 技术栈：Tailwind CSS v4 + shadcn/ui + React 19
@@ -10,7 +10,7 @@
 
 ## 一、设计目标
 
-LLMTestAgent 是一台 **AI 驱动的 API 测试精密工具**。界面气质对标**工程图纸 / 蓝图 / 技术标注**：浅蓝纸底、工程蓝墨线、等宽标注、印章式徽章——精密、克制、有强烈辨识度，与市面上千篇一律的暗色 AI 界面区隔。
+TestAgents 是一台 **AI 驱动的 API 测试精密工具**。界面气质对标**工程图纸 / 蓝图 / 技术标注**：浅蓝纸底、工程蓝墨线、等宽标注、印章式徽章——精密、克制、有强烈辨识度，与市面上千篇一律的暗色 AI 界面区隔。
 
 核心原则：
 
@@ -105,8 +105,8 @@ LLMTestAgent 是一台 **AI 驱动的 API 测试精密工具**。界面气质对
 | 元素 | 类名建议 | 说明 |
 |------|----------|------|
 | 页面标题 | `font-display text-2xl font-semibold tracking-tight` | 如「仪表盘」 |
-| 页头注解 | `.annotation`（`font-mono text-[11px] uppercase tracking-[0.1em]`） | 如 `FIG.01 — OVERVIEW`、`PROJECT_12` |
-| 区块标题 | `font-display text-lg font-semibold` | 如「项目」 |
+| 页头注解 | `.annotation`（`font-mono text-[11px] uppercase tracking-[0.1em]`） | 如 `FIG.01 — OVERVIEW`、`SPACE_12` |
+| 区块标题 | `font-display text-lg font-semibold` | 如「空间」 |
 | 表头 | `font-mono text-[11px] uppercase tracking-wider text-muted-foreground` | DataTable 内置 |
 | 统计读数 | `font-display text-3xl font-semibold tabular-nums` | 读数带大数字 |
 | 等宽数据 | `font-mono text-xs` | URL、时间、文件大小、编号 |
@@ -158,7 +158,7 @@ LLMTestAgent 是一台 **AI 驱动的 API 测试精密工具**。界面气质对
 这些是让界面"一眼是蓝图"的记忆点，新增页面时应沿用：
 
 1. **图纸网格** — `body` 自带 16px 极淡网格（主色 4% 透明度）；hero 卡用 `.bg-blueprint-grid`（24px，5%）铺底。
-2. **等宽标注** — `.annotation` 类（mono 大写宽字距）：页头 `FIG.xx — TITLE`、项目卡 `PROJECT_{id}`、顶栏 `~/页面名` 面包屑。
+2. **等宽标注** — `.annotation` 类（mono 大写宽字距）：页头 `FIG.xx — TITLE`、空间卡 `SPACE_{id}`、顶栏 `~/页面名` 面包屑。
 3. **印章式徽章** — 状态与 HTTP 方法均为**描边印章**：`rounded-[2px] border border-{color}/50 bg-{color}/5 font-mono text-[11px] uppercase`；`pending` 用虚线边框（草稿批注感）。
 4. **图纸角标** — hero 卡四角十字墨线（`CornerMarks`，见 `dashboard.tsx`）。
 5. **读数带** — 统计区不用"卡片套卡片"，改为**横排读数带**：`divide-x divide-border-subtle` 竖墨线分隔 + `font-display` 大数字 + mono 色点标签（见 `dashboard.tsx`、`run-detail.tsx`、`report-view.tsx`）。
@@ -203,7 +203,7 @@ LLMTestAgent 是一台 **AI 驱动的 API 测试精密工具**。界面气质对
 <PageHeader
   title="仪表盘"
   annotation="FIG.01 — OVERVIEW"   // 可选 mono 注解
-  description="API 测试项目概览。"
+  description="API 测试空间概览。"
   actions={<Button ...>...</Button>}  // 可选右侧操作区
 />
 ```
@@ -263,7 +263,7 @@ LLMTestAgent 是一台 **AI 驱动的 API 测试精密工具**。界面气质对
 
 - 状态：`StatusBadge` — 描边印章式；`running` 带 pulse；`pending` 虚线。
 - HTTP 方法：`HttpMethodBadge` — 描边印章式，色来自 `--color-method-*`。
-- 项目启用状态：shadcn `Badge`（`default` 启用 / `secondary` 未启用）。
+- 空间启用状态：shadcn `Badge`（`default` 启用 / `secondary` 未启用）。
 
 ### 7.7 Tabs
 

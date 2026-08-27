@@ -1,4 +1,4 @@
-# ⛧ 数据库设计文档 — LLMTestAgent ⛧
+# ⛧ 数据库设计文档 — TestAgents ⛧
 
 ---
 
@@ -15,22 +15,23 @@
 | **文件位置** | `db/LLMTest.db`（首次运行自动创建） |
 | **ID 策略** | 全局雪花算法（`next_id` 生成器），非自增 |
 | **时间格式** | `Text` 存储本地时间字符串（`local_now` 函数生成） |
+| **表数量** | 10 张（含 conversation / message） |
 
 ---
 
-## 一、project — 项目表
+## 一、space — 空间表
 
-> *「万事之始，皆立于项目。一个项目，统辖其下所有接口与测试。」*
+> *「万事之始，皆立于空间。一个空间，统辖其下所有接口与测试。」*
 
 ### 字段定义
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
 | `id` | Integer | **PK**, 非自增 | 全局唯一 ID |
-| `name` | Text | NOT NULL, **UNIQUE** | 项目名称 |
-| `base_url` | Text | NOT NULL | 项目基础 URL |
-| `description` | Text | default="" | 项目描述 |
-| `status` | Integer | NOT NULL, default=1 | 状态（1=启用） |
+| `name` | Text | NOT NULL, **UNIQUE** | 空间名称 |
+| `base_url` | Text | NOT NULL | 默认基础 URL |
+| `description` | Text | default="" | 描述 |
+| `status` | Integer | NOT NULL, default=1 | 状态（1=启用，0=未启用） |
 | `created_at` | Text | NOT NULL | 创建时间 |
 | `updated_at` | Text | NOT NULL | 更新时间 |
 
@@ -38,13 +39,14 @@
 
 | 索引名 | 字段 |
 |--------|------|
-| `idx_project_name` | `name` |
+| `idx_space_name` | `name` |
 
 ### 关系
 
 - 1:N → `environment`（CASCADE 级联删除）
 - 1:N → `endpoint`（CASCADE 级联删除）
-- 1:N → `test_run`（SET NULL 置空）
+- 1:N → `test_run`（CASCADE 级联删除）
+- 1:N → `conversation`（CASCADE 级联删除）
 
 ---
 
@@ -57,7 +59,7 @@
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
 | `id` | Integer | **PK**, 非自增 | 全局唯一 ID |
-| `project_id` | Integer | **FK** → `project.id`, NOT NULL | 所属项目 |
+| `space_id` | Integer | **FK** → `space.id`, NOT NULL | 所属空间 |
 | `name` | Text | NOT NULL | 环境名称 |
 | `base_url` | Text | NOT NULL | 环境基础 URL |
 | `description` | Text | default="" | 环境描述 |
@@ -71,13 +73,13 @@
 
 | 索引名 | 字段 |
 |--------|------|
-| `idx_env_project` | `project_id` |
+| `idx_env_space` | `space_id` |
 
 ### 外键删除策略
 
 | 外键 | 指向 | 策略 |
 |------|------|------|
-| `project_id` | `project.id` | CASCADE |
+| `space_id` | `space.id` | CASCADE |
 
 ---
 
@@ -90,7 +92,7 @@
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
 | `id` | Integer | **PK**, 非自增 | 全局唯一 ID |
-| `project_id` | Integer | **FK** → `project.id`, NOT NULL | 所属项目 |
+| `space_id` | Integer | **FK** → `space.id`, NOT NULL | 所属空间 |
 | `operation_id` | Text | NOT NULL | OpenAPI operationId |
 | `name` | Text | NOT NULL | 接口名称 |
 | `path` | Text | NOT NULL | 请求路径 |
@@ -115,20 +117,20 @@
 | 约束名 | 类型 | 规则 |
 |--------|------|------|
 | `ck_api_method` | CHECK | `method IN ('GET','POST','PUT','DELETE','PATCH','HEAD','OPTIONS')` |
-| `uq_project_path_method` | UNIQUE | `(project_id, path, method)` |
+| `uq_space_path_method` | UNIQUE | `(space_id, path, method)` |
 
 ### 索引
 
 | 索引名 | 字段 |
 |--------|------|
-| `idx_endpoint_project` | `project_id` |
+| `idx_endpoint_space` | `space_id` |
 | `idx_endpoint_operation_id` | `operation_id` |
 
 ### 外键删除策略
 
 | 外键 | 指向 | 策略 |
 |------|------|------|
-| `project_id` | `project.id` | CASCADE |
+| `space_id` | `space.id` | CASCADE |
 
 ---
 
@@ -141,7 +143,7 @@
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
 | `id` | Integer | **PK**, 非自增 | 全局唯一 ID |
-| `project_id` | Integer | **FK** → `project.id`, NULLABLE | 关联项目 |
+| `space_id` | Integer | **FK** → `space.id`, NOT NULL | 关联空间 |
 | `environment_id` | Integer | **FK** → `environment.id`, NULLABLE | 关联环境 |
 | `name` | Text | default="" | 运行名称 |
 | `status` | Text | NOT NULL, default="pending" | 运行状态 |
@@ -175,14 +177,14 @@
 
 | 索引名 | 字段 |
 |--------|------|
-| `idx_run_project` | `project_id` |
+| `idx_run_space` | `space_id` |
 | `idx_run_env` | `environment_id` |
 
 ### 外键删除策略
 
 | 外键 | 指向 | 策略 |
 |------|------|------|
-| `project_id` | `project.id` | SET NULL |
+| `space_id` | `space.id` | CASCADE |
 | `environment_id` | `environment.id` | SET NULL |
 
 ---
@@ -372,7 +374,80 @@
 
 ---
 
-## 九、枚举值速查
+## 九、conversation — 会话表
+
+> *「会话者，用户与智能体之间的对话历程也。每轮交互，皆有据可查。」*
+
+### 字段定义
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| `id` | Integer | **PK**, 非自增 | 全局唯一 ID |
+| `space_id` | Integer | **FK** → `space.id`, NULLABLE | 关联空间（可空，支持无空间会话） |
+| `title` | Text | NOT NULL, default="" | 会话标题 |
+| `mode` | Text | NOT NULL, default="Run" | 会话模式 |
+| `status` | Integer | NOT NULL, default=1 | 状态（1=启用，0=未启用） |
+| `last_message_at` | Text | NULLABLE | 最后消息时间 |
+| `created_at` | Text | NOT NULL | 创建时间 |
+| `updated_at` | Text | NOT NULL | 更新时间 |
+
+### 约束
+
+| 约束名 | 类型 | 规则 |
+|--------|------|------|
+| `ck_conversation_mode` | CHECK | `mode IN ('Ask','Plan','Run')` |
+| `ck_conversation_status` | CHECK | `status IN (0,1)` |
+
+### 索引
+
+| 索引名 | 字段 |
+|--------|------|
+| `idx_conversation_space` | `space_id` |
+
+### 外键删除策略
+
+| 外键 | 指向 | 策略 |
+|------|------|------|
+| `space_id` | `space.id` | CASCADE |
+
+---
+
+## 十、message — 消息表
+
+> *「消息为会话之血肉——append-only，不可修改，不可删除，唯有追加。」*
+
+### 字段定义
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| `id` | Integer | **PK**, 非自增 | 全局唯一 ID |
+| `conversation_id` | Integer | **FK** → `conversation.id`, NOT NULL | 所属会话 |
+| `role` | Text | NOT NULL | 消息角色 |
+| `content` | Text | NOT NULL, default="" | 消息内容 |
+| `meta` | Text | NOT NULL, default="{}" | 元数据（JSON） |
+| `created_at` | Text | NOT NULL | 创建时间 |
+
+### 约束
+
+| 约束名 | 类型 | 规则 |
+|--------|------|------|
+| `ck_message_role` | CHECK | `role IN ('user','assistant','system')` |
+
+### 索引
+
+| 索引名 | 字段 |
+|--------|------|
+| `idx_message_conv` | `conversation_id` |
+
+### 外键删除策略
+
+| 外键 | 指向 | 策略 |
+|------|------|------|
+| `conversation_id` | `conversation.id` | CASCADE |
+
+---
+
+## 十一、枚举值速查
 
 > *「标准化的值域，是数据完整性的守护者。」*
 
@@ -432,6 +507,22 @@
 | `skipped` | 跳过（依赖未满足） |
 | `error` | 错误（执行异常） |
 
+### conversation.mode
+
+| 值 | 含义 |
+|----|------|
+| `Ask` | 问答模式 |
+| `Plan` | 计划模式 |
+| `Run` | 执行模式 |
+
+### message.role
+
+| 值 | 含义 |
+|----|------|
+| `user` | 用户消息 |
+| `assistant` | 助手回复 |
+| `system` | 系统消息 |
+
 ### report.format
 
 | 值 | 含义 |
@@ -455,7 +546,7 @@
 
 ---
 
-## 十、数据库重建
+## 十二、数据库重建
 
 ```bash
 # Windows
@@ -467,6 +558,15 @@ rm db/LLMTest.db
 # 重新运行程序即可自动重建所有表结构
 python main.py "解析这份API文档并存储" --api-doc input/httpbin_service.json
 ```
+
+---
+
+## 十三、修订记录
+
+| 日期 | 说明 |
+|------|------|
+| 2026-08-27 | `project` → `space` 术语层重命名；`test_run.space_id` 改为 NOT NULL + CASCADE；新增 `conversation` / `message` 两表；枚举速查补充 conversation.mode / message.role |
+| 旧版 | 初始版本（project 术语） |
 
 ---
 

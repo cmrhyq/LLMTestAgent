@@ -163,7 +163,7 @@ class LangSmithConfig(BaseModel):
 
     enabled: bool = Field(default=False, description="是否启用 LangSmith 追踪")
     api_key: str = Field(default="", description="LangSmith API 密钥")
-    space: str = Field(default="LLMTestAgent", description="LangSmith 空间名称")
+    space: str = Field(default="TestAgents", description="LangSmith 空间名称")
     endpoint: str = Field(default="https://api.smith.langchain.com", description="LangSmith 服务端点")
 
 
