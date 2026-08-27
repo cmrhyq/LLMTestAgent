@@ -1,5 +1,5 @@
 -- ============================================================================
--- LLMTestAgent 数据库建表脚本 (SQLite)
+-- TestAgents 数据库建表脚本 (SQLite)
 --
 -- 说明：
 -- 1. 应用启动时由 SQLAlchemy Base.metadata.create_all() 建表，本脚本用于

@@ -1,5 +1,5 @@
 # ============================================================================
-# pyproject.toml — LLMTestAgent 项目配置
+# pyproject.toml — TestAgents 项目配置
 # 包含：项目元数据、依赖声明、构建系统、开发工具配置
 # 参考：https://packaging.python.org/en/latest/specifications/pyproject-toml/
 # ============================================================================
@@ -16,7 +16,7 @@ build-backend = "hatchling.build"
 # 项目元数据
 # ----------------------------------------------------------------------------
 [project]
-name = "llmtestagent"
+name = "testagents"
 dynamic = ["version"]                # 版本号从 src/__init__.py 动态读取
 description = "LLM-driven API automation testing agent — natural language to parse, generate, execute, and report."
 license = "Apache-2.0"
@@ -38,7 +38,7 @@ classifiers = [
 ]
 
 # ----------------------------------------------------------------------------
-# 运行时依赖（pip install llmtestagent 时自动安装）
+# 运行时依赖（pip install testagents 时自动安装）
 # ----------------------------------------------------------------------------
 dependencies = [
     # LangChain 生态
@@ -115,9 +115,9 @@ test = [
 # 项目链接（显示在 PyPI 页面）
 # ----------------------------------------------------------------------------
 [project.urls]
-Homepage = "https://github.com/cmrhyq/LLMTestAgent"
-Repository = "https://github.com/cmrhyq/LLMTestAgent"
-Issues = "https://github.com/cmrhyq/LLMTestAgent/issues"
+Homepage = "https://github.com/cmrhyq/TestAgents"
+Repository = "https://github.com/cmrhyq/TestAgents"
+Issues = "https://github.com/cmrhyq/TestAgents/issues"
 
 # ----------------------------------------------------------------------------
 # Hatch 构建配置

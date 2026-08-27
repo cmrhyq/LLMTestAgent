@@ -1,4 +1,4 @@
-"""LLMTestAgent FastAPI 应用入口。
+"""TestAgents FastAPI 应用入口。
 
 启动方式:
     python app.py
@@ -72,7 +72,7 @@ async def lifespan(application: FastAPI):
 
 
 app = FastAPI(
-    title="LLMTestAgent API",
+    title="TestAgents API",
     description="基于大语言模型的 API 自动化测试智能体 - RESTful 接口服务",
     version="1.0.0",
     lifespan=lifespan,

@@ -10,9 +10,9 @@ skinparam entity {
   BorderColor #495057
 }
 
-title LLMTestAgent - Entity Relationship Diagram
+title TestAgents - Entity Relationship Diagram
 
-entity "project" as project {
+entity "space" as space {
   * **id** : Integer <<PK>>
   --
   * name : Text <<UNIQUE>>
@@ -26,7 +26,7 @@ entity "project" as project {
 entity "environment" as environment {
   * **id** : Integer <<PK>>
   --
-  * project_id : Integer <<FK>>
+  * space_id : Integer <<FK>>
   * name : Text
   * base_url : Text
   description : Text
@@ -40,11 +40,11 @@ entity "environment" as environment {
 entity "endpoint" as endpoint {
   * **id** : Integer <<PK>>
   --
-  * project_id : Integer <<FK>>
+  * space_id : Integer <<FK>>
   * operation_id : Text
   * name : Text
-  * path : Text
-  * method : Text
+  * path : Text <<UQ(space,path,method)>>
+  * method : Text <<UQ(space,path,method)>>
   tags : Text (JSON)
   summary : Text
   description : Text
@@ -64,7 +64,7 @@ entity "endpoint" as endpoint {
 entity "test_run" as test_run {
   * **id** : Integer <<PK>>
   --
-  project_id : Integer <<FK>>
+  * space_id : Integer <<FK>>
   environment_id : Integer <<FK>>
   name : Text
   * status : Text
@@ -169,9 +169,32 @@ entity "report" as report {
   * generated_at : Text
 }
 
-project ||--o{ environment : "CASCADE"
-project ||--o{ endpoint : "CASCADE"
-project ||--o{ test_run : "SET NULL"
+entity "conversation" as conversation {
+  * **id** : Integer <<PK>>
+  --
+  space_id : Integer <<FK>>
+  title : Text
+  * mode : Text
+  * status : Integer
+  last_message_at : Text
+  * created_at : Text
+  * updated_at : Text
+}
+
+entity "message" as message {
+  * **id** : Integer <<PK>>
+  --
+  * conversation_id : Integer <<FK>>
+  * role : Text
+  * content : Text
+  * meta : Text (JSON)
+  * created_at : Text
+}
+
+space ||--o{ environment : "CASCADE"
+space ||--o{ endpoint : "CASCADE"
+space ||--o{ test_run : "CASCADE"
+space ||--o{ conversation : "CASCADE"
 environment ||--o{ test_run : "SET NULL"
 test_run ||--o{ test_case : "CASCADE"
 test_run ||--o{ test_result : "CASCADE"
@@ -179,5 +202,6 @@ test_run ||--|| test_summary : "CASCADE (1:1)"
 test_run ||--o{ report : "CASCADE"
 endpoint ||--o{ test_case : "SET NULL"
 test_case ||--o{ test_result : "CASCADE"
+conversation ||--o{ message : "CASCADE"
 
 @enduml

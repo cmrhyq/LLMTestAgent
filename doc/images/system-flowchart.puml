@@ -13,7 +13,7 @@ skinparam diamond {
   BorderColor #856404
 }
 
-title LLMTestAgent System Flowchart
+title TestAgents System Flowchart
 
 start
 
@@ -27,7 +27,7 @@ if (Intent?) then (parse_openapi)
 
   :Feature Extraction\n(LLM Analysis);
 
-  :Persist to Database\n(Project + Endpoints);
+  :Persist to Database\n(Space + Endpoints);
 
 else (run_test)
 
@@ -36,8 +36,8 @@ else (run_test)
   :Select Endpoints Agent\n(LLM + Tool Calling Loop);
 
   partition "Agent Tool Loop" {
-    :search_project(name);
-    :get_project_endpoints(project_id);
+    :search_space(name);
+    :get_space_endpoints(space_id);
     :Parse Selected Endpoints;
   }
 
