@@ -177,6 +177,10 @@ class AppConfig(BaseModel):
     chroma: ChromaConfig = Field(default_factory=ChromaConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     langsmith: LangSmithConfig = Field(default_factory=LangSmithConfig)
+    model_list: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="LiteLLM Router 模型列表（model_name + litellm_params），透传给 litellm.Router",
+    )
 
 
 def load_config(config_path: str | Path | None = None) -> AppConfig:

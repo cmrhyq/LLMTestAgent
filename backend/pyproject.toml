@@ -52,6 +52,7 @@ dependencies = [
     "langchain-anthropic>=0.2.0",
     "langchain-deepseek>=1.1.0",
     # LLM 提供商 SDK
+    "litellm>=1.98.0",
     "boto3>=1.34.0",                 # AWS Bedrock
     "zhipuai>=2.0.0",               # 智谱 AI
     "dashscope>=1.14.0",            # 通义千问
