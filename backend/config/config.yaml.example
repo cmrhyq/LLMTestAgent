@@ -36,6 +36,31 @@ llm:
     api_key: ""
     model: deepseek-v4-flash
 
+# LiteLLM配置，需要配置多个模型来进行任务复杂度分流
+model_list:
+  - model_name: glm-4-flash
+    litellm_params:
+      model: zai/glm-4-flash
+      api_key: ""
+  - model_name: deepseek-v4-flash
+    litellm_params:
+      model: deepseek/deepseek-v4-flash
+      api_key: ""
+  - model_name: deepseek-v4-pro
+    litellm_params:
+      model: deepseek/deepseek-v4-pro
+      api_key: ""
+  - model_name: smart-router
+    litellm_params:
+      model: auto_router/complexity_router
+      complexity_router_config:
+        tiers:
+          SIMPLE: glm-4-flash
+          MEDIUM: deepseek-v4-flash
+          COMPLEX: deepseek-v4-pro
+          REASONING: deepseek-v4-pro
+      complexity_router_default_model: glm-4-flash
+
 # 测试执行配置
 execution:
   # 超时配置（秒）
