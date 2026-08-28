@@ -1,6 +1,6 @@
 # TestAgents 架构设计文档
 
-> 版本：v0.4（对应当前代码实现，2026-08）
+> 版本：v0.5（对应当前代码实现，2026-08）
 > 定位：本文是对 **当前真实实现** 的整体架构说明，跨越前端、后端、数据层、工作流引擎与外部依赖。
 >
 与其他文档关系：本文为总览；[数据库设计](DatabaseDesign.md)、[ER 图](ER.md)、[系统流程图](SystemFlowchart.md)、[页面设计准则](UI-Design-Guidelines.md)。
@@ -20,7 +20,7 @@
 | 后端  | Python + FastAPI + SQLAlchemy 2.0 + LangChain / LangGraph + structlog                              |
 | 数据  | SQLite 3（WAL 模式，雪花 ID 主键）                                                                          |
 | 向量库 | ChromaDB（连接层就绪，未接入业务）                                                                              |
-| LLM | 多 Provider：OpenAI（含代理 base_url）/ AWS Bedrock / 智谱 / 通义千问                                           |
+| LLM | LiteLLM Router 多模型路由（glm / deepseek 等）+ langchain-litellm（ChatLiteLLMRouter）                              |
 
 ### 1.2 顶层架构图
 
@@ -38,7 +38,7 @@ flowchart TB
     services[data/services 业务层]
     repos[data/repositories DAO 层]
     graph[LangGraph 测试工作流]
-    llm[LLMClient 多 Provider]
+    llm[LiteLLM Router 多模型]
     api --> services --> repos
     api --> graph
     graph --> llm
@@ -96,8 +96,9 @@ flowchart TB
 | 模块                       | 关键类/函数                                       | 说明                                                                                                                         |
 |--------------------------|----------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
 | `config.py`              | `AppConfig` + `get_config()`/`init_config()` | Pydantic 配置模型；仅从 YAML 加载（已移除 `${ENV}` / `.env`）；配置段：llm/execution/output/database/chroma/logging/langsmith/case_generation |
-| `database/connection.py` | `DatabaseManager`（线程安全单例）                    | SQLite 自动启用 `WAL` + 外键 + UTF-8；`get_session()` 上下文自动 commit/rollback                                                       |
-| `llm/llm_client.py`      | `create_chat_model()` + `LLMClient`          | 多 Provider 工厂 + 统一封装（同步/异步/流式/工具绑定/事件流）                                                                                    |
+| `database/connection.py` | `DatabaseManager`（线程安全单例）                    | SQLite 自动启用 `WAL` + 外键 + UTF-8；`get_session()` 上下文自动 commit/rollback；`ensure_db()` 幂等初始化（graph 节点/tools 场景） |
+| `llm/llm_client.py`      | `create_chat_model()` + `LLMClient`          | 基于 `litellm.Router(model_list)` + `ChatLiteLLMRouter` 的统一封装（同步/异步/流式/工具绑定/事件流），兼容层接口不变 |
+| `llm/llm_service.py`     | `LLMService` + `get_llm_service()`           | 新 LLM 客户端：直接收发 LangChain `BaseMessage`，返回原始 `AIMessage`/`AIMessageChunk`（含 `usage_metadata`/`tool_calls`） |
 | `chroma/connection.py`   | `ChromaManager`（单例）                          | HttpClient + Token 认证、集合/文档 CRUD、LangChain VectorStore；**未接入业务**                                                           |
 | `cache/data_cache.py`    | `DataCache`                                  | 线程安全缓存，`create_scoped(run_id)` 隔离并发工作流的步骤间变量                                                                               |
 | `logging.py`             | `StructLogger`                               | structlog 彩色/JSON 双输出 + 文件轮转 + `log_execution_time` 装饰器                                                                    |
@@ -130,8 +131,8 @@ flowchart TB
 flowchart TD
   START([START]) --> startNode[start]
   startNode --> parseInput[parse_input]
-  parseInput -->|"intent = parse_openapi"| parseDoc[parse_openapi_doc]
-  parseInput -->|"intent = run_test"| selectAgent[select_endpoints_agent]
+  parseInput -->|"intent = run"| selectAgent[select_endpoints_agent]
+  parseInput -->|"intent = ask"| answerNode[answer_question]
   selectAgent <-->|tools_condition 循环| toolNode[ToolNode: db_tools]
   selectAgent --> parseResult[parse_result]
   parseResult -->|"mode = single"| genSingle[generate_single_cases]
@@ -140,7 +141,7 @@ flowchart TD
   genFlow --> execFlow[execute_flow_tests]
   execSingle --> report[generate_report]
   execFlow --> report
-  parseDoc --> endNode[end]
+  answerNode --> endNode[end]
   report --> endNode --> ENDN([END])
   parseInput -.出错.-> errorNode[error] --> ENDN
 ```
@@ -149,24 +150,24 @@ flowchart TD
 
 | 节点                           | 职责                                                            |
 |------------------------------|---------------------------------------------------------------|
-| `start_node`                 | 校验 `raw_input`，初始化 `current_step`                             |
-| `parse_input_node`           | LLM 意图识别：`run_test` / `parse_openapi`，及测试模式 `single` / `flow` |
-| `select_endpoints_node`      | Agent 绑定 DB 工具挑选接口（ToolNode 循环），并解析 `selected_endpoint_ids`   |
+| `start_node`                 | 校验 `raw_input`，初始化 `next_node` / `run_status`                |
+| `parse_input_node`           | LLM 意图识别：`run`（执行测试）/ `ask`（问答），及测试模式 `single` / `flow` |
+| `select_endpoints_node`      | Agent 绑定 DB 工具挑选接口（ToolNode 循环），并解析 `selected_endpoints`   |
 | `generate_single_cases_node` | 逐接口调 LLM 生成用例，建 `TestRun`、写 `TestCase`                        |
 | `generate_flow_cases_node`   | 一次性传所有接口，LLM 编排带 `step_order` 的流程用例                           |
 | `execute_single_tests_node`  | 按优先级 P0>P1>P2 执行，汇总统计                                         |
 | `execute_flow_tests_node`    | 按 `step_order` 顺序执行，前置失败则依赖步骤置 `skipped`                      |
 | `generate_report_node`       | 生成 HTML 报告并写 `Report` 记录                                      |
-| `parse_openapi_node`         | 调 `ApiDocStorage` 解析 OpenAPI 并落库                              |
+| `answer_question_node`       | ask 意图问答：安全/意图审计 + 历史上下文 + LLM 回答（走图或 `/chat/stream` 直接调用） |
 | `security_audit_node`        | 安全 + API 测试意图审计（供 `/chat/stream` 使用）                          |
 | `task_complexity_node`       | 复杂度分级选模型（已实现，**未接入主图**）                                       |
 | `end_node` / `error_node`    | 终态 / 错误终态                                                     |
 
-**路由**（`src/graph/route.py`）：`route_by_step`（错误分流）、`route_by_intent`、`route_by_test_mode`。
+**路由**（`src/graph/route.py`）：`route_by_next_node`（通用 next_node 分流）、`route_by_intent`（RUN → SELECT_ENDPOINTS_AGENT / ASK → ANSWER_QUESTION）、`route_by_test_mode`。
 
-**状态**（`src/graph/state.py`）：`AgentState` 继承 `MessagesState`（自带 `messages`），字段含 `current_step`、`raw_input`、
-`api_doc_file_path`、`user_intent`、`test_mode`、`selected_endpoints`、`test_results`、`test_summary`、`run_id`、`report_path`、
-`error_message` 等。
+**状态**（`src/graph/state.py`）：`AgentState` 继承 `MessagesState`（自带 `messages`），字段含 `next_node`、`raw_input`、
+`user_intent`、`test_mode`、`space_id`、`selected_endpoints`、`run_id`、`test_results_summary`、`report_path`、
+`answer_content`、`conversation_id`、`error_message` 等。
 
 ### 3.3 执行引擎（`src/graph/executor/`）
 
@@ -229,26 +230,37 @@ append-only。会话数据以 SQLite 为权威存储（非 Chroma、非 localSto
 
 ### 5.2 流式对话时序
 
+`POST /chat/stream` 按 `mode` 分流：`run` → 走完整 graph（意图判断后执行测试或回答），SSE 事件流输出，结束后测试摘要落库
+assistant 消息；`ask` → 走 `answer_question_node`（安全审计 + 回答），text/plain 分块输出；`plan` → 占位提示。
+
 ```mermaid
 sequenceDiagram
   participant FE as SecurityChatPage
   participant API as POST /chat/stream
   participant SVC as ConversationService
   participant AUD as security_audit_node
-  participant LLM as LLMClient.achat_stream
+  participant LLM as LiteLLM Router
 
-  FE->>API: instruction + conversation_id? + mode
+  FE->>API: instruction + conversation_id? + mode + space_id?
   API->>SVC: 无 id 则建会话; 落库 user 消息
   API-->>FE: 响应头 X-Conversation-Id
-  API->>AUD: 线程池执行安全/意图审计
-  alt 命中风险 / 非测试内容
-    API-->>FE: 返回固定拦截文案
-  else 通过
-    API->>SVC: 加载历史消息拼多轮上下文
-    API->>LLM: system + 历史 + 当前
-    LLM-->>FE: 逐 token 流式返回
+  alt mode = run
+    API->>LLM: graph 全流程（意图判断 → 测试/回答），SSE 事件流
+    LLM-->>FE: data: {start/node/final/error} 结构化事件
+    API->>SVC: 结束后落库 assistant 摘要
+  else mode = ask
+    API->>AUD: 线程池执行安全/意图审计
+    alt 命中风险 / 非测试内容
+      API-->>FE: 返回固定拦截文案
+    else 通过
+      API->>SVC: 加载历史消息拼多轮上下文
+      API->>LLM: system + 历史 + 当前
+      LLM-->>FE: 逐 token 流式返回（text/plain）
+    end
+    API->>SVC: 结束时落库 assistant 全文
+  else mode = plan
+    API-->>FE: 占位提示（功能待定）
   end
-  API->>SVC: 结束时落库 assistant 全文
 ```
 
 ### 5.3 前端接入
@@ -312,20 +324,31 @@ flowchart LR
 
 ## 七、LLM 与 Prompt 体系
 
-### 7.1 多 Provider
+### 7.1 LiteLLM Router 统一模型层
 
-`core/llm/llm_client.py` 的 `create_chat_model()` 按 `config.llm.provider` 分发：
+`config.yaml` 顶层 `model_list` 定义全部模型（`model_name` + `litellm_params`），由 `litellm.Router` 统一路由
+（fallback / load balancing / 复杂度分流）：
 
-| provider   | 实现             | 备注                                             |
-|------------|----------------|------------------------------------------------|
-| `openai`   | `ChatOpenAI`   | 支持自定义 `base_url`（可接 Bedrock Access Gateway 代理） |
-| `bedrock`  | `ChatBedrock`  | boto3 客户端                                      |
-| `zhipu`    | `ChatZhipuAI`  | 智谱                                             |
-| `qwen`     | `ChatTongyi`   | 通义千问                                           |
-| `deepseek` | `ChatDeepSeek` | Deepseek（`langchain-deepseek`）                 |
+| model_name          | 底层模型                    | 用途                         |
+|--------------------|---------------------------|----------------------------|
+| `glm-4-flash`      | `zai/glm-4-flash`         | 简单任务                      |
+| `glm-4.7-flash`    | `zai/glm-4.7-flash`       | 中等任务                      |
+| `deepseek-v4-flash` | `deepseek/deepseek-v4-flash` | 复杂任务（高并发）              |
+| `deepseek-v4-pro`  | `deepseek/deepseek-v4-pro` | 推理任务                      |
+| `smart-router`     | `auto_router/complexity_router` | **默认**：按提示词复杂度自动分流到上述 4 级 |
 
-统一封装 `LLMClient` 提供：`chat`、`invoke_with_tools`、同步/异步流式（`chat_stream`/`achat_stream`）、原始消息块流、工具绑定流、事件流；全局单例
-`get_llm_client()`。
+**两条接入路径**：
+
+| 客户端                         | 消息格式                     | 返回                               | 适用场景                |
+|------------------------------|--------------------------|----------------------------------|---------------------|
+| `llm_client.LLMClient`（兼容层） | `list[dict]` OpenAI 格式   | `str` / `AIMessage`（历史接口，兼容旧调用方） | 既有 graph 节点调用       |
+| `llm_service.LLMService`（新）   | `list[BaseMessage]`      | `AIMessage` / `AIMessageChunk`（原生）  | 新代码推荐              |
+
+- `LLMClient`：`create_chat_model()` 返回 `ChatLiteLLMRouter`（`litellm.Router` + `ChatLiteLLMRouter` 包装），提供 `chat`、
+  `invoke_with_tools`、同步/异步流式、原始消息块流、工具绑定流、事件流；全局单例 `get_llm_client()`。
+- `LLMService`：直接收发 LangChain `BaseMessage`（`HumanMessage`/`SystemMessage`/`AIMessage`），仅 `chat`/`achat` 返回
+  `str`，其余方法返回原始消息对象（含 `usage_metadata` / `tool_calls` / `tool_call_chunks`）；全局单例 `get_llm_service()`。
+- **Token 用量**：非流式 `AIMessage.usage_metadata`；流式需 `stream_options={"include_usage": True}`；费用可借 `litellm.completion_cost()`。
 
 ### 7.2 Prompt 体系（`src/prompts/`）
 
@@ -340,11 +363,12 @@ flowchart LR
 ## 八、配置体系
 
 - 配置文件：`backend/config/config.yaml`，`load_config()` 仅从 YAML 读取配置（已移除 `.env` / `${ENV}` 变量替换）。
-- 配置段（`AppConfig`）：`llm`（provider + 各 provider 段）、`execution`（超时/重试/并发/依赖失败策略）、`output`（时间戳目录）、
-  `database`、`chroma`、`logging`、`langsmith`（可观测性）、`case_generation`（场景列表）。
+- 配置段（`AppConfig`）：`llm`（`default_model` 默认模型名）、顶层 `model_list`（LiteLLM Router 模型路由列表）、
+  `execution`（超时/重试/并发/依赖失败策略）、`output`（时间戳目录）、`database`、`chroma`、`logging`、`langsmith`（可观测性）、
+  `case_generation`（场景列表）。
 
-> 安全提示：纯 YAML 化后，`config.yaml` 中的密钥（如 AWS access_key/secret_key、代理 api_key）需以明文写入本地配置，务必确保
-`config.yaml` 已在 `.gitignore` 中，避免明文入库；如需更安全的密钥注入方案（如运行时 secret 覆盖层），属于安全审查的高优先级项。
+> 安全提示：`model_list` 中各模型的 `api_key` 以明文写入本地 `config.yaml`，务必确保 `config.yaml` 已在 `.gitignore` 中，
+> 避免明文入库；如需更安全的密钥注入方案（如运行时 secret 覆盖层），属于安全审查的高优先级项。
 
 ---
 
@@ -367,11 +391,13 @@ flowchart LR
    配置。
 2. **Plan 执行闭环**：`mode=Plan` 生成结构化测试计划 → 用户确认 → 注入 `AgentState` 复用执行链路 → 回写 `conversation` 与
    `test_run` 关联。
-3. **space_id 全链路**：测试执行工作流以 `space_id` 限定范围，减少 LLM 猜空间名。
-4. **task_complexity / fs_tools 接入主图**：目前已实现但未挂入工作流。
-5. **会话与 run 关联**：`conversation` 增加 `test_run_id` 关联字段，打通对话与执行产物。
-6. **测试空间功能**：在测试空间详情页面解析 OpenAPI文档时可以选择要导入的 endpoint 和 env，创建测试空间时删除base_url字段
-7. **LLM网关**：增加LiteLLM，统一模型调用入口，增加根据任务复杂度进行模型分流，简单任务使用简单模型，困难任务使用复杂模型
+3. **fs_tools 接入主图**：目前已实现但未挂入工作流。
+4. **会话与 run 关联**：`conversation` 增加 `test_run_id` 关联字段，打通对话与执行产物。
+5. **测试空间功能**：在测试空间详情页面解析 OpenAPI文档时可以选择要导入的 endpoint 和 env。
+6. **Token使用记录**：根据LiteLLM的功能，新增相关表记录token，模型等信息
+
+> 已完成（2026-08）：**LLM 网关**（LiteLLM 统一模型入口 + 按任务复杂度分流，`smart-router` 默认路由）见 §7.1；
+> **space_id 全链路**（`AgentState.space_id` + run 流程注入）见 §3.2。
 
 ---
 
@@ -394,5 +420,6 @@ flowchart LR
 
 | 版本  | 日期         | 说明                                                                                                                       |
 |-----|------------|--------------------------------------------------------------------------------------------------------------------------|
+| 0.5 | 2026-08-28 | LLM 层重构：多 Provider 工厂 → LiteLLM Router（`model_list` + `smart-router` 复杂度分流）+ `ChatLiteLLMRouter`；新增 `LLMService`（原生 BaseMessage）；graph 意图改 `run`/`ask`（`parse_openapi` 下线，`answer_question` 接入主图）；`AgentState` 增 `space_id`/`answer_content`；`/chat/stream` 按 mode 分流；`db_bootstrap` 合并入 `connection.ensure_db` |
 | 0.4 | 2026-08-27 | `project` → `space` 全文术语同步；路由清单更新 `/spaces`；tool 名同步 `search_space`/`get_space_endpoints`；`test_run.space_id` 改为 CASCADE |
 | 0.3 | 2026-08-13 | 初稿：整合前后端全景架构；校准对话历史已实现、单一对话入口、Ask/Plan 现状；标注 Chroma/Plan 为演进方向                                                           |
