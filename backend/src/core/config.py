@@ -16,60 +16,10 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 
-class OpenAIConfig(BaseModel):
-    """OpenAI配置"""
-
-    base_url: str = Field(
-        default="",
-        description="OpenAI Base URL，留空则使用默认地址；填写代理网关地址（如 Bedrock Access Gateway）则走代理",
-    )
-    api_key: str = Field(default="", description="OpenAI API密钥")
-    model: str = Field(default="gpt-4", description="模型名称")
-    temperature: float = Field(default=0.7, description="温度参数")
-    max_tokens: int = Field(default=4096, description="最大token数")
-
-
-class BedrockConfig(BaseModel):
-    """AWS Bedrock配置"""
-
-    region: str = Field(default="us-east-1", description="AWS区域")
-    model_id: str = Field(default="anthropic.claude-3-sonnet-20240229-v1:0", description="模型ID")
-    max_tokens: int = Field(default=4096, description="最大token数")
-    access_key: str = Field(default="", description="AWS Access Key")
-    secret_key: str = Field(default="", description="AWS Secret Key")
-    session_token: str = Field(default="", description="AWS Session Token（临时凭证必填）")
-
-
-class ZhipuConfig(BaseModel):
-    """智谱AI配置"""
-
-    api_key: str = Field(default="", description="智谱API密钥")
-    model: str = Field(default="glm-4", description="模型名称")
-
-
-class QwenConfig(BaseModel):
-    """通义千问配置"""
-
-    api_key: str = Field(default="", description="通义千问API密钥")
-    model: str = Field(default="qwen-max", description="模型名称")
-
-
-class DeepseekConfig(BaseModel):
-    """Deepseek配置"""
-
-    api_key: str = Field(default="", description="DeepseekAPI密钥")
-    model: str = Field(default="deepseek-v4-flash", description="模型名称")
-
-
 class LLMConfig(BaseModel):
     """LLM配置"""
 
-    provider: str = Field(default="openai", description="LLM提供商")
-    openai: OpenAIConfig = Field(default_factory=OpenAIConfig)
-    bedrock: BedrockConfig = Field(default_factory=BedrockConfig)
-    zhipu: ZhipuConfig = Field(default_factory=ZhipuConfig)
-    qwen: QwenConfig = Field(default_factory=QwenConfig)
-    deepseek: DeepseekConfig = Field(default_factory=DeepseekConfig)
+    default_model: str = Field(default="smart-router", description="默认模型名（对应 model_list 中的 model_name）")
 
 
 class RetryConfig(BaseModel):
