@@ -5,7 +5,7 @@
 ``src.graph.nodes.answer_question.answer_question_node``。
 """
 
-from src.core.database.connection import get_db_manager
+from src.core.database.database_manager import get_db_manager
 from src.core.logging import get_logger
 from src.data.schemas.conversation import ConversationCreate
 from src.data.services.conversation_service import ConversationService

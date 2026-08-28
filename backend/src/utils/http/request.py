@@ -18,7 +18,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import ConnectionError, HTTPError, RequestException, Timeout
 
-from src.core.cache.data_cache import DataCache
+from src.core.cache.cache_manager import CacheManager
 from src.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -141,7 +141,7 @@ class HttpRequest:
             auth_credentials: 认证凭证字典
         """
         self.base_url = base_url
-        self.cache = DataCache.get_instance()
+        self.cache = CacheManager.get_instance()
 
         # 创建 session 以复用连接
         self.session = requests.Session()

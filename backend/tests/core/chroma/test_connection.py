@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.core.chroma.connection import (
+from src.core.chroma.chroma_manager import (
     ChromaManager,
     get_chroma_manager,
     init_chroma_from_config,

@@ -12,7 +12,7 @@ import json
 
 from langchain_core.tools import tool
 
-from src.core.cache.data_cache import DataCache
+from src.core.cache.cache_manager import CacheManager
 from src.core.logging import get_logger
 from src.graph.executor.assertion_engine import AssertionEngine
 from src.graph.executor.jsonpath import extract_jsonpath as _extract_jsonpath_impl
@@ -85,7 +85,7 @@ def resolve_cache(cache_key: str) -> str:
     Returns:
         缓存值（JSON 编码）；键不存在返回 null
     """
-    cache = DataCache.get_instance()
+    cache = CacheManager.get_instance()
     if not cache.has(cache_key):
         return "null"
     value = cache.get(cache_key)
@@ -107,7 +107,7 @@ def extract_cache(cache_key: str, source_path: str, response_body: str) -> str:
     try:
         body = as_object(response_body)
         value = _extract_jsonpath_impl(body, source_path)
-        DataCache.get_instance().set(cache_key, value)
+        CacheManager.get_instance().set(cache_key, value)
         return json.dumps(value, ensure_ascii=False, default=str)
     except Exception as e:
         logger.error(f"缓存提取失败: {e}", cache_key=cache_key, error=str(e))

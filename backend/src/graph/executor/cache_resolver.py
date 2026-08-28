@@ -18,7 +18,7 @@ cache_rules JSON 格式约定:
 import copy
 from typing import Any
 
-from src.core.cache.data_cache import DataCache
+from src.core.cache.cache_manager import CacheManager
 from src.core.logging import get_logger
 from src.graph.executor.jsonpath import extract_jsonpath
 
@@ -28,8 +28,8 @@ logger = get_logger(__name__)
 class CacheResolver:
     """缓存参数注入与提取处理器。"""
 
-    def __init__(self, cache: DataCache | None = None) -> None:
-        self.cache = cache or DataCache.get_instance()
+    def __init__(self, cache: CacheManager | None = None) -> None:
+        self.cache = cache or CacheManager.get_instance()
 
     def inject(
         self,

@@ -18,7 +18,7 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import StreamingResponse
 
 from src.core.config import get_config
-from src.core.database.connection import get_db_manager
+from src.core.database.database_manager import get_db_manager
 from src.core.logging import get_logger
 from src.data.schemas.conversation import ChatStreamRequest
 from src.data.services.chat_stream_service import ChatStreamService

@@ -7,14 +7,14 @@ HTML 测试报告并落库。
 from pathlib import Path
 
 from src.core.config import get_config
-from src.core.database.connection import get_db_manager
+from src.core.database.database_manager import get_db_manager
 from src.core.logging import get_logger
 from src.data.models.report import Report
 from src.data.services import ReportService, TestResultService, TestRunService
 from data.constant.constants import NodeName
 from src.graph.report import render_report
 from src.graph.state import AgentState
-from src.utils.db_bootstrap import ensure_db
+from src.core.database.database_manager import init_database_from_config
 
 logger = get_logger(__name__)
 
@@ -38,9 +38,9 @@ def generate_report_node(state: AgentState) -> dict:
         return {"report_path": "", "next_node": NodeName.ERROR.value}
 
     config = get_config()
-    ensure_db()
 
     try:
+        init_database_from_config()
         with get_db_manager().get_session() as session:
             test_result_service = TestResultService(session)
             test_run_service = TestRunService(session)

@@ -10,7 +10,7 @@ import pytest
 
 from src.graph.nodes.security_audit_node import security_audit_node
 from src.graph.state import AgentState
-from src.utils.llm_utils import robust_json_loads
+from src.utils.json_utils import robust_json_loads
 
 # 4 种测试 prompt：注入攻击、prompt 泄露、合法 API 测试请求、无关闲聊
 PROMPT_INJECTION = (

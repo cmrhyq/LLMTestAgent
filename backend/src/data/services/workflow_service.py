@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from src.core.config import get_config
-from src.core.database.connection import init_database_from_config
+from src.core.database.database_manager import init_database_from_config
 from src.core.errors import ConflictError, ValidationError
 from src.core.logging import get_logger
 from src.data.schemas import EnvironmentCreate, EndpointCreate

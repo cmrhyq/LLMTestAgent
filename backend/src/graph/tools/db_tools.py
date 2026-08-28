@@ -8,15 +8,15 @@ import json
 
 from langchain_core.tools import tool
 
-from src.core.database.connection import get_db_manager
+from src.core.database.database_manager import get_db_manager
 from src.data.services import EndpointService, SpaceService
-from src.utils.db_bootstrap import ensure_db
+from src.core.database.database_manager import init_database_from_config
 
 
 @tool
 def search_space(name: str) -> str:
     """根据名称搜索空间，支持模糊匹配。返回匹配的空间列表（JSON格式），包含id、name、description字段。"""
-    ensure_db()
+    init_database_from_config()
     with get_db_manager().get_session() as session:
         service = SpaceService(session)
         results, _ = service.list_spaces(name, None, 1, 100)
@@ -38,7 +38,7 @@ def search_space(name: str) -> str:
 @tool
 def get_space_endpoints(space_id: int) -> str:
     """根据空间ID获取该空间下所有启用的API接口。返回接口列表（JSON格式），包含id、name、path、method、summary、tags、response_summary字段。response_summary展示接口返回的数据结构摘要，便于理解接口间数据依赖关系。"""
-    ensure_db()
+    init_database_from_config()
     with get_db_manager().get_session() as session:
         results = EndpointService(session).list_active(space_id)
 

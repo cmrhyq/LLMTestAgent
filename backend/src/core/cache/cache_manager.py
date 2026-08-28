@@ -9,7 +9,7 @@ import threading
 from typing import Any, Optional
 
 
-class DataCache:
+class CacheManager:
     """
     线程安全的数据缓存类
 
@@ -31,7 +31,7 @@ class DataCache:
         scoped.clear()  # 只清除该命名空间
     """
 
-    _instance: Optional["DataCache"] = None
+    _instance: Optional["CacheManager"] = None
     _lock = threading.Lock()
     _initialized = False
 
@@ -42,24 +42,24 @@ class DataCache:
         Args:
             namespace: 命名空间前缀，用于隔离不同 run 的缓存数据
         """
-        if not DataCache._initialized and namespace == "":
+        if not CacheManager._initialized and namespace == "":
             self._data: dict[str, Any] = {}
             self._data_lock = threading.Lock()
-            DataCache._initialized = True
+            CacheManager._initialized = True
         elif namespace != "":
             self._data = {}
             self._data_lock = threading.Lock()
         self._namespace = namespace
 
     @classmethod
-    def get_instance(cls) -> "DataCache":
+    def get_instance(cls) -> "CacheManager":
         """
         获取 DataCache 的单例实例
 
         使用双重检查锁定模式确保线程安全的单例创建
 
         Returns:
-            DataCache: 全局唯一的缓存实例
+            CacheManager: 全局唯一的缓存实例
         """
         if cls._instance is None:
             with cls._lock:
@@ -70,7 +70,7 @@ class DataCache:
         return cls._instance
 
     @classmethod
-    def create_scoped(cls, namespace: str) -> "DataCache":
+    def create_scoped(cls, namespace: str) -> "CacheManager":
         """
         创建一个带命名空间的独立缓存实例，用于隔离并发 workflow 数据。
 
@@ -80,7 +80,7 @@ class DataCache:
             namespace: 命名空间标识（建议使用 run_id）
 
         Returns:
-            DataCache: 带命名空间的缓存实例
+            CacheManager: 带命名空间的缓存实例
         """
         instance = cls.__new__(cls)
         instance._data = {}
@@ -172,11 +172,11 @@ class DataCache:
 
 
 # 便捷函数：获取缓存实例
-def get_cache() -> DataCache:
+def get_cache() -> CacheManager:
     """
     获取数据缓存实例的便捷函数
 
     Returns:
-        DataCache: 全局唯一的缓存实例
+        CacheManager: 全局唯一的缓存实例
     """
-    return DataCache.get_instance()
+    return CacheManager.get_instance()

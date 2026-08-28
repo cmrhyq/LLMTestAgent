@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Any
 
 from src.core.config import get_config
-from src.core.database.connection import get_db_manager
+from src.core.database.database_manager import get_db_manager
 from src.core.llm.llm_client import get_llm_client
 from src.core.logging import get_logger
 from src.data.models.endpoint import Endpoint
@@ -19,8 +19,7 @@ from src.data.models.test_case import TestCase
 from src.data.services import CaseGenerationService, EndpointService, SpaceService
 from data.constant.constants import NodeName
 from src.graph.state import AgentState
-from src.utils.db_bootstrap import ensure_db
-from src.utils.llm_utils import get_model_name
+from src.core.database.database_manager import init_database_from_config
 
 logger = get_logger(__name__)
 
@@ -62,11 +61,11 @@ class BaseCaseGenerationNode(ABC):
 
         config = get_config()
         llm_client = get_llm_client()
-        ensure_db()
 
         space_id = int(selected_endpoints[0].get("space_id") or 0)
         endpoint_ids = [int(ep["endpoint_id"]) for ep in selected_endpoints if ep.get("endpoint_id")]
 
+        init_database_from_config()
         with get_db_manager().get_session() as session:
             space_service = SpaceService(session)
             endpoint_service = EndpointService(session)
@@ -84,8 +83,7 @@ class BaseCaseGenerationNode(ABC):
             run = case_service.create_running_run(
                 space_id=space_id,
                 name=f"{self.run_name_prefix}-{datetime.now().strftime('%Y%m%d%H%M%S')}",
-                provider=config.llm.provider,
-                model=get_model_name(config),
+                model=config.llm.default_model,
             )
             run_id = run.id
 

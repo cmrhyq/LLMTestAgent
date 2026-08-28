@@ -7,7 +7,7 @@ from collections.abc import Generator
 
 from sqlalchemy.orm import Session
 
-from src.core.database.connection import get_db_manager
+from src.core.database.database_manager import get_db_manager
 
 
 def get_db() -> Generator[Session, None, None]:

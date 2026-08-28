@@ -33,7 +33,6 @@ class CaseGenerationService:
         self,
         space_id: int,
         name: str,
-        provider: str,
         model: str,
     ) -> TestRun:
         """创建 running 状态的执行批次。"""
@@ -42,7 +41,6 @@ class CaseGenerationService:
             name=name,
             status=TestStatus.RUNNING.value,
             trigger_type="manual",
-            llm_provider=provider,
             llm_model=model,
             started_at=local_now(),
         )

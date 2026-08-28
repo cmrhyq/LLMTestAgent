@@ -17,7 +17,7 @@ from fastapi.responses import JSONResponse
 
 from src.api.v1.router import api_router
 from src.core.config import init_config
-from src.core.database.connection import init_database_from_config
+from src.core.database.database_manager import init_database_from_config
 from src.core.errors import ConflictError, NotFoundError, ValidationError
 from src.core.llm.llm_client import init_llm_client
 from src.core.logging import get_logger
@@ -64,7 +64,7 @@ async def lifespan(application: FastAPI):
     config = init_config()
     db_manager = init_database_from_config(config)
     init_database_from_orm(db_manager)
-    init_llm_client(config)
+    init_llm_client()
     logger.info("FastAPI 应用启动完成", version="1.0.0")
     yield
     db_manager.close()
@@ -112,7 +112,7 @@ app.add_exception_handler(ValidationError, _business_error_handler(422))
 @app.get("/health", tags=["系统"])
 def health_check():
     """健康检查接口。"""
-    from src.core.database.connection import get_db_manager
+    from src.core.database.database_manager import get_db_manager
 
     db_ok = get_db_manager().check_connection()
     return {

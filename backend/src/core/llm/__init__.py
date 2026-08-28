@@ -2,7 +2,6 @@
 
 from src.core.llm.llm_client import (
     LLMClient,
-    create_chat_model,
     get_chat_model,
     get_llm_client,
     init_llm_client,
@@ -10,7 +9,6 @@ from src.core.llm.llm_client import (
 
 __all__ = [
     "LLMClient",
-    "create_chat_model",
     "get_chat_model",
     "get_llm_client",
     "init_llm_client",

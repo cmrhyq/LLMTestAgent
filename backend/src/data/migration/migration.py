@@ -11,7 +11,7 @@ from pathlib import Path
 
 from sqlalchemy import inspect, text
 
-from src.core.database.connection import DatabaseManager, get_db_manager
+from src.core.database.database_manager import DatabaseManager, get_db_manager
 from src.core.logging import get_logger
 from src.data.models.base import Base
 

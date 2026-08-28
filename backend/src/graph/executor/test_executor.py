@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from src.core.config import AppConfig, get_config
 
 if TYPE_CHECKING:
-    from src.core.cache.data_cache import DataCache
+    from src.core.cache.cache_manager import CacheManager
 from src.core.logging import get_logger
 from src.data.models.test_case import TestCase
 from src.data.models.test_result import TestResult
@@ -36,11 +36,11 @@ class TestExecutor:
     负责单条用例的完整执行流程，由 execute_single_tests_node 调用。
     """
 
-    def __init__(self, config: AppConfig | None = None, cache: "DataCache | None" = None) -> None:
-        from src.core.cache.data_cache import DataCache
+    def __init__(self, config: AppConfig | None = None, cache: "CacheManager | None" = None) -> None:
+        from src.core.cache.cache_manager import CacheManager
 
         self.config = config or get_config()
-        self.cache_resolver = CacheResolver(cache=cache or DataCache.get_instance())
+        self.cache_resolver = CacheResolver(cache=cache or CacheManager.get_instance())
         self.assertion_engine = AssertionEngine()
 
     def execute_single(

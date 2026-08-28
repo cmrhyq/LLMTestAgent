@@ -5,7 +5,7 @@
 
 from typing import Any
 
-from src.core.cache.data_cache import DataCache
+from src.core.cache.cache_manager import CacheManager
 from src.core.config import get_config
 from src.core.database import get_db_manager
 from src.core.logging import get_logger
@@ -14,7 +14,7 @@ from src.data.services import TestCaseService, TestRunService
 from data.constant.constants import NodeName
 from src.graph.executor.test_executor import TestExecutor
 from src.graph.state import AgentState
-from src.utils.db_bootstrap import ensure_db
+from src.core.database.database_manager import init_database_from_config
 
 logger = get_logger(__name__)
 
@@ -40,10 +40,10 @@ def execute_single_tests_node(state: AgentState) -> dict:
         return {"test_results_summary": {}, "next_node": NodeName.ERROR.value, "error_message": "run_id 为空"}
 
     config = get_config()
-    scoped_cache = DataCache.create_scoped(f"run_{run_id}")
+    scoped_cache = CacheManager.create_scoped(f"run_{run_id}")
     executor = TestExecutor(config, cache=scoped_cache)
-    ensure_db()
 
+    init_database_from_config()
     with get_db_manager().get_session() as session:
         test_case_service = TestCaseService(session)
         test_run_service = TestRunService(session)
