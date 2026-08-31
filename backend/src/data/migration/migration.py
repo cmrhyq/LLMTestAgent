@@ -28,6 +28,7 @@ EXPECTED_TABLES = [
     "report",
     "conversation",
     "message",
+    "llm_log",
 ]
 
 

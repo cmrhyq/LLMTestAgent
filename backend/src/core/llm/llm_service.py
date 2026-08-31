@@ -50,6 +50,7 @@
 """
 
 from collections.abc import AsyncIterator, Iterator
+from time import perf_counter
 from typing import Any
 
 from langchain_core.messages import AIMessage, BaseMessage
@@ -121,20 +122,51 @@ class LLMService:
 
     def invoke(self, messages: list[BaseMessage], **kwargs: Any) -> AIMessage:
         """同步调用，返回完整 AIMessage（含 usage_metadata / response_metadata / tool_calls）。"""
-        return self.model.invoke(messages, **kwargs)
+        start = perf_counter()
+        try:
+            response = self.model.invoke(messages, **kwargs)
+            self._record_usage(_model_of(response), "invoke", _usage_of(response), duration_ms=_elapsed_ms(start))
+            return response
+        except Exception as e:
+            self._record_usage(self.default_model, "invoke", None, success=False, error_message=str(e))
+            raise
 
     async def ainvoke(self, messages: list[BaseMessage], **kwargs: Any) -> AIMessage:
         """异步调用，返回完整 AIMessage。"""
-        return await self.model.ainvoke(messages, **kwargs)
+        start = perf_counter()
+        try:
+            response = await self.model.ainvoke(messages, **kwargs)
+            self._record_usage(_model_of(response), "ainvoke", _usage_of(response), duration_ms=_elapsed_ms(start))
+            return response
+        except Exception as e:
+            self._record_usage(self.default_model, "ainvoke", None, success=False, error_message=str(e))
+            raise
 
     def stream(self, messages: list[BaseMessage], **kwargs: Any) -> Iterator[BaseMessage]:
         """同步流式，逐 chunk 产出 AIMessageChunk（含 content / tool_call_chunks / usage_metadata）。"""
-        yield from self.model.stream(messages, **kwargs)
+        start = perf_counter()
+        last_chunk: BaseMessage | None = None
+        try:
+            for chunk in self.model.stream(messages, **kwargs):
+                last_chunk = chunk
+                yield chunk
+            self._record_usage(_model_of(last_chunk), "stream", _usage_of(last_chunk), duration_ms=_elapsed_ms(start))
+        except Exception as e:
+            self._record_usage(self.default_model, "stream", _usage_of(last_chunk), success=False, error_message=str(e))
+            raise
 
     async def astream(self, messages: list[BaseMessage], **kwargs: Any) -> AsyncIterator[BaseMessage]:
         """异步流式，逐 chunk 产出 AIMessageChunk。"""
-        async for chunk in self.model.astream(messages, **kwargs):
-            yield chunk
+        start = perf_counter()
+        last_chunk: BaseMessage | None = None
+        try:
+            async for chunk in self.model.astream(messages, **kwargs):
+                last_chunk = chunk
+                yield chunk
+            self._record_usage(_model_of(last_chunk), "astream", _usage_of(last_chunk), duration_ms=_elapsed_ms(start))
+        except Exception as e:
+            self._record_usage(self.default_model, "astream", _usage_of(last_chunk), success=False, error_message=str(e))
+            raise
 
     # ------------------------------------------------------------------
     # 工具调用
@@ -147,8 +179,15 @@ class LLMService:
         **kwargs: Any,
     ) -> AIMessage:
         """同步调用并绑定工具，返回 AIMessage（含 .tool_calls）。"""
-        model_with_tools = self.model.bind_tools(tools)
-        return model_with_tools.invoke(messages, **kwargs)
+        start = perf_counter()
+        try:
+            model_with_tools = self.model.bind_tools(tools)
+            response = model_with_tools.invoke(messages, **kwargs)
+            self._record_usage(_model_of(response), "tools", _usage_of(response), duration_ms=_elapsed_ms(start))
+            return response
+        except Exception as e:
+            self._record_usage(self.default_model, "tools", None, success=False, error_message=str(e))
+            raise
 
     async def ainvoke_with_tools(
         self,
@@ -157,8 +196,15 @@ class LLMService:
         **kwargs: Any,
     ) -> AIMessage:
         """异步调用并绑定工具，返回 AIMessage（含 .tool_calls）。"""
-        model_with_tools = self.model.bind_tools(tools)
-        return await model_with_tools.ainvoke(messages, **kwargs)
+        start = perf_counter()
+        try:
+            model_with_tools = self.model.bind_tools(tools)
+            response = await model_with_tools.ainvoke(messages, **kwargs)
+            self._record_usage(_model_of(response), "tools", _usage_of(response), duration_ms=_elapsed_ms(start))
+            return response
+        except Exception as e:
+            self._record_usage(self.default_model, "tools", None, success=False, error_message=str(e))
+            raise
 
     # ------------------------------------------------------------------
     # 观测
@@ -175,6 +221,74 @@ class LLMService:
         # token_counter 接受 OpenAI 格式，转换一下
         openai_messages = [{"role": _get_role(m), "content": m.content} for m in messages]
         return token_counter(model=self.default_model, messages=openai_messages)
+
+    # ------------------------------------------------------------------
+    # LLM 调用统计落库
+    # ------------------------------------------------------------------
+
+    def _record_usage(
+        self,
+        model_name: str,
+        request_type: str,
+        usage: dict | None,
+        *,
+        success: bool = True,
+        error_message: str = "",
+        duration_ms: int = 0,
+    ) -> None:
+        """将一次 LLM 调用的 token / 模型统计写入 ``llm_log`` 表。
+
+        Args:
+            model_name: 实际使用的模型（如 zai/glm-4-flash）
+            request_type: 调用类型（invoke/ainvoke/stream/astream/tools）
+            usage: litellm usage_metadata dict，可为 None
+            success: 是否成功
+            error_message: 失败原因
+            duration_ms: 耗时毫秒
+        """
+        usage = usage or {}
+        try:
+            from src.core.database.connection import init_database_from_config
+            from src.data.models.llm_log import LLMLog
+
+            with init_database_from_config().get_session() as session:
+                session.add(
+                    LLMLog(
+                        model_name=model_name or self.default_model,
+                        provider=(model_name or "").split("/", 1)[0],
+                        request_type=request_type,
+                        prompt_tokens=int(usage.get("input_tokens", 0) or 0),
+                        completion_tokens=int(usage.get("output_tokens", 0) or 0),
+                        total_tokens=int(usage.get("total_tokens", 0) or 0),
+                        duration_ms=int(duration_ms),
+                        success=1 if success else 0,
+                        error_message=(error_message or "")[:500],
+                    )
+                )
+                session.commit()
+        except Exception as e:  # 统计失败不影响主流程
+            logger.warning("LLM 调用统计落库失败: %s", e)
+
+
+def _model_of(message: BaseMessage | None) -> str:
+    """从 AIMessage 提取实际使用的模型名（response_metadata 兜底为空）。"""
+    if message is None:
+        return ""
+    meta = getattr(message, "response_metadata", None) or {}
+    return str(meta.get("model", "")) or ""
+
+
+def _usage_of(message: BaseMessage | None) -> dict:
+    """从 AIMessage 提取 usage_metadata dict。"""
+    if message is None:
+        return {}
+    usage = getattr(message, "usage_metadata", None)
+    return dict(usage) if usage else {}
+
+
+def _elapsed_ms(start: float) -> int:
+    """返回自 start 起的耗时（毫秒）。"""
+    return int((perf_counter() - start) * 1000)
 
 
 def _get_role(msg: BaseMessage) -> str:

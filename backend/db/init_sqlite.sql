@@ -392,6 +392,28 @@ FROM test_case tc
 GROUP BY tc.scenario_type;
 
 -- ============================================================================
+-- 10. LLM 调用记录表 (llm_log)
+--    统计每次大模型请求的 token 用量与使用模型（来源：litellm usage_metadata）
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS llm_log
+(
+    id               INTEGER PRIMARY KEY,
+    model_name       TEXT    NOT NULL,
+    provider         TEXT             DEFAULT '',
+    request_type     TEXT             DEFAULT '',
+    prompt_tokens    INTEGER          DEFAULT 0,
+    completion_tokens INTEGER         DEFAULT 0,
+    total_tokens     INTEGER          DEFAULT 0,
+    duration_ms      INTEGER          DEFAULT 0,
+    success          INTEGER          DEFAULT 1,
+    error_message    TEXT             DEFAULT '',
+    created_at       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', 'localtime'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_llm_log_model ON llm_log (model_name);
+CREATE INDEX IF NOT EXISTS idx_llm_log_created ON llm_log (created_at);
+
+-- ============================================================================
 -- 初始数据（ID 由应用层雪花算法生成，此处使用固定种子值；OR IGNORE 保证可重复执行）
 -- ============================================================================
 INSERT OR IGNORE INTO space (id, name, description, status)

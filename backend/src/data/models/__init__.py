@@ -1,6 +1,7 @@
 from src.data.models.conversation import Conversation
 from src.data.models.endpoint import Endpoint
 from src.data.models.environment import Environment
+from src.data.models.llm_log import LLMLog
 from src.data.models.message import Message
 from src.data.models.space import Space
 from src.data.models.report import Report
@@ -21,4 +22,5 @@ __all__ = [
     "Report",
     "Conversation",
     "Message",
+    "LLMLog",
 ]
